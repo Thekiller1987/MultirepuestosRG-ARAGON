@@ -1,0 +1,27 @@
+{
+  "name": "MultirepuestosRG",
+  "short_name": "RG App",
+  "description": "Sistema de gestión de MultirepuestosRG",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4A90E2", 
+  "orientation": "any", 
+  "icons": [
+    {
+      "src": "/public/icons/192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/public/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/public/icons/logo.png",
+      "sizes": "512x512", 
+      "type": "image/png" 
+    }
+  ]
+}

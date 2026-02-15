@@ -1,0 +1,11 @@
+# SPA: evita 404 al refrescar
+[[redirects]]
+  from = "/api/*"
+  to = "http://64.23.228.145/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -1,0 +1,307 @@
+[dotenv@17.2.2] injecting env (5) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[dotenv@17.2.2] injecting env (0) from .env -- tip: 📡 observe env with Radar: https://dotenvx.com/radar
+Servidor corriendo en el puerto 3001
+¡Conexión a la base de datos exitosa! 🎉
+[dotenv@17.2.2] injecting env (5) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.2.2] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+Servidor corriendo en el puerto 3001
+¡Conexión a la base de datos exitosa! 🎉
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Ventas del 2025-10-21 (rango del día).
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+LOG: Intentando obtener todos los clientes...
+Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllUsers (/srv/MultirepuestosRg/server/src/controllers/userController.js:9:30)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at isAdmin (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:35:5)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+LOG: Intentando obtener todos los clientes...
+Error en getAllProducts: Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllProducts (/srv/MultirepuestosRg/server/src/controllers/productController.js:72:29)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+ERROR CRÍTICO (getAllClients): Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllClients (/srv/MultirepuestosRg/server/src/controllers/clientController.js:19:38)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at /srv/MultirepuestosRg/server/node_modules/router/index.js:295:15
+    at processParams (/srv/MultirepuestosRg/server/node_modules/router/index.js:582:12)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/index.js:291:5) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+LOG: Intentando obtener todos los clientes...
+ERROR CRÍTICO (getAllClients): Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllClients (/srv/MultirepuestosRg/server/src/controllers/clientController.js:19:38)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at /srv/MultirepuestosRg/server/node_modules/router/index.js:295:15
+    at processParams (/srv/MultirepuestosRg/server/node_modules/router/index.js:582:12)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/index.js:291:5) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllUsers (/srv/MultirepuestosRg/server/src/controllers/userController.js:9:30)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at isAdmin (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:35:5)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+Error en getAllProducts: Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllProducts (/srv/MultirepuestosRg/server/src/controllers/productController.js:72:29)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+LOG: Intentando obtener todos los clientes...
+Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllUsers (/srv/MultirepuestosRg/server/src/controllers/userController.js:9:30)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at isAdmin (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:35:5)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+Error en getAllProducts: Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllProducts (/srv/MultirepuestosRg/server/src/controllers/productController.js:72:29)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+ERROR CRÍTICO (getAllClients): Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllClients (/srv/MultirepuestosRg/server/src/controllers/clientController.js:19:38)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at /srv/MultirepuestosRg/server/node_modules/router/index.js:295:15
+    at processParams (/srv/MultirepuestosRg/server/node_modules/router/index.js:582:12)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/index.js:291:5) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+LOG: Intentando obtener todos los clientes...
+Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllUsers (/srv/MultirepuestosRg/server/src/controllers/userController.js:9:30)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at isAdmin (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:35:5)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+Error en getAllProducts: Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllProducts (/srv/MultirepuestosRg/server/src/controllers/productController.js:72:29)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+ERROR CRÍTICO (getAllClients): Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllClients (/srv/MultirepuestosRg/server/src/controllers/clientController.js:19:38)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at /srv/MultirepuestosRg/server/node_modules/router/index.js:295:15
+    at processParams (/srv/MultirepuestosRg/server/node_modules/router/index.js:582:12)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/index.js:291:5) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+LOG: Intentando obtener todos los clientes...
+Error en getAllProducts: Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllProducts (/srv/MultirepuestosRg/server/src/controllers/productController.js:72:29)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllUsers (/srv/MultirepuestosRg/server/src/controllers/userController.js:9:30)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at isAdmin (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:35:5)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at verifyToken (/srv/MultirepuestosRg/server/src/middleware/authMiddleware.js:17:7)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+ERROR CRÍTICO (getAllClients): Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getAllClients (/srv/MultirepuestosRg/server/src/controllers/clientController.js:19:38)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at /srv/MultirepuestosRg/server/node_modules/router/index.js:295:15
+    at processParams (/srv/MultirepuestosRg/server/node_modules/router/index.js:582:12)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/index.js:291:5) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}
+LOG: Ventas del 2025-10-21 (rango del día).
+ERROR CRÍTICO al obtener las ventas: Error
+    at PromisePool.query (/srv/MultirepuestosRg/server/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at getSales (/srv/MultirepuestosRg/server/src/controllers/salesController.js:211:32)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/srv/MultirepuestosRg/server/node_modules/router/lib/route.js:117:3)
+    at handle (/srv/MultirepuestosRg/server/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/srv/MultirepuestosRg/server/node_modules/router/lib/layer.js:152:17)
+    at /srv/MultirepuestosRg/server/node_modules/router/index.js:295:15
+    at processParams (/srv/MultirepuestosRg/server/node_modules/router/index.js:582:12)
+    at next (/srv/MultirepuestosRg/server/node_modules/router/index.js:291:5) {
+  code: 'ECONNREFUSED',
+  errno: undefined,
+  sql: undefined,
+  sqlState: undefined,
+  sqlMessage: undefined
+}

@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "build": "cd client && npm install && npm run build"
+  },
+  "dependencies": {
+    "react-to-print": "^3.1.1"
+  }
+}

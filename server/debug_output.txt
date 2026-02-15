@@ -1,0 +1,49 @@
+﻿[dotenv@17.2.2] injecting env (6) from .env -- tip: ­ƒôí observe env with Radar: https://dotenvx.com/radar
+=== SALE 4000 ===
+[
+  {
+    "id_venta": 4000,
+    "id_producto": 2384,
+    "cantidad": 1,
+    "precio_unitario": "10.00",
+    "codigo": "BP011",
+    "nombre": "Brida Plastica"
+  }
+]
+
+Product ID in Sale 4000: 2384
+DB Record for this ID: {
+  id_producto: 2384,
+  codigo: 'BP011',
+  nombre: 'Brida Plastica',
+  costo: '5.00',
+  venta: '10.00',
+  mayoreo: '10.00',
+  existencia: 32,
+  stock_reservado: 0,
+  minimo: null,
+  maximo: 500,
+  descripcion: null,
+  tipo_venta: 'UNIDAD',
+  id_categoria: null,
+  id_proveedor: null,
+  imagen: null
+}
+
+DB Record for BP011: {
+  id_producto: 2384,
+  codigo: 'BP011',
+  nombre: 'Brida Plastica',
+  costo: '5.00',
+  venta: '10.00',
+  mayoreo: '10.00',
+  existencia: 32,
+  stock_reservado: 0,
+  minimo: null,
+  maximo: 500,
+  descripcion: null,
+  tipo_venta: 'UNIDAD',
+  id_categoria: null,
+  id_proveedor: null,
+  imagen: null
+}
