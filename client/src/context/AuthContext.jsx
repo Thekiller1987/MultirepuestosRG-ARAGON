@@ -291,6 +291,12 @@ export const AuthProvider = ({ children, socket }) => {
     );
 };
 
+export const useAuthToken = () => {
+    const context = useContext(AuthContext);
+    if (!context) throw new Error('useAuthToken must be used within AuthProvider');
+    return context.token;
+};
+
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {

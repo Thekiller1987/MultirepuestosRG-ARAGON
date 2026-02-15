@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 
 /* ================== CONFIG ================== */
-const API_URL = 'https://multirepuestosrg.com/api';
+const API_URL = 'https://www.multirepuestosrgaragon.com/api';
 
 /* ================== HELPERS ================== */
 function todayManagua() {
