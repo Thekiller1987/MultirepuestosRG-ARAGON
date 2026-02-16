@@ -116,7 +116,7 @@ const Wrapper = styled.div`
 `;
 
 const TicketLogo = styled.img`
-  width: 120px; max-width: 160px; height: auto; display: block; margin: 0 auto 6px; border-radius: 6px;
+  width: 100%; max-width: 160px; height: auto; display: block; margin: 0 auto 6px; border-radius: 6px;
   &.a4-logo { margin: 0; max-width: 140px; }
 `;
 
@@ -164,8 +164,10 @@ const ProformaModal = ({
     ruc: settings?.empresa_ruc || '1211812770001E',
     phone: settings?.empresa_telefono || '84031936 / 84058142',
     address: settings?.empresa_direccion || 'Del portón de la normal 75 varas al este. Juigalpa, Chontales.',
-    slogan: settings?.empresa_eslogan || 'Tu mejor opción en repuestos', // Fallback slogan slightly diff for variety but uses settings first
-    logo: settings?.empresa_logo_url || new URL('/icons/logo.png', window.location.origin).toString()
+    slogan: settings?.empresa_eslogan || 'Repuestos de confianza al mejor precio',
+    logo: settings?.empresa_logo_url
+      ? (settings.empresa_logo_url.startsWith('http') ? settings.empresa_logo_url : `${import.meta.env.VITE_API_URL}${settings.empresa_logo_url}`)
+      : new URL('/icons/logo.png', window.location.origin).toString()
   };
 
   // Lógica Imprimir
