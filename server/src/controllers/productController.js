@@ -76,7 +76,6 @@ const getAllProducts = async (_req, res) => {
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
       LEFT   JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
-      WHERE p.activo = 1
       ORDER BY p.nombre ASC
     `;
     const [rows] = await db.query(query);
