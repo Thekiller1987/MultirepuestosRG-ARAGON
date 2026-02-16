@@ -599,6 +599,17 @@ const CreateProductModal = ({ isOpen, onClose, onSave, categories, providers, al
   const [profitPercentage, setProfitPercentage] = useState('');
   const [modalError, setModalError] = useState('');
 
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        codigo: '', nombre: '', costo: '', venta: '', mayoreo: '', id_categoria: '',
+        existencia: '', minimo: '', maximo: '', tipo_venta: 'Unidad', id_proveedor: '', descripcion: '', imagen: null
+      });
+      setProfitPercentage('');
+      setModalError('');
+    }
+  }, [isOpen]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     const next = { ...formData, [name]: value };
@@ -709,7 +720,12 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
     if (productToEdit) {
       setFormData({
         ...productToEdit,
+        codigo: productToEdit.codigo || '',
+        nombre: productToEdit.nombre || '',
+        costo: productToEdit.costo ?? '',
+        venta: productToEdit.venta ?? productToEdit.precio ?? '',
         mayoreo: productToEdit.mayoreo ?? '',
+        existencia: productToEdit.existencia ?? 0,
         minimo: productToEdit.minimo ?? '',
         maximo: productToEdit.maximo ?? '',
         id_categoria: productToEdit.id_categoria ?? '',

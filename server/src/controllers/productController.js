@@ -76,6 +76,7 @@ const getAllProducts = async (_req, res) => {
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
       LEFT   JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
+      WHERE p.activo = 1
       ORDER BY p.nombre ASC
     `;
     const [rows] = await db.query(query);
@@ -299,18 +300,44 @@ const deleteProduct = async (req, res) => {
  */
 const archiveProduct = async (req, res) => {
   const { id } = req.params;
+  const id_usuario = req.user?.id_usuario || req.user?.id;
 
+  let connection;
   try {
-    const [exists] = await db.query('SELECT id_producto, nombre FROM productos WHERE id_producto=?', [id]);
-    if (!exists.length) return res.status(404).json({ msg: 'Producto no encontrado.' });
+    connection = await db.getConnection();
+    await connection.beginTransaction();
 
-    return res.status(400).json({
-      msg: 'Función no disponible: la tabla productos no tiene columna "activo".',
-      hint: 'Si deseas archivar, agrega la columna: ALTER TABLE productos ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1;'
-    });
+    const [rows] = await connection.query('SELECT nombre FROM productos WHERE id_producto = ?', [id]);
+    if (!rows.length) {
+      await connection.rollback();
+      return res.status(404).json({ msg: 'Producto no encontrado.' });
+    }
+    const nombreProd = rows[0].nombre;
+
+    // 1. Marcar como inactivo
+    await connection.query('UPDATE productos SET activo = 0 WHERE id_producto = ?', [id]);
+
+    // 2. Registrar movimiento
+    await connection.query(
+      'INSERT INTO movimientos_inventario (id_producto, tipo_movimiento, detalles, id_usuario) VALUES (?, ?, ?, ?)',
+      [id, 'ARCHIVADO', `Producto "${nombreProd}" archivado (oculto).`, id_usuario || null]
+    );
+
+    await connection.commit();
+
+    // SOCKET EMIT
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('inventory_update', { action: 'archive', id });
+    }
+
+    res.json({ msg: 'Producto archivado correctamente.', id });
   } catch (error) {
+    if (connection) await connection.rollback();
     console.error('Error en archiveProduct:', error);
     res.status(500).json({ msg: 'No se pudo procesar el archivado.' });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
