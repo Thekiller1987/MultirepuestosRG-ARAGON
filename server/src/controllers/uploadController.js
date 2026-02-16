@@ -149,77 +149,104 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
 
         // --- 2. QUERY DE INSERCIÓN/ACTUALIZACIÓN ÚNICA (UPSERT) ---
 
-        const queryText = `
-            INSERT INTO productos (
-                codigo, nombre, costo, venta, existencia, id_categoria, 
-                id_proveedor, tipo_venta, mayoreo, minimo, maximo
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
-            ON DUPLICATE KEY UPDATE 
-                nombre = VALUES(nombre),
-                costo = VALUES(costo),
-                venta = VALUES(venta),
-                mayoreo = VALUES(mayoreo),
-                tipo_venta = VALUES(tipo_venta),
-                id_categoria = VALUES(id_categoria),
-                id_proveedor = VALUES(id_proveedor),
-                minimo = VALUES(minimo),
-                maximo = VALUES(maximo),
-                existencia = existencia + VALUES(existencia); 
-        `;
-
-        // SQL para obtener el ID de un producto existente (Necesario para registrar movimientos)
-        const checkIdSql = 'SELECT id_producto FROM productos WHERE codigo = ?';
-
-        // --- 3. EJECUTAR QUERIES Y REGISTRAR MOVIMIENTOS ---
+        // --- 2. EJECUCIÓN: SELECT -> UPDATE OR INSERT ---
+        // Refactorizado para evitar problemas con ON DUPLICATE KEY UPDATE si no hay constraint único
 
         for (const saneProduct of processedProducts) {
-            // Saltamos filas que pudieron haber fallado el mapeo pero no el error crítico inicial
             if (saneProduct.error) continue;
 
-            // Los valores de INSERT y ON DUPLICATE son los mismos en MySQL.
-            const values = [
-                saneProduct.codigo, saneProduct.nombre, saneProduct.costo, saneProduct.venta, saneProduct.entrada_existencia,
-                saneProduct.id_categoria, saneProduct.id_proveedor, saneProduct.tipo_venta, saneProduct.mayoreo,
-                saneProduct.minimo, saneProduct.maximo
-            ];
-
             try {
-                const [result] = await connection.query(queryText, values);
+                // A. Verificar existencia por CÓDIGO
+                const [existingRows] = await connection.query(
+                    'SELECT id_producto, existencia FROM productos WHERE codigo = ?',
+                    [saneProduct.codigo]
+                );
 
-                // result.affectedRows > 1 indica una actualización (2 filas afectadas)
-                // result.affectedRows === 1 indica una inserción
-                const isUpdate = result.affectedRows > 1;
-                const isInsert = result.affectedRows === 1;
-
+                let productId = null;
+                let isUpdate = false;
+                let actionType = '';
                 let logDetails = '';
-                let tipoMovimiento = '';
 
-                // Obtenemos el ID del producto (ya sea recién insertado o existente)
-                const [rows] = await connection.execute(checkIdSql, [saneProduct.codigo]);
-                const productId = rows[0]?.id_producto;
+                if (existingRows.length > 0) {
+                    // --- ACTUALIZAR ---
+                    isUpdate = true;
+                    productId = existingRows[0].id_producto;
+                    const oldStock = Number(existingRows[0].existencia);
 
-                if (isUpdate && saneProduct.entrada_existencia > 0) {
-                    tipoMovimiento = 'ENTRADA_MASIVA';
-                    logDetails = `Entrada por carga masiva: +${saneProduct.entrada_existencia}. Datos actualizados (costo, venta, etc.).`;
-                } else if (isUpdate && saneProduct.entrada_existencia === 0) {
-                    tipoMovimiento = 'ACTUALIZACION_DATOS';
-                    logDetails = `Actualización masiva de datos (costo, venta, proveedor, etc.). Stock sin cambios.`;
-                } else if (isInsert) {
-                    tipoMovimiento = 'CREACION_MASIVA';
-                    logDetails = `Creación de producto por carga masiva. Stock inicial: ${saneProduct.entrada_existencia}.`;
+                    // Actualizamos todos los campos
+                    await connection.query(`
+                        UPDATE productos SET 
+                            nombre = ?, 
+                            costo = ?, 
+                            venta = ?, 
+                            mayoreo = ?, 
+                            tipo_venta = ?, 
+                            id_categoria = ?, 
+                            id_proveedor = ?, 
+                            minimo = ?, 
+                            maximo = ?,
+                            existencia = existencia + ? 
+                        WHERE id_producto = ?
+                    `, [
+                        saneProduct.nombre,
+                        saneProduct.costo,
+                        saneProduct.venta,
+                        saneProduct.mayoreo,
+                        saneProduct.tipo_venta,
+                        saneProduct.id_categoria,
+                        saneProduct.id_proveedor,
+                        saneProduct.minimo,
+                        saneProduct.maximo,
+                        saneProduct.entrada_existencia,
+                        productId
+                    ]);
+
+                    if (saneProduct.entrada_existencia > 0) {
+                        actionType = 'ENTRADA_MASIVA';
+                        logDetails = `Entrada: +${saneProduct.entrada_existencia}. Stock ${oldStock} -> ${oldStock + saneProduct.entrada_existencia}. Datos actualizados.`;
+                    } else {
+                        actionType = 'ACTUALIZACION_DATOS';
+                        logDetails = `Actualización de datos (Precio: ${saneProduct.venta}, Costo: ${saneProduct.costo}). Stock sin cambios.`;
+                    }
+
+                } else {
+                    // --- INSERTAR ---
+                    const [insertResult] = await connection.query(`
+                        INSERT INTO productos (
+                            codigo, nombre, costo, venta, existencia, 
+                            id_categoria, id_proveedor, tipo_venta, mayoreo, 
+                            minimo, maximo
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    `, [
+                        saneProduct.codigo,
+                        saneProduct.nombre,
+                        saneProduct.costo,
+                        saneProduct.venta,
+                        saneProduct.entrada_existencia, // Stock inicial
+                        saneProduct.id_categoria,
+                        saneProduct.id_proveedor,
+                        saneProduct.tipo_venta,
+                        saneProduct.mayoreo,
+                        saneProduct.minimo,
+                        saneProduct.maximo
+                    ]);
+
+                    productId = insertResult.insertId;
+                    actionType = 'CREACION_MASIVA';
+                    logDetails = `Producto nuevo. Stock Inicial: ${saneProduct.entrada_existencia}. Precio: ${saneProduct.venta}.`;
                 }
 
-                // Si hubo un cambio de stock o es una nueva creación, registramos el movimiento
-                if (tipoMovimiento && productId) {
-                    await connection.execute(logSql, [productId, tipoMovimiento, logDetails, userId]);
+                // Registrar Historial
+                if (actionType && productId) {
+                    await connection.query(logSql, [productId, actionType, logDetails, userId]);
                 }
 
                 updatedCount++;
 
-            } catch (queryError) {
+            } catch (rowError) {
                 errorCount++;
-                console.error(`Error de SQL al insertar/actualizar el código ${saneProduct.codigo}:`, queryError.sqlMessage || queryError.message);
-                errors.push({ codigo: saneProduct.codigo, error: `Error de BD: ${queryError.sqlMessage || queryError.message}` });
+                errors.push({ codigo: saneProduct.codigo, error: `Error BD: ${rowError.message}` });
+                console.error(`Error procesando producto ${saneProduct.codigo}:`, rowError);
             }
         }
 
