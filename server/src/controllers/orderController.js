@@ -27,22 +27,22 @@ const getOrders = async (req, res) => {
 const createOrder = async (req, res) => {
     const { clienteNombre, items, total, abonoInicial, pagoDetalles } = req.body;
     const connection = await pool.getConnection();
-    
+
     try {
         await connection.beginTransaction();
-        
+
         const estadoInicial = abonoInicial > 0 ? 'APARTADO' : 'PENDIENTE';
-        
+
         console.log('=== CREANDO PEDIDO ===');
         console.log('Cliente Nombre:', clienteNombre);
         console.log('Estado inicial:', estadoInicial);
-        
+
         // ✅ GUARDAMOS EL NOMBRE DEL CLIENTE DIRECTAMENTE
         const [orderResult] = await connection.query(
             'INSERT INTO pedidos (id_cliente, nombre_cliente, total_pedido, abonado, estado, fecha_creacion) VALUES (?, ?, ?, ?, ?, NOW())',
             [null, clienteNombre, total, abonoInicial, estadoInicial]
         );
-        
+
         const orderId = orderResult.insertId;
         console.log('Pedido creado con ID:', orderId);
 
@@ -52,7 +52,7 @@ const createOrder = async (req, res) => {
                 'INSERT INTO detalle_pedidos (id_pedido, id_producto, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
                 [orderId, item.id, item.quantity, item.precio]
             );
-            
+
             await connection.query(
                 'UPDATE productos SET existencia = existencia - ?, stock_reservado = stock_reservado + ? WHERE id_producto = ?',
                 [item.quantity, item.quantity, item.id]
@@ -68,17 +68,21 @@ const createOrder = async (req, res) => {
         }
 
         await connection.commit();
-        
-        res.status(201).json({ 
-            message: 'Pedido creado exitosamente', 
-            orderId 
+
+        // Socket emit
+        const io = req.app.get('io');
+        if (io) io.emit('inventory_update');
+
+        res.status(201).json({
+            message: 'Pedido creado exitosamente',
+            orderId
         });
-        
+
     } catch (error) {
         await connection.rollback();
         console.error('❌ Error al crear pedido:', error);
-        res.status(500).json({ 
-            message: error.message || 'Error al crear el pedido' 
+        res.status(500).json({
+            message: error.message || 'Error al crear el pedido'
         });
     } finally {
         if (connection) connection.release();
@@ -153,33 +157,33 @@ const addAbono = async (req, res) => {
     const { id } = req.params;
     const { monto, pagoDetalles } = req.body;
     const connection = await pool.getConnection();
-    
+
     try {
         await connection.beginTransaction();
         const [orderRows] = await connection.query('SELECT * FROM pedidos WHERE id_pedido = ? FOR UPDATE', [id]);
-        
+
         if (orderRows.length === 0) {
             throw new Error('Pedido no encontrado');
         }
-        
+
         const order = orderRows[0];
         const saldoPendiente = parseFloat(order.total_pedido) - parseFloat(order.abonado);
-        
-        if(parseFloat(monto) > saldoPendiente + 0.01) {
+
+        if (parseFloat(monto) > saldoPendiente + 0.01) {
             throw new Error('El monto del abono no puede ser mayor al saldo pendiente.');
         }
-        
+
         const nuevoAbonado = parseFloat(order.abonado) + parseFloat(monto);
         await connection.query('UPDATE pedidos SET abonado = ? WHERE id_pedido = ?', [nuevoAbonado, id]);
-        
+
         await connection.query(
             "INSERT INTO ventas (fecha, total_venta, estado, id_usuario, pago_detalles, tipo_venta, referencia_pedido) VALUES (NOW(), ?, 'ABONO', ?, ?, 'PEDIDO', ?)",
             [monto, req.user.id, JSON.stringify(pagoDetalles), id]
         );
-        
+
         await connection.commit();
         res.status(200).json({ message: 'Abono registrado exitosamente' });
-        
+
     } catch (error) {
         await connection.rollback();
         console.error('Error al registrar abono:', error);
@@ -193,23 +197,23 @@ const liquidarOrder = async (req, res) => {
     const { id } = req.params;
     const { pagoDetalles } = req.body;
     const connection = await pool.getConnection();
-    
+
     try {
         await connection.beginTransaction();
         const [orderRows] = await connection.query('SELECT * FROM pedidos WHERE id_pedido = ? FOR UPDATE', [id]);
-        
+
         if (orderRows.length === 0) {
             throw new Error('Pedido no encontrado');
         }
-        
+
         const order = orderRows[0];
         const saldoPendiente = parseFloat(order.total_pedido) - parseFloat(order.abonado);
-        
+
         await connection.query(
-            'UPDATE pedidos SET abonado = total_pedido, estado = "COMPLETADO" WHERE id_pedido = ?', 
+            'UPDATE pedidos SET abonado = total_pedido, estado = "COMPLETADO" WHERE id_pedido = ?',
             [id]
         );
-        
+
         await connection.query(
             "INSERT INTO ventas (fecha, total_venta, estado, id_usuario, pago_detalles, tipo_venta, referencia_pedido) VALUES (NOW(), ?, 'LIQUIDACIÓN', ?, ?, 'PEDIDO', ?)",
             [saldoPendiente, req.user.id, JSON.stringify(pagoDetalles), id]
@@ -218,14 +222,18 @@ const liquidarOrder = async (req, res) => {
         const [items] = await connection.query('SELECT * FROM detalle_pedidos WHERE id_pedido = ?', [id]);
         for (const item of items) {
             await connection.query(
-                'UPDATE productos SET stock_reservado = stock_reservado - ? WHERE id_producto = ?', 
+                'UPDATE productos SET stock_reservado = stock_reservado - ? WHERE id_producto = ?',
                 [item.cantidad, item.id_producto]
             );
         }
-        
+
         await connection.commit();
+
+        const io = req.app.get('io');
+        if (io) io.emit('inventory_update');
+
         res.status(200).json({ message: 'Pedido liquidado y completado exitosamente.' });
-        
+
     } catch (error) {
         await connection.rollback();
         console.error('Error al liquidar pedido:', error);
@@ -238,44 +246,48 @@ const liquidarOrder = async (req, res) => {
 const cancelOrder = async (req, res) => {
     const { id } = req.params;
     const connection = await pool.getConnection();
-    
+
     try {
         await connection.beginTransaction();
         const [orderRows] = await connection.query(
-            'SELECT * FROM pedidos WHERE id_pedido = ? AND estado != "CANCELADO"', 
+            'SELECT * FROM pedidos WHERE id_pedido = ? AND estado != "CANCELADO"',
             [id]
         );
-        
+
         if (orderRows.length === 0) {
             await connection.rollback();
-            return res.status(404).json({ 
-                message: 'Pedido no encontrado o ya está cancelado' 
+            return res.status(404).json({
+                message: 'Pedido no encontrado o ya está cancelado'
             });
         }
 
         const [items] = await connection.query('SELECT * FROM detalle_pedidos WHERE id_pedido = ?', [id]);
         for (const item of items) {
             await connection.query(
-                'UPDATE productos SET stock_reservado = stock_reservado - ?, existencia = existencia + ? WHERE id_producto = ?', 
+                'UPDATE productos SET stock_reservado = stock_reservado - ?, existencia = existencia + ? WHERE id_producto = ?',
                 [item.cantidad, item.cantidad, item.id_producto]
             );
         }
-        
+
         await connection.query(
-            'UPDATE pedidos SET estado = "CANCELADO" WHERE id_pedido = ?', 
+            'UPDATE pedidos SET estado = "CANCELADO" WHERE id_pedido = ?',
             [id]
         );
-        
+
         await connection.commit();
-        res.status(200).json({ 
-            message: 'Pedido cancelado y stock revertido.' 
+
+        const io = req.app.get('io');
+        if (io) io.emit('inventory_update');
+
+        res.status(200).json({
+            message: 'Pedido cancelado y stock revertido.'
         });
 
     } catch (error) {
         await connection.rollback();
         console.error('Error al cancelar pedido:', error);
-        res.status(500).json({ 
-            message: error.message || 'Error al cancelar el pedido' 
+        res.status(500).json({
+            message: error.message || 'Error al cancelar el pedido'
         });
     } finally {
         if (connection) connection.release();

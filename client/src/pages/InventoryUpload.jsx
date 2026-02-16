@@ -358,11 +358,13 @@ const InventoryUpload = () => {
         const minKey = findKey(['Inv. Mínimo', 'Minimo', 'Min']);
         const maxKey = findKey(['Inv. Máximo', 'Maximo', 'Max']);
         const tipoKey = findKey(['Tipo de Venta', 'Tipo', 'Type']);
+        const descKey = findKey(['Descripción', 'Descripcion', 'Description', 'Detalles']);
 
         // Extract values using found keys
         return {
             codigo: codigoKey ? String(row[codigoKey] || '').trim() : '',
             nombre: nombreKey ? String(row[nombreKey] || '').trim() : '',
+            descripcion: descKey ? String(row[descKey] || '').trim() : '',
             costo: cleanPrice(row[costoKey]),
             precio: cleanPrice(row[precioKey]),
             mayoreo: cleanPrice(row[mayoreoKey]),

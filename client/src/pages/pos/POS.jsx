@@ -223,13 +223,15 @@ const POS = () => {
     const existing = cart.find(i => (i.id_producto || i.id) === pid);
     const newQty = (existing?.quantity || 0) + quantity;
 
-    if (product.existencia <= 0) {
+    const stockDisponible = product.disponible !== undefined ? product.disponible : product.existencia;
+
+    if (stockDisponible <= 0) {
       showAlert({ title: "Sin Stock", message: `El producto "${product.nombre}" no tiene existencia disponible.` });
       return;
     }
 
-    if (newQty > product.existencia) {
-      showAlert({ title: "Stock Insuficiente", message: `Solo hay ${product.existencia} unidades disponibles.` });
+    if (newQty > stockDisponible) {
+      showAlert({ title: "Stock Insuficiente", message: `Solo hay ${stockDisponible} unidades disponibles.` });
       return;
     }
 
@@ -256,8 +258,10 @@ const POS = () => {
       updateActiveCart(cart.filter(i => (i.id_producto || i.id) !== pid));
       return;
     }
-    if (q > (pRef.existencia || 9999)) {
-      q = pRef.existencia;
+    const stockDisponible = pRef.disponible !== undefined ? pRef.disponible : pRef.existencia;
+
+    if (q > (stockDisponible || 9999)) {
+      q = stockDisponible;
       showAlert({ title: "Stock", message: "Cantidad máxima alcanzada según inventario." });
     }
 

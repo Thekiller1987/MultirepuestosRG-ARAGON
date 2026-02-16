@@ -112,12 +112,14 @@ const bulkUpdateInventory = async (req, res) => {
                 const rawPrice = product.precio !== undefined ? product.precio : (product.venta !== undefined ? product.venta : 0);
                 const finalVenta = parseFloat(rawPrice) || 0.00;
                 const entradaExistencia = parseInt(product.existencia, 10) || 0;
+                const finalDescripcion = String(product.descripcion || '').trim();
 
                 processedProducts.push({
                     codigo: rawCodigo, nombre: rawNombre, tipo_venta: finalTipoVenta,
                     id_categoria: id_categoria, id_proveedor: id_proveedor,
                     costo: finalCosto, venta: finalVenta, mayoreo: finalMayoreo,
                     entrada_existencia: entradaExistencia, minimo: finalMinimo, maximo: finalMaximo,
+                    descripcion: finalDescripcion
                 });
 
             } catch (mapError) {
@@ -153,6 +155,7 @@ const bulkUpdateInventory = async (req, res) => {
                     await connection.query(`
                         UPDATE productos SET 
                             nombre = ?, 
+                            descripcion = ?,
                             costo = ?, 
                             venta = ?, 
                             mayoreo = ?, 
@@ -165,6 +168,7 @@ const bulkUpdateInventory = async (req, res) => {
                         WHERE id_producto = ?
                     `, [
                         saneProduct.nombre,
+                        saneProduct.descripcion,
                         saneProduct.costo,
                         saneProduct.venta,
                         saneProduct.mayoreo,
@@ -192,13 +196,14 @@ const bulkUpdateInventory = async (req, res) => {
                     // --- INSERTAR ---
                     const [insertResult] = await connection.query(`
                         INSERT INTO productos (
-                            codigo, nombre, costo, venta, existencia, 
+                            codigo, nombre, descripcion, costo, venta, existencia, 
                             id_categoria, id_proveedor, tipo_venta, mayoreo, 
                             minimo, maximo
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `, [
                         saneProduct.codigo,
                         saneProduct.nombre,
+                        saneProduct.descripcion,
                         saneProduct.costo,
                         saneProduct.venta,
                         saneProduct.entrada_existencia, // Stock inicial
@@ -235,6 +240,12 @@ const bulkUpdateInventory = async (req, res) => {
         }
 
         await connection.commit(); // Confirmar todos los cambios si hubo al menos un éxito
+
+        // socket.io emission
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('inventory_update', { action: 'bulk_upload', count: updatedCount });
+        }
 
         // Respuesta final al cliente (Multi-Status si hay errores parciales)
         const status = errorCount > 0 ? 207 : 200;

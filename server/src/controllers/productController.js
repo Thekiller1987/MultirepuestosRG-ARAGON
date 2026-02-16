@@ -121,14 +121,15 @@ const getAllProducts = async (_req, res) => {
     const products = rows.map(p => {
       const pid = p.id_producto;
       const reserved = reservedMap.get(pid) || 0;
-      // Restar lo reservado (pero no bajar de 0 visualmente para no confundir, o sí?)
-      // User says "no le salga", so reducing existence is correct.
-      const existenciaReal = Math.max(0, p.existencia - reserved);
+      // "existencia" is Physical Stock (DB)
+      // "disponible" is Available Stock (DB - Active Carts)
+      const disponible = Math.max(0, p.existencia - reserved);
 
       return {
         ...p,
-        existencia: existenciaReal, // Override existence with Available Stock
-        reserved: reserved,         // Optional: expose reserved count
+        existencia: p.existencia, // Ahora devolvemos el stock FÍSICO REAL
+        disponible: disponible,   // Y el stock disponible por separado
+        reserved: reserved,
         imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
       };
     });
