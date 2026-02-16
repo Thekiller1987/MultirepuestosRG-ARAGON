@@ -309,8 +309,8 @@ export const fetchSalesChartReport = (token, params) => {
 // ===================================================================
 // --- SECCIÓN DE CARGA MASIVA ---
 // ===================================================================
-export const bulkUploadInventory = async (items, token) => {
-    return await request('post', '/upload/inventory', token, { items });
+export const bulkUploadInventory = async (data, token) => {
+    return await request('post', '/upload/inventory', token, data);
 };
 
 // ===================================================================

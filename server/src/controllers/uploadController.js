@@ -53,8 +53,8 @@ const bulkUpdateInventory = async (req, res) => {
     const { items: products, replaceStock = false } = req.body; // Default to FALSE (Add) for safety if not provided
     const userId = req.user?.id_usuario ?? req.user?.id;
 
-    if (!products || products.length === 0) {
-        return res.status(400).json({ message: "No se proporcionaron datos de productos válidos para la carga masiva." });
+    if (!products || !Array.isArray(products) || products.length === 0) {
+        return res.status(400).json({ message: "No se proporcionaron datos de productos válidos (array esperado)." });
     }
 
     let updatedCount = 0;
