@@ -72,7 +72,7 @@ const createProduct = async (req, res) => {
 const getAllProducts = async (_req, res) => {
   try {
     const query = `
-      SELECT p.*, c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
+      SELECT p.*, p.id_categoria, p.id_proveedor, p.minimo, p.maximo, p.existencia, c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
       LEFT   JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
