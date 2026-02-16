@@ -30,11 +30,14 @@ const app = express();
 // Helper para CORS dinámico (permite LAN IPs)
 const allowedOrigins = [
   'https://multirepuestosrg.netlify.app',
-  'https://www.multirepuestosrg.com',
-  'https://multirepuestosrg.com', // Added non-www version
+  'https://www.multirepuestosrgaragon.com', // NEW DOMAIN
+  'https://multirepuestosrgaragon.com',     // NEW DOMAIN WITHOUT WWW
+  'https://multirepuestosrg.com',
   'http://localhost:5173',
   'http://64.23.228.145',
-  'https://64.23.228.145'
+  'https://64.23.228.145',
+  'http://206.189.73.145', // NEW DROPLET IP
+  'https://206.189.73.145'
 ];
 
 const corsOriginHelper = (origin, callback) => {
@@ -44,14 +47,17 @@ const corsOriginHelper = (origin, callback) => {
   // Orígenes explícitos
   if (allowedOrigins.includes(origin)) return callback(null, true);
 
-  // Permitir IPs de red local (192.168.x.x, 10.x.x.x, 172.16.x.x)
+  // Permitir IPs de red local
   if (origin.startsWith('http://192.168.') ||
     origin.startsWith('http://10.') ||
     origin.startsWith('http://172.')) {
     return callback(null, true);
   }
 
-  callback(new Error('Not allowed by CORS'));
+  // FALLBACK: Permitir todo temporalmente para debug si sigue fallando
+  // return callback(null, true); 
+
+  callback(new Error(`Not allowed by CORS: ${origin}`));
 };
 
 const corsOptions = {
