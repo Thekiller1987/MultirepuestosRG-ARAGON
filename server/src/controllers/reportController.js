@@ -52,14 +52,40 @@ const getSalesSummaryReport = async (req, res) => {
 };
 
 // --- OBTENER VALOR TOTAL DEL INVENTARIO ---
+// --- OBTENER VALOR TOTAL DEL INVENTARIO (CON DESGLOSE) ---
 const getInventoryValueReport = async (req, res) => {
     try {
-        const sql = `
-            SELECT SUM(p.costo * p.existencia) AS valor_total_inventario
-            FROM productos AS p;
+        const connection = await db.getConnection();
+
+        // 1. Total General
+        const sqlTotal = `
+            SELECT COALESCE(SUM(costo * existencia), 0) AS valor_total_inventario
+            FROM productos;
         `;
-        const [results] = await db.query(sql);
-        res.json(results[0]);
+        const [totalRows] = await connection.query(sqlTotal);
+
+        // 2. Desglose de "Culpables" (Top 50 por valor total)
+        const sqlBreakdown = `
+            SELECT 
+                id_producto, 
+                nombre, 
+                codigo, 
+                costo, 
+                existencia, 
+                (costo * existencia) as valor_total
+            FROM productos
+            ORDER BY valor_total DESC
+            LIMIT 50;
+        `;
+        const [breakdownRows] = await connection.query(sqlBreakdown);
+
+        connection.release();
+
+        res.json({
+            valor_total_inventario: totalRows[0].valor_total_inventario,
+            breakdown: breakdownRows
+        });
+
     } catch (error) {
         console.error('Error en reporte de valor de inventario:', error);
         res.status(500).json({ msg: 'Error en el servidor.' });
