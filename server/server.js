@@ -99,6 +99,11 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/outflow', outflowRoutes);
 
 const settingsRoutes = require('./src/routes/settingsRoutes.js');
+const { initSettings } = require('./src/controllers/settingsController.js');
+
+// Inicializar configuración (asegurar que exista tabla)
+initSettings().catch(err => console.error("Error init settings:", err));
+
 app.use('/api/settings', settingsRoutes);
 
 app.get('/', (_req, res) => {

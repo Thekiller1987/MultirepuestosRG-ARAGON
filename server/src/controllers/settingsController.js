@@ -1,7 +1,8 @@
 const pool = require('../config/db');
 
 // AUTO-MIGRACIÓN: Tabla business_config
-(async () => {
+// AUTO-MIGRACIÓN: Tabla business_config
+const initSettings = async () => {
     try {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS business_config (
@@ -25,16 +26,20 @@ const pool = require('../config/db');
         const columns = ['ticket_sales_footer', 'ticket_proforma_footer', 'ticket_transfer_footer'];
         for (const col of columns) {
             try {
-                await pool.query(`ALTER TABLE business_config ADD COLUMN ${col} TEXT`);
+                // Check if column exists first to avoid error spam
+                const [rows] = await pool.query(`SHOW COLUMNS FROM business_config LIKE '${col}'`);
+                if (rows.length === 0) {
+                    await pool.query(`ALTER TABLE business_config ADD COLUMN ${col} TEXT`);
+                    console.log(`✅ Columna ${col} agregada a business_config`);
+                }
             } catch (e) {
-                // Ignore "Column already exists" (Error 1060)
-                if (e.code !== 'ER_DUP_FIELDNAME') console.error(`Error adding column ${col}:`, e);
+                console.error(`Error verificando columna ${col}:`, e);
             }
         }
     } catch (error) {
         console.error('Error inicializando business_config:', error);
     }
-})();
+};
 
 /* ===================== READ ===================== */
 const getSettings = async (req, res) => {
@@ -87,4 +92,4 @@ const updateSettings = async (req, res) => {
     }
 };
 
-module.exports = { getSettings, updateSettings };
+module.exports = { getSettings, updateSettings, initSettings };
