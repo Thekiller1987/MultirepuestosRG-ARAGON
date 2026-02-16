@@ -49,9 +49,9 @@ async function getOrCreateMappingId(connection, tableName, name, nameColumn, idC
  * Procesa la carga masiva de productos (inventario).
  * @returns {object} - Informe de éxito/error al cliente.
  */
-const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓN CONST 🚨
-    const products = req.body.items;
-    const userId = req.user?.id_usuario ?? req.user?.id; // ID del usuario que realiza la carga
+const bulkUpdateInventory = async (req, res) => {
+    const { items: products, replaceStock = false } = req.body; // Default to FALSE (Add) for safety if not provided
+    const userId = req.user?.id_usuario ?? req.user?.id;
 
     if (!products || products.length === 0) {
         return res.status(400).json({ message: "No se proporcionaron datos de productos válidos para la carga masiva." });
@@ -62,29 +62,25 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
     const errors = [];
     let connection;
 
-    // SQL para el registro de movimientos de inventario
     const logSql = 'INSERT INTO movimientos_inventario (id_producto, tipo_movimiento, detalles, id_usuario) VALUES (?, ?, ?, ?)';
 
     try {
         connection = await db.getConnection();
         await connection.beginTransaction();
 
-        let categoryMap = {}; // Cache para categorías
-        let providerMap = {}; // Cache para proveedores
+        let categoryMap = {};
+        let providerMap = {};
         const processedProducts = [];
 
         // --- 1. PROCESAR, SANEAR Y MAPEAR (BUSCAR IDS) CADA PRODUCTO ---
         for (const product of products) {
-
-            // ⚠️ VALIDACIÓN CRÍTICA: Código y Nombre son obligatorios
-            // Si falta alguno, lo marcamos como error y pasamos a la siguiente fila.
             const rawCodigo = String(product.codigo || '').trim();
             const rawNombre = String(product.nombre || '').trim();
 
             if (!rawCodigo || !rawNombre) {
                 errorCount++;
-                errors.push({ codigo: rawCodigo || 'N/A', error: 'El Código y el Nombre del Producto son campos obligatorios y no pueden estar vacíos.' });
-                continue; // Saltar al siguiente item
+                errors.push({ codigo: rawCodigo || 'N/A', error: 'El Código y el Nombre del Producto son campos obligatorios.' });
+                continue;
             }
 
             try {
@@ -108,30 +104,13 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
                 }
                 const id_proveedor = providerMap[providerMapKey];
 
-                // SANIDAD Y DEFENSA CONTRA VACÍOS
                 const finalTipoVenta = String(product.tipo_venta || '').trim() || 'UNIDAD';
-
-                // Valores numéricos: parseFloat() fallará si es una cadena vacía, 
-                // por lo que usamos el || null o || 0 para manejar los vacíos de forma segura.
-                // Usamos product.<campo> ya que el front-end ya limpió los símbolos de moneda ($,)
                 const finalCosto = parseFloat(product.costo) || 0.00;
-                // finalVenta calculated above in DEBUG block for safety
-                const finalMayoreo = parseFloat(product.mayoreo) || null; // Opcional
-                const finalMinimo = parseInt(product.minimo, 10) || null; // Opcional
-                const finalMaximo = parseInt(product.maximo, 10) || null; // Opcional
-
-                // DEBUG LOGGING START
-                if (products.indexOf(product) < 3) { // Log only first 3 items to avoid spam
-                    console.log(`DEBUG UPLOAD: Code=${rawCodigo}, Incoming Keys=${Object.keys(product).join(',')}`);
-                    console.log(`DEBUG UPLOAD: Incoming Precio=${product.precio}, Venta=${product.venta}, Costo=${product.costo}`);
-                }
-
-                // ROBUST HANDLING FOR PRICE
+                const finalMayoreo = parseFloat(product.mayoreo) || null;
+                const finalMinimo = parseInt(product.minimo, 10) || null;
+                const finalMaximo = parseInt(product.maximo, 10) || null;
                 const rawPrice = product.precio !== undefined ? product.precio : (product.venta !== undefined ? product.venta : 0);
                 const finalVenta = parseFloat(rawPrice) || 0.00;
-                // DEBUG LOGGING END
-
-                // Existencia es la cantidad que ENTRA. Debe ser un número (o 0 si está vacío)
                 const entradaExistencia = parseInt(product.existencia, 10) || 0;
 
                 processedProducts.push({
@@ -147,11 +126,7 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
             }
         }
 
-        // --- 2. QUERY DE INSERCIÓN/ACTUALIZACIÓN ÚNICA (UPSERT) ---
-
         // --- 2. EJECUCIÓN: SELECT -> UPDATE OR INSERT ---
-        // Refactorizado para evitar problemas con ON DUPLICATE KEY UPDATE si no hay constraint único
-
         for (const saneProduct of processedProducts) {
             if (saneProduct.error) continue;
 
@@ -163,17 +138,18 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
                 );
 
                 let productId = null;
-                let isUpdate = false;
                 let actionType = '';
                 let logDetails = '';
 
                 if (existingRows.length > 0) {
                     // --- ACTUALIZAR ---
-                    isUpdate = true;
                     productId = existingRows[0].id_producto;
                     const oldStock = Number(existingRows[0].existencia);
 
-                    // Actualizamos todos los campos
+                    // Logic for Stock Update vs Replacement
+                    const stockExpression = replaceStock ? 'existencia = ?' : 'existencia = existencia + ?';
+                    const stockValue = saneProduct.entrada_existencia; // In both cases we pass the value, SQL differs
+
                     await connection.query(`
                         UPDATE productos SET 
                             nombre = ?, 
@@ -185,7 +161,7 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
                             id_proveedor = ?, 
                             minimo = ?, 
                             maximo = ?,
-                            existencia = existencia + ? 
+                            ${stockExpression}
                         WHERE id_producto = ?
                     `, [
                         saneProduct.nombre,
@@ -197,16 +173,19 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
                         saneProduct.id_proveedor,
                         saneProduct.minimo,
                         saneProduct.maximo,
-                        saneProduct.entrada_existencia,
+                        stockValue, // Passed once, determines new value or increment depending on query
                         productId
                     ]);
 
-                    if (saneProduct.entrada_existencia > 0) {
+                    if (replaceStock) {
+                        actionType = 'AJUSTE_MASIVO_STOCK';
+                        logDetails = `Reemplazo de Stock (Carga Masiva): ${oldStock} -> ${stockValue}. Precio: ${saneProduct.venta}`;
+                    } else if (stockValue > 0) {
                         actionType = 'ENTRADA_MASIVA';
-                        logDetails = `Entrada: +${saneProduct.entrada_existencia}. Stock ${oldStock} -> ${oldStock + saneProduct.entrada_existencia}. Datos actualizados.`;
+                        logDetails = `Entrada: +${stockValue}. Stock ${oldStock} -> ${oldStock + stockValue}.`;
                     } else {
                         actionType = 'ACTUALIZACION_DATOS';
-                        logDetails = `Actualización de datos (Precio: ${saneProduct.venta}, Costo: ${saneProduct.costo}). Stock sin cambios.`;
+                        logDetails = `Actualización de datos. Stock sin cambios (${oldStock}).`;
                     }
 
                 } else {
