@@ -127,7 +127,8 @@ const http = require('http');
 const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
-  cors: corsOptions
+  cors: corsOptions,
+  path: '/api/socket.io/' // Match client path for Nginx routing
 });
 
 io.on('connection', (socket) => {
