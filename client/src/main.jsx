@@ -9,38 +9,8 @@ import App from './App.jsx';
 import './index.css';
 
 // Initialize Socket with robust reconnection
-import { io } from 'socket.io-client';
-
-const URL = window.location.host.includes('localhost')
-  ? 'http://localhost:3001'
-  : window.location.origin;
-
-const socket = io(URL, {
-  path: '/socket.io/',
-  transports: ['websocket', 'polling'], // Prefer websocket, fallback to polling
-  reconnection: true,
-  reconnectionAttempts: Infinity, // Keep trying forever
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  timeout: 20000,
-  autoConnect: true
-});
-
-socket.on('connect', () => {
-  console.log("✅ Socket Connected:", socket.id);
-  console.log("🚀 APP VERSION: 2.1.0 - DOMAIN MIGRATED");
-});
-
-socket.on('connect_error', (err) => {
-  console.warn("⚠️ Socket Connection Error (retrying...):", err.message);
-});
-
-socket.on('disconnect', (reason) => {
-  console.warn("❌ Socket Disconnected:", reason);
-  if (reason === 'io server disconnect') {
-    socket.connect(); // Explicitly reconnect if server closed it
-  }
-});
+// Initialize Socket with robust reconnection
+import socket from './service/socket.js';
 
 // Wrapper to pass user AND socket
 const AppProviders = ({ socket }) => {
