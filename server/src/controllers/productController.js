@@ -212,7 +212,9 @@ const updateProduct = async (req, res) => {
     // ✅ CAMBIO 3: El objeto a actualizar ya no incluye 'existencia'.
     const productData = {
       codigo, nombre, costo, venta,
-      minimo, maximo, id_categoria, id_proveedor,
+      minimo, maximo,
+      id_categoria: id_categoria || null,
+      id_proveedor: id_proveedor || null,
       tipo_venta, mayoreo, descripcion, imagen
     };
 
