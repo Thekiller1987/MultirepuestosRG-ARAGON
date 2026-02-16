@@ -189,7 +189,13 @@ export default function ClientesYCreditos() {
         }
     };
 
-    const handleOpenModal = (name, data = null) => setModal({ name, data });
+    const handleOpenModal = (name, data = null) => {
+        if (name === 'abono' && !isCajaOpen) {
+            toast.error('⚠️ La caja está cerrada. Abre una sesión de caja antes de registrar abonos.');
+            return;
+        }
+        setModal({ name, data });
+    };
     const handleCloseModal = () => setModal({ name: null, data: null });
 
     const formatCurrency = (amount) => `C$${Number(amount || 0).toFixed(2)}`;
@@ -224,7 +230,7 @@ export default function ClientesYCreditos() {
                             <td style={{ fontWeight: 'bold', color: c.saldo_pendiente > 0 ? '#dc3545' : '#28a745' }}>{formatCurrency(c.saldo_pendiente)}</td>
                             <td>
                                 <ButtonGroup>
-                                    <Button $abono disabled={!isCajaOpen || c.saldo_pendiente <= 0} onClick={() => handleOpenModal('abono', c)}><FaMoneyBillWave /> Abono</Button>
+                                    <Button $abono disabled={c.saldo_pendiente <= 0} onClick={() => handleOpenModal('abono', c)}><FaMoneyBillWave /> Abono</Button>
                                     <Button onClick={() => handleOpenModal('client', c)}><FaEdit /> Editar</Button>
                                     <Button $delete onClick={() => handleDelete(c)}><FaTrashAlt /> Eliminar</Button>
                                     <Button primary onClick={() => handleOpenModal('historial', c)}><FaHistory /> Créditos</Button>
@@ -262,7 +268,7 @@ export default function ClientesYCreditos() {
                         </div>
 
                         <ActionGrid>
-                            <Button $abono disabled={!isCajaOpen || c.saldo_pendiente <= 0} onClick={() => handleOpenModal('abono', c)} style={{ justifyContent: 'center' }}>
+                            <Button $abono disabled={c.saldo_pendiente <= 0} onClick={() => handleOpenModal('abono', c)} style={{ justifyContent: 'center' }}>
                                 <FaMoneyBillWave /> Abonar
                             </Button>
                             <Button onClick={() => handleOpenModal('client', c)} style={{ justifyContent: 'center', background: '#e2e6ea', color: '#495057' }}>
