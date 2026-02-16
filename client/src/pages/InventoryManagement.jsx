@@ -865,7 +865,7 @@ const InventoryManagement = () => {
       const q = `${norm(nombre)}|${norm(codigo)}|${norm(descripcion)}`;
       const qStarts = [norm(nombre), norm(codigo)];
       const costoNum = Number(p.costo || 0);
-      const ventaNum = Number(p.venta || 0);
+      const ventaNum = Number(p.precio || p.precio_venta || p.venta || 0);
       const existenciaNum = Number(p.existencia || 0);
       return {
         ...p,
