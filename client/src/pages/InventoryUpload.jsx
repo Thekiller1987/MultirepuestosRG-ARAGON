@@ -597,12 +597,10 @@ const InventoryUpload = () => {
                     }}>
                         Máximo 10,000 filas por carga.
                     </p>
-                    <FileInput
-                        id="file-upload"
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileChange}
-                        disabled={isUploading}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    disabled={isUploading} 
                     />
                 </DropZone>
 
@@ -671,3 +669,4 @@ const InventoryUpload = () => {
         </PageWrapper>
     );
 };
+export default InventoryUpload;
