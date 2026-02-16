@@ -115,10 +115,21 @@ const bulkUpdateInventory = async (req, res) => { // 🚨 CAMBIADO A DECLARACIÓ
                 // por lo que usamos el || null o || 0 para manejar los vacíos de forma segura.
                 // Usamos product.<campo> ya que el front-end ya limpió los símbolos de moneda ($,)
                 const finalCosto = parseFloat(product.costo) || 0.00;
-                const finalVenta = parseFloat(product.precio) || 0.00;
+                // finalVenta calculated above in DEBUG block for safety
                 const finalMayoreo = parseFloat(product.mayoreo) || null; // Opcional
                 const finalMinimo = parseInt(product.minimo, 10) || null; // Opcional
                 const finalMaximo = parseInt(product.maximo, 10) || null; // Opcional
+
+                // DEBUG LOGGING START
+                if (products.indexOf(product) < 3) { // Log only first 3 items to avoid spam
+                    console.log(`DEBUG UPLOAD: Code=${rawCodigo}, Incoming Keys=${Object.keys(product).join(',')}`);
+                    console.log(`DEBUG UPLOAD: Incoming Precio=${product.precio}, Venta=${product.venta}, Costo=${product.costo}`);
+                }
+
+                // ROBUST HANDLING FOR PRICE
+                const rawPrice = product.precio !== undefined ? product.precio : (product.venta !== undefined ? product.venta : 0);
+                const finalVenta = parseFloat(rawPrice) || 0.00;
+                // DEBUG LOGGING END
 
                 // Existencia es la cantidad que ENTRA. Debe ser un número (o 0 si está vacío)
                 const entradaExistencia = parseInt(product.existencia, 10) || 0;
