@@ -26,6 +26,7 @@ const socket = io(URL, {
 
 socket.on('connect', () => {
   console.log("✅ Socket Connected:", socket.id);
+  console.log("🚀 APP VERSION: 2.1.0 - DOMAIN MIGRATED");
 });
 
 socket.on('connect_error', (err) => {
@@ -53,6 +54,20 @@ const AppProviders = ({ socket }) => {
     </CajaProvider>
   );
 };
+
+import { registerSW } from 'virtual:pwa-register';
+
+// Refresh prompt logic
+const updateSW = registerSW({
+  onNeedRefresh() {
+    if (confirm("Hay una nueva versión disponible. ¿Recargar ahora?")) {
+      updateSW(true);
+    }
+  },
+  onOfflineReady() {
+    console.log("App lista para trabajar offline");
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

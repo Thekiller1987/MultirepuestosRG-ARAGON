@@ -1,4 +1,4 @@
-import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t as m,v as H}from"./vendor-BMIwBeBI.js";import{u as X,l as Y}from"./index-CLPd0yE4.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-qNamXCRA.js";const K="/icons/logo.png",W="#0b1220",J="#1d2b64",F="#4A90E2",k="#3B7ADF",b="#e6ecff",d="#99a3c4",$="rgba(255, 255, 255, 0.08)",S="rgba(255, 255, 255, 0.18)",Q=m`to { transform: rotate(360deg); }`,V=m`
+import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t as m,v as H}from"./vendor-BHEUBfle.js";import{u as X,l as Y}from"./index-WS_0-QTp.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BzGOTXeo.js";const K="/icons/logo.png",W="#0b1220",J="#1d2b64",F="#4A90E2",k="#3B7ADF",b="#e6ecff",d="#99a3c4",$="rgba(255, 255, 255, 0.08)",S="rgba(255, 255, 255, 0.18)",Q=m`to { transform: rotate(360deg); }`,V=m`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
