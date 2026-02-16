@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
-import { FaUsers, FaCreditCard, FaTrashAlt, FaEdit, FaPlus, FaMoneyBillWave, FaArrowLeft, FaRedo, FaHistory } from 'react-icons/fa';
+import { FaUsers, FaCreditCard, FaTrashAlt, FaEdit, FaPlus, FaMoneyBillWave, FaArrowLeft, FaRedo, FaHistory, FaPhone, FaIdCard } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -109,6 +109,55 @@ const Table = styled.table`
     }
 `;
 
+/* MOBILE STYLES */
+const MobileGrid = styled.div`
+    display: none;
+    @media(max-width: 992px) {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+`;
+
+const ClientCard = styled.div`
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 1.25rem;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border-left: 5px solid ${props => props.$hasDebt ? '#dc3545' : '#28a745'};
+`;
+
+const CardRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+`;
+
+const CardLabel = styled.span`
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 600;
+`;
+
+const CardValue = styled.span`
+    font-size: 1rem;
+    font-weight: 700;
+    color: ${props => props.color || '#343a40'};
+`;
+
+const ActionGrid = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #dee2e6;
+`;
+
 export default function ClientesYCreditos() {
     const { clients, user, token, isLoading, refreshClients, cajaSession, allUsers } = useAuth();
     const [modal, setModal] = useState({ name: null, data: null });
@@ -172,7 +221,6 @@ export default function ClientesYCreditos() {
                                     <Button $abono disabled={!isCajaOpen || c.saldo_pendiente <= 0} onClick={() => handleOpenModal('abono', c)}><FaMoneyBillWave /> Abono</Button>
                                     <Button onClick={() => handleOpenModal('client', c)}><FaEdit /> Editar</Button>
                                     <Button $delete onClick={() => handleDelete(c)}><FaTrashAlt /> Eliminar</Button>
-                                    <Button $delete onClick={() => handleDelete(c)}><FaTrashAlt /> Eliminar</Button>
                                     <Button primary onClick={() => handleOpenModal('historial', c)}><FaHistory /> Créditos</Button>
                                     <Button $refresh style={{ background: '#6f42c1' }} onClick={() => handleOpenModal('tickets', c)}><FaMoneyBillWave /> Ver Tickets</Button>
                                 </ButtonGroup>
@@ -181,6 +229,52 @@ export default function ClientesYCreditos() {
                     ))}
                 </tbody>
             </Table>
+
+            <MobileGrid>
+                {clients.map(c => (
+                    <ClientCard key={c.id_cliente} $hasDebt={c.saldo_pendiente > 0}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                            <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#343a40' }}>{c.nombre}</span>
+                            <span style={{ fontSize: '0.8rem', color: '#adb5bd' }}>#{c.id_cliente}</span>
+                        </div>
+
+                        <CardRow>
+                            <CardLabel><FaPhone size={12} /> Teléfono</CardLabel>
+                            <CardValue style={{ fontWeight: 'normal' }}>{c.telefono || 'N/A'}</CardValue>
+                        </CardRow>
+
+                        <CardRow>
+                            <CardLabel><FaIdCard size={12} /> Límite</CardLabel>
+                            <CardValue style={{ fontWeight: 'normal' }}>{renderLimit(c.limite_credito)}</CardValue>
+                        </CardRow>
+
+                        <div style={{ background: '#f8f9fa', padding: '10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontWeight: 600, color: '#495057' }}>Saldo Pendiente:</span>
+                            <span style={{ fontWeight: 800, fontSize: '1.2rem', color: c.saldo_pendiente > 0 ? '#dc3545' : '#28a745' }}>
+                                {formatCurrency(c.saldo_pendiente)}
+                            </span>
+                        </div>
+
+                        <ActionGrid>
+                            <Button $abono disabled={!isCajaOpen || c.saldo_pendiente <= 0} onClick={() => handleOpenModal('abono', c)} style={{ justifyContent: 'center' }}>
+                                <FaMoneyBillWave /> Abonar
+                            </Button>
+                            <Button onClick={() => handleOpenModal('client', c)} style={{ justifyContent: 'center', background: '#e2e6ea', color: '#495057' }}>
+                                <FaEdit /> Editar
+                            </Button>
+                            <Button primary onClick={() => handleOpenModal('historial', c)} style={{ justifyContent: 'center' }}>
+                                <FaHistory /> Historial
+                            </Button>
+                            <Button $refresh style={{ background: '#6f42c1', justifyContent: 'center' }} onClick={() => handleOpenModal('tickets', c)}>
+                                <FaMoneyBillWave /> Tickets
+                            </Button>
+                            <Button $delete onClick={() => handleDelete(c)} style={{ justifyContent: 'center', gridColumn: 'span 2' }}>
+                                <FaTrashAlt /> Eliminar Cliente
+                            </Button>
+                        </ActionGrid>
+                    </ClientCard>
+                ))}
+            </MobileGrid>
 
             {modal.name === 'client' && <ClientFormModal client={modal.data} onClose={handleCloseModal} onSave={refreshClients} />}
             {modal.name === 'abono' && <AbonoCreditoModal client={modal.data} onClose={handleCloseModal} onAbonoSuccess={refreshClients} showAlert={showAlert} />}
