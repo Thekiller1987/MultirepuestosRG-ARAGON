@@ -223,6 +223,11 @@ const POS = () => {
     const existing = cart.find(i => (i.id_producto || i.id) === pid);
     const newQty = (existing?.quantity || 0) + quantity;
 
+    if (product.existencia <= 0) {
+      showAlert({ title: "Sin Stock", message: `El producto "${product.nombre}" no tiene existencia disponible.` });
+      return;
+    }
+
     if (newQty > product.existencia) {
       showAlert({ title: "Stock Insuficiente", message: `Solo hay ${product.existencia} unidades disponibles.` });
       return;
@@ -319,8 +324,12 @@ const POS = () => {
 
         if (pagoDetalles.shouldPrintNow) {
           setTicketData(savedSale); // Abre Modal Ticket con ID real
+          // Clear cart AFTER setting ticket data to ensure UI consistency behind modal
+          handleRemoveOrder(orderToCloseId);
         } else {
           // Éxito silencioso o pequeño toast (ya mostramos alerta abajo si era instant)
+          // If not printing, clear immediately
+          handleRemoveOrder(orderToCloseId);
         }
 
         // Registrar en Caja (Background)

@@ -382,7 +382,7 @@ const Badge = ({ type, children }) => {
 
 /* ================== MAIN COMPONENT ================== */
 export default function DetailedSalesReport() {
-    const { token, products: allProducts } = useAuth(); // Use products from Context for instant access
+    const { token, products: allProducts, clients } = useAuth(); // Use products and clients from Context for instant access
     const navigate = useNavigate();
     const isMobile = useIsMobile();
 

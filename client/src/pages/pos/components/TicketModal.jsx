@@ -182,6 +182,11 @@ const TicketLogo = styled.img`
   margin: 0 auto; 
   border-radius: 6px;
   &.a4-logo { margin: 0; max-width: 140px; }
+
+  @media print {
+    filter: grayscale(100%) contrast(150%);
+    opacity: 1 !important;
+  }
 `;
 
 const Tag = styled.span`
