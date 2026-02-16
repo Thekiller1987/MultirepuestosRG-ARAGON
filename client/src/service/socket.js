@@ -8,7 +8,7 @@ const URL = window.location.host.includes('localhost')
 // Initialize the socket connection
 // We use 'polling' first for maximum compatibility, then upgrade to 'websocket'
 const socket = io(URL, {
-    path: '/socket.io/',
+    path: '/api/socket.io/', // Routing via /api/ to use existing Nginx proxy
     transports: ['polling', 'websocket'], // Critical for stability
     reconnection: true,
     reconnectionAttempts: Infinity,
