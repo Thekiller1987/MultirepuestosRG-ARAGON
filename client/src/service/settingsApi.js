@@ -1,7 +1,10 @@
 
+// Use relative path to avoid env var issues in production
+const API_URL = '/api';
+
 export const getSettings = async (token) => {
     try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/settings`, {
+        const response = await fetch(`${API_URL}/settings`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -28,7 +31,7 @@ export const getSettings = async (token) => {
 };
 
 export const updateSettings = async (token, settings) => {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/settings`, {
+    const response = await fetch(`${API_URL}/settings`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -46,7 +49,7 @@ export const uploadLogo = async (token, file) => {
         reader.readAsDataURL(file);
         reader.onload = async () => {
             try {
-                const response = await fetch(`${import.meta.env.VITE_API_URL}/settings/logo`, {
+                const response = await fetch(`${API_URL}/settings/logo`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

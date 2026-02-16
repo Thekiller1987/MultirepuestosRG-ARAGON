@@ -27,19 +27,15 @@ const AppProviders = ({ socket }) => {
   );
 };
 
-import { registerSW } from 'virtual:pwa-register';
-
-// Refresh prompt logic
-const updateSW = registerSW({
-  onNeedRefresh() {
-    if (confirm("Hay una nueva versión disponible. ¿Recargar ahora?")) {
-      updateSW(true);
+// FORCE SW UNREGISTER TO FIX CACHE ISSUES
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function (registrations) {
+    for (let registration of registrations) {
+      registration.unregister();
+      console.log("Service Worker Unregistered to force update");
     }
-  },
-  onOfflineReady() {
-    console.log("App lista para trabajar offline");
-  },
-});
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
