@@ -36,13 +36,8 @@ const createProduct = async (req, res) => {
 
     const productData = {
       codigo, nombre, costo, venta, existencia,
-      minimo: minimo || null,
-      maximo: maximo || null,
-      id_categoria: id_categoria || null,
-      id_proveedor: id_proveedor || null,
-      tipo_venta,
-      mayoreo: mayoreo || null,
-      imagen, descripcion
+      minimo, maximo, id_categoria, id_proveedor,
+      tipo_venta, mayoreo, imagen, descripcion
     };
 
     const [result] = await connection.query('INSERT INTO productos SET ?', [productData]);
@@ -77,7 +72,7 @@ const createProduct = async (req, res) => {
 const getAllProducts = async (_req, res) => {
   try {
     const query = `
-      SELECT p.*, p.id_categoria, p.id_proveedor, p.minimo, p.maximo, p.existencia, c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
+      SELECT p.*, c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
       LEFT   JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
@@ -85,49 +80,55 @@ const getAllProducts = async (_req, res) => {
     `;
     const [rows] = await db.query(query);
 
-    // 1. Obtener carritos activos (Fall-back seguro)
-    let reservedMap = new Map();
-    try {
-      const requestingUserId = _req.user?.id_usuario || _req.user?.id;
-      const [carts] = await db.query(
-        "SELECT user_id, carts_json FROM active_carts WHERE updated_at > NOW() - INTERVAL 60 MINUTE AND user_id != ?",
-        [requestingUserId || -1]
-      );
+    // 1. Obtener carritos activos (últimos 60 min) EXCLUYENDO al usuario actual
+    const requestingUserId = _req.user?.id_usuario || _req.user?.id;
+    // FIXED: Column name is carts_json, not cart_data
+    const [carts] = await db.query(
+      "SELECT user_id, carts_json FROM active_carts WHERE updated_at > NOW() - INTERVAL 60 MINUTE AND user_id != ?",
+      [requestingUserId || -1]
+    );
 
-      carts.forEach(c => {
-        try {
-          let items = c.carts_json;
-          if (typeof items === 'string') items = JSON.parse(items);
-          if (!items) items = [];
-          if (Array.isArray(items)) {
-            items.forEach(ticket => {
-              if (ticket.items && Array.isArray(ticket.items)) {
-                ticket.items.forEach(item => {
-                  const pid = item.id_producto || item.id;
-                  const qty = Number(item.quantity || item.cantidad || 0);
-                  reservedMap.set(pid, (reservedMap.get(pid) || 0) + qty);
-                });
-              }
-            });
-          }
-        } catch (e) { /* ignore parse error */ }
-      });
-    } catch (cartError) {
-      console.error('⚠️ Error calculating available stock from carts:', cartError.message);
-      // Proceed without reserved stock calculation to avoid 500
-    }
+    // 2. Calcular stock reservado por producto
+    const reservedMap = new Map();
+    carts.forEach(c => {
+      try {
+        // FIXED: Use carts_json. Native JSON type in MySQL might not need parsing if driver handles it, 
+        // but often it returns string or object. If Object (mysql2), no need to parse.
+        // Let's handle both.
+        let items = c.carts_json;
+        if (typeof items === 'string') {
+          items = JSON.parse(items);
+        }
+        if (!items) items = [];
 
-    // 2. Formatear y restar stock reservado
+        // Structure of active carts is: [ { id, name, items: [...] }, ... ]
+        // So we need to iterate over the tickets (carts), then the items in those tickets.
+        if (Array.isArray(items)) {
+          items.forEach(ticket => {
+            if (ticket.items && Array.isArray(ticket.items)) {
+              ticket.items.forEach(item => {
+                const pid = item.id_producto || item.id;
+                const qty = Number(item.quantity || item.cantidad || 0);
+                reservedMap.set(pid, (reservedMap.get(pid) || 0) + qty);
+              });
+            }
+          });
+        }
+      } catch (e) { /* ignore parse error */ }
+    });
+
+    // 3. Formatear y restar stock reservado
     const products = rows.map(p => {
       const pid = p.id_producto;
       const reserved = reservedMap.get(pid) || 0;
-      const disponible = Math.max(0, p.existencia - reserved);
+      // Restar lo reservado (pero no bajar de 0 visualmente para no confundir, o sí?)
+      // User says "no le salga", so reducing existence is correct.
+      const existenciaReal = Math.max(0, p.existencia - reserved);
 
       return {
         ...p,
-        existencia: p.existencia,
-        disponible: disponible,
-        reserved: reserved,
+        existencia: existenciaReal, // Override existence with Available Stock
+        reserved: reserved,         // Optional: expose reserved count
         imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
       };
     });
@@ -215,16 +216,10 @@ const updateProduct = async (req, res) => {
     }
 
     // ✅ CAMBIO 3: El objeto a actualizar ya no incluye 'existencia'.
-    // ✅ CAMBIO 3: El objeto a actualizar ya no incluye 'existencia'.
     const productData = {
       codigo, nombre, costo, venta,
-      minimo: minimo || null,
-      maximo: maximo || null,
-      id_categoria: id_categoria || null,
-      id_proveedor: id_proveedor || null,
-      tipo_venta,
-      mayoreo: mayoreo || null,
-      descripcion, imagen
+      minimo, maximo, id_categoria, id_proveedor,
+      tipo_venta, mayoreo, descripcion, imagen
     };
 
     // Actualiza el producto en la base de datos
@@ -303,44 +298,18 @@ const deleteProduct = async (req, res) => {
  */
 const archiveProduct = async (req, res) => {
   const { id } = req.params;
-  const id_usuario = req.user?.id_usuario || req.user?.id;
 
-  let connection;
   try {
-    connection = await db.getConnection();
-    await connection.beginTransaction();
+    const [exists] = await db.query('SELECT id_producto, nombre FROM productos WHERE id_producto=?', [id]);
+    if (!exists.length) return res.status(404).json({ msg: 'Producto no encontrado.' });
 
-    const [rows] = await connection.query('SELECT nombre FROM productos WHERE id_producto = ?', [id]);
-    if (!rows.length) {
-      await connection.rollback();
-      return res.status(404).json({ msg: 'Producto no encontrado.' });
-    }
-    const nombreProd = rows[0].nombre;
-
-    // 1. Marcar como inactivo
-    await connection.query('UPDATE productos SET activo = 0 WHERE id_producto = ?', [id]);
-
-    // 2. Registrar movimiento
-    await connection.query(
-      'INSERT INTO movimientos_inventario (id_producto, tipo_movimiento, detalles, id_usuario) VALUES (?, ?, ?, ?)',
-      [id, 'ARCHIVADO', `Producto "${nombreProd}" archivado (oculto).`, id_usuario || null]
-    );
-
-    await connection.commit();
-
-    // SOCKET EMIT
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('inventory_update', { action: 'archive', id });
-    }
-
-    res.json({ msg: 'Producto archivado correctamente.', id });
+    return res.status(400).json({
+      msg: 'Función no disponible: la tabla productos no tiene columna "activo".',
+      hint: 'Si deseas archivar, agrega la columna: ALTER TABLE productos ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1;'
+    });
   } catch (error) {
-    if (connection) await connection.rollback();
     console.error('Error en archiveProduct:', error);
     res.status(500).json({ msg: 'No se pudo procesar el archivado.' });
-  } finally {
-    if (connection) connection.release();
   }
 };
 
