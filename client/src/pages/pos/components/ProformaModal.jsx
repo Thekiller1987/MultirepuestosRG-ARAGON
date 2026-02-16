@@ -166,7 +166,7 @@ const ProformaModal = ({
     address: settings?.empresa_direccion || 'Del portón de la normal 75 varas al este. Juigalpa, Chontales.',
     slogan: settings?.empresa_eslogan || 'Repuestos de confianza al mejor precio',
     logo: settings?.empresa_logo_url
-      ? (settings.empresa_logo_url.startsWith('http') ? settings.empresa_logo_url : `${import.meta.env.VITE_API_URL}${settings.empresa_logo_url}`)
+      ? (settings.empresa_logo_url.startsWith('http') ? settings.empresa_logo_url : settings.empresa_logo_url)
       : new URL('/icons/logo.png', window.location.origin).toString()
   };
 
