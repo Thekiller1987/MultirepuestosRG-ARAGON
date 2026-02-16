@@ -3,8 +3,11 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 // Crear pool de conexiones usando variables del .env
+// Fix for Node.js 18+ preferring IPv6 causing ECONNREFUSED on localhost
+const dbHost = (process.env.DB_HOST === 'localhost') ? '127.0.0.1' : (process.env.DB_HOST || '127.0.0.1');
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
+  host: dbHost,
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'appuser',
   password: process.env.DB_PASSWORD || 'AppSegura_2025!',
