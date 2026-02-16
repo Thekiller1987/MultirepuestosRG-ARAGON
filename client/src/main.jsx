@@ -11,7 +11,9 @@ import './index.css';
 // Initialize Socket with robust reconnection
 import { io } from 'socket.io-client';
 
-const URL = 'https://www.multirepuestosrgaragon.com';
+const URL = window.location.host.includes('localhost')
+  ? 'http://localhost:3001'
+  : window.location.origin;
 
 const socket = io(URL, {
   path: '/socket.io/',

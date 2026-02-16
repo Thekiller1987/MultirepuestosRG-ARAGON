@@ -122,26 +122,23 @@ const Card = styled.form`
 const LogoWrap = styled.div`
   display: grid;
   place-items: center;
-  padding: 14px;
-  border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  padding: 20px;
+  background: transparent;
+  margin-bottom: 10px;
 `;
 
 const Logo = styled.img`
-  width: clamp(120px, 42vw, 180px);
-  height: auto;
+  width: clamp(180px, 60vw, 240px);
+  max-height: 180px;
+  object-fit: contain;
   display: block;
   user-select: none;
   pointer-events: none;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
   
-  // 💡 INICIO CÓDIGO AÑADIDO/MODIFICADO: Logo ligeramente más pequeño en móvil
   @media (max-width: 480px) {
-    width: 100px; /* Tamaño fijo en móvil muy pequeño */
+    width: 160px;
   }
-  // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
 `;
 
 const Title = styled.h2`
@@ -313,16 +310,16 @@ const Login = () => {
     const isIOS = /iphone|ipad|ipod/.test(ua);
     const isAndroid = /android/.test(ua);
     // isStandalone será TRUE si la app se abrió desde el icono de la PWA
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone; // Soporte para iOS viejo
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone; // Soporte para iOS viejo
 
     // Solo mostramos el prompt si es Android/iOS Y NO está en modo standalone (es decir, está en el navegador)
     if ((isIOS || isAndroid) && !isStandalone) {
       setPwaPlatform(isIOS ? 'ios' : 'android');
       setShowPwaPrompt(true);
     } else {
-        // Ocultar si ya está instalada o no es un móvil compatible con el prompt nativo
-        setShowPwaPrompt(false);
+      // Ocultar si ya está instalada o no es un móvil compatible con el prompt nativo
+      setShowPwaPrompt(false);
     }
     // 💡 FIN CÓDIGO MODIFICADO
   }, []);

@@ -3,7 +3,7 @@ import axios from 'axios';
 // ===================================================================
 // === MODIFICACIÓN OBLIGATORIA: CONEXIÓN DIRECTA A DIGITALOCEAN ===
 // RAW_BASE DEBE TERMINAR SIN SLASH PARA UNIÓN LIMPIA
-const RAW_BASE = 'https://www.multirepuestosrgaragon.com/api';
+const RAW_BASE = '/api';
 // ===================================================================
 
 const API_URL = RAW_BASE; // Simplificado

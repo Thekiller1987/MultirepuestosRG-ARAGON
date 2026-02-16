@@ -1,4 +1,4 @@
-import{r as s,V as L,j as e,W as lo,L as co,X as De,I as po,O as xo,Y as Re,Z as uo,$ as mo,a0 as go,a1 as ho,a2 as Oe,a3 as fo,a4 as bo,a5 as jo,a6 as Be,A as B,s as m,t as vo,m as te,b as D,n as Te,v as yo,U as Co}from"./vendor-BHEUBfle.js";import{u as wo}from"./index-WS_0-QTp.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BzGOTXeo.js";const je=m.div`
+import{r as s,V as L,j as e,W as lo,L as co,X as De,I as po,O as xo,Y as Re,Z as uo,$ as mo,a0 as go,a1 as ho,a2 as Oe,a3 as fo,a4 as bo,a5 as jo,a6 as Be,A as B,s as m,t as vo,m as te,b as D,n as Te,v as yo,U as Co}from"./vendor-BHEUBfle.js";import{u as wo}from"./index-CRFpa_vU.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BzGOTXeo.js";const je=m.div`
   padding: 20px;
   background-color: #f8fafc; /* Color de fondo más limpio (Slate-50) */
   min-height: 100vh;

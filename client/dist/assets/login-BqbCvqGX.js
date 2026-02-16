@@ -1,4 +1,4 @@
-import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t as m,v as H}from"./vendor-BHEUBfle.js";import{u as X,l as Y}from"./index-WS_0-QTp.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BzGOTXeo.js";const K="/icons/logo.png",W="#0b1220",J="#1d2b64",F="#4A90E2",k="#3B7ADF",b="#e6ecff",d="#99a3c4",$="rgba(255, 255, 255, 0.08)",S="rgba(255, 255, 255, 0.18)",Q=m`to { transform: rotate(360deg); }`,V=m`
+import{r as o,j as e,h as T,i as z,k as B,n as L,o as q,p as R,q as U,s as t,t as m,v as H}from"./vendor-BHEUBfle.js";import{u as X,l as Y}from"./index-CRFpa_vU.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BzGOTXeo.js";const K="/icons/logo.png",W="#0b1220",J="#1d2b64",k="#4A90E2",F="#3B7ADF",b="#e6ecff",d="#99a3c4",$="rgba(255, 255, 255, 0.08)",S="rgba(255, 255, 255, 0.18)",Q=m`to { transform: rotate(360deg); }`,V=m`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
@@ -25,7 +25,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
     }
     // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
   }
-`,ee=o.main`
+`,ee=t.main`
   min-height: 100dvh;
   display: grid;
   place-items: center;
@@ -42,7 +42,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
     padding-bottom: 5vh;
   }
   // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
-`,ae=o.div`
+`,ae=t.div`
   position: absolute;
   inset: -20%;
   background: linear-gradient(-45deg, #4674ff, #3f7efb, #21c8f6, #7f53ac);
@@ -52,7 +52,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
   animation: ${V} 22s ease infinite;
   animation-play-state: ${r=>r.$paused?"paused":"running"};
   pointer-events: none;
-`,oe=o.form`
+`,te=t.form`
   width: min(440px, 94vw);
   background: ${$};
   border: 1px solid ${S};
@@ -76,38 +76,35 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
       margin-bottom: auto;
   }
   // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
-`,te=o.div`
+`,ne=t.div`
   display: grid;
   place-items: center;
-  padding: 14px;
-  border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.18);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
-`,ne=o.img`
-  width: clamp(120px, 42vw, 180px);
-  height: auto;
+  padding: 20px;
+  background: transparent;
+  margin-bottom: 10px;
+`,oe=t.img`
+  width: clamp(180px, 60vw, 240px);
+  max-height: 180px;
+  object-fit: contain;
   display: block;
   user-select: none;
   pointer-events: none;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
   
-  // 💡 INICIO CÓDIGO AÑADIDO/MODIFICADO: Logo ligeramente más pequeño en móvil
   @media (max-width: 480px) {
-    width: 100px; /* Tamaño fijo en móvil muy pequeño */
+    width: 160px;
   }
-  // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
-`,re=o.h2`
+`,re=t.h2`
   margin: 2px 0 0;
   font-size: clamp(1.5rem, 4.8vw, 1.9rem);
   text-align: center;
   font-weight: 800;
-`,ie=o.p`
+`,ie=t.p`
   margin: -2px 0 6px;
   color: ${d};
   text-align: center;
   font-size: clamp(.9rem, 3.4vw, .95rem);
-`,C=o.label`
+`,C=t.label`
   display: grid;
   grid-template-columns: 42px 1fr;
   align-items: center;
@@ -129,12 +126,12 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
     border-radius: 18px;
   }
   // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
-`,v=o.span`
+`,v=t.span`
   display: grid;
   place-items: center;
   font-size: 18px;
   color: ${d};
-`,j=o.input`
+`,j=t.input`
   border: none;
   outline: none;
   background: transparent;
@@ -149,7 +146,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
     padding: 6px 2px;
   }
   // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
-`,y=o.p`
+`,y=t.p`
   margin: 0;
   padding: 10px 12px;
   border-radius: 12px;
@@ -158,7 +155,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
   color: #ffe6eb;
   background: rgba(255,70,104,0.12);
   border: 1px solid rgba(255,70,104,0.35);
-`,se=o.button`
+`,se=t.button`
   display: grid;
   grid-auto-flow: column;
   justify-content: center;
@@ -172,7 +169,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
   font-weight: 700;
   font-size: 16px;
   cursor: pointer;
-  background: linear-gradient(180deg, ${F} 0%, ${k} 100%);
+  background: linear-gradient(180deg, ${k} 0%, ${F} 100%);
   box-shadow: 0 14px 24px rgba(74,144,226,0.35);
   transition: all .25s ease;
   &:hover { filter: brightness(1.05); }
@@ -185,7 +182,7 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
     border-radius: 18px;
   }
   // 💡 FIN CÓDIGO AÑADIDO/MODIFICADO
-`,de=o(H)`animation: ${Q} 1s linear infinite;`,le=o.div`
+`,de=t(H)`animation: ${Q} 1s linear infinite;`,pe=t.div`
   position: fixed;
   left: 12px; right: 12px;
   bottom: 16px;
@@ -198,16 +195,16 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
   box-shadow: 0 18px 40px rgba(0,0,0,0.45);
   animation: ${G} .35s ease both;
   @media (min-width: 768px) { display: none; }
-`,pe=o.div`
+`,le=t.div`
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   font-weight: 800; color: ${b};
   margin-bottom: 6px;
   svg { cursor: pointer; color: ${d}; }
-`,ce=o.p`
+`,ce=t.p`
   margin: 0 0 10px;
   color: ${d};
   font-size: .95rem;
-`,ge=o.button`
+`,ge=t.button`
   width: 100%;
   display: grid;
   grid-auto-flow: column;
@@ -219,6 +216,6 @@ import{r as n,j as e,h as _,i as z,k as B,n as L,o as q,p as R,q as U,s as o,t a
   border-radius: 12px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(180deg, ${F} 0%, ${k} 100%);
+  background: linear-gradient(180deg, ${k} 0%, ${F} 100%);
   box-shadow: 0 12px 22px rgba(74,144,226,.35);
-`,Ie=()=>{const{login:r}=X(),[I,N]=n.useState(""),[h,P]=n.useState(""),[i,f]=n.useState(!1),[D,O]=n.useState(null),[M,l]=n.useState(!1),[x,E]=n.useState(null),[w,p]=n.useState(!1);n.useEffect(()=>{const t=window.navigator.userAgent.toLowerCase(),s=/iphone|ipad|ipod/.test(t),c=/android/.test(t),g=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone;(s||c)&&!g?(E(s?"ios":"android"),l(!0)):l(!1)},[]);const T=async t=>{var s,c,g;t.preventDefault(),O(null),f(!0);try{const a=await Y({nombre_usuario:I,password:h}),u=(a==null?void 0:a.token)??(a==null?void 0:a.accessToken)??((s=a==null?void 0:a.data)==null?void 0:s.token)??null,A=(a==null?void 0:a.user)??(a==null?void 0:a.usuario)??((c=a==null?void 0:a.data)==null?void 0:c.user)??null;if(!u||!A)throw new y("Respuesta de login inválida");await r(A,u)}catch(a){const u=(g=a==null?void 0:a.message)!=null&&g.includes("401")?"Credenciales inválidas.":(a==null?void 0:a.message)||"Error al conectar con el servidor.";O(u)}finally{f(!1)}};return e.jsxs(e.Fragment,{children:[e.jsx(Z,{}),e.jsxs(ee,{children:[e.jsx(ae,{$paused:w}),e.jsxs(oe,{onSubmit:T,$typing:w,children:[e.jsx(te,{children:e.jsx(ne,{src:K,alt:"Logo Multirepuestos RG"})}),e.jsx(re,{children:"Acceso al Sistema"}),e.jsx(ie,{children:"Introduce tus credenciales de usuario para ingresar."}),D&&e.jsx(y,{children:D}),e.jsxs(C,{children:[e.jsx(v,{children:e.jsx(_,{})}),e.jsx(j,{type:"text",placeholder:"Nombre de usuario",value:I,onChange:t=>N(t.target.value),onFocus:()=>p(!0),onBlur:()=>p(!1),required:!0,disabled:i,autoComplete:"username",spellCheck:!1})]}),e.jsxs(C,{children:[e.jsx(v,{children:e.jsx(z,{})}),e.jsx(j,{type:"password",placeholder:"Contraseña",value:h,onChange:t=>P(t.target.value),onFocus:()=>p(!0),onBlur:()=>p(!1),required:!0,disabled:i,autoComplete:"current-password"})]}),e.jsxs(se,{type:"submit",disabled:i,children:[i?e.jsx(de,{}):e.jsx(B,{}),i?"Cargando…":"Ingresar"]})]}),M&&e.jsxs(le,{children:[e.jsxs(pe,{children:[e.jsx("span",{children:"¡Descarga MultirepuestosRG! 📲"}),e.jsx(L,{onClick:()=>l(!1)})]}),e.jsx(ce,{children:x==="ios"?"Para instalar la app, toca el botón de Compartir (⬆️) y luego “Añadir a pantalla de inicio”.":"Toca el menú (⋮) de tu navegador y luego “Instalar aplicación”."}),e.jsxs(ge,{onClick:()=>l(!1),children:[x==="ios"?e.jsx(q,{}):e.jsx(R,{}),x==="ios"?"Entendido":"Instalar ahora"]})]})]})]})};export{Ie as default};
+`,he=()=>{const{login:r}=X(),[h,P]=o.useState(""),[f,N]=o.useState(""),[i,I]=o.useState(!1),[w,D]=o.useState(null),[E,p]=o.useState(!1),[u,M]=o.useState(null),[O,l]=o.useState(!1);o.useEffect(()=>{const n=window.navigator.userAgent.toLowerCase(),s=/iphone|ipad|ipod/.test(n),c=/android/.test(n),g=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone;(s||c)&&!g?(M(s?"ios":"android"),p(!0)):p(!1)},[]);const _=async n=>{var s,c,g;n.preventDefault(),D(null),I(!0);try{const a=await Y({nombre_usuario:h,password:f}),x=(a==null?void 0:a.token)??(a==null?void 0:a.accessToken)??((s=a==null?void 0:a.data)==null?void 0:s.token)??null,A=(a==null?void 0:a.user)??(a==null?void 0:a.usuario)??((c=a==null?void 0:a.data)==null?void 0:c.user)??null;if(!x||!A)throw new y("Respuesta de login inválida");await r(A,x)}catch(a){const x=(g=a==null?void 0:a.message)!=null&&g.includes("401")?"Credenciales inválidas.":(a==null?void 0:a.message)||"Error al conectar con el servidor.";D(x)}finally{I(!1)}};return e.jsxs(e.Fragment,{children:[e.jsx(Z,{}),e.jsxs(ee,{children:[e.jsx(ae,{$paused:O}),e.jsxs(te,{onSubmit:_,$typing:O,children:[e.jsx(ne,{children:e.jsx(oe,{src:K,alt:"Logo Multirepuestos RG"})}),e.jsx(re,{children:"Acceso al Sistema"}),e.jsx(ie,{children:"Introduce tus credenciales de usuario para ingresar."}),w&&e.jsx(y,{children:w}),e.jsxs(C,{children:[e.jsx(v,{children:e.jsx(T,{})}),e.jsx(j,{type:"text",placeholder:"Nombre de usuario",value:h,onChange:n=>P(n.target.value),onFocus:()=>l(!0),onBlur:()=>l(!1),required:!0,disabled:i,autoComplete:"username",spellCheck:!1})]}),e.jsxs(C,{children:[e.jsx(v,{children:e.jsx(z,{})}),e.jsx(j,{type:"password",placeholder:"Contraseña",value:f,onChange:n=>N(n.target.value),onFocus:()=>l(!0),onBlur:()=>l(!1),required:!0,disabled:i,autoComplete:"current-password"})]}),e.jsxs(se,{type:"submit",disabled:i,children:[i?e.jsx(de,{}):e.jsx(B,{}),i?"Cargando…":"Ingresar"]})]}),E&&e.jsxs(pe,{children:[e.jsxs(le,{children:[e.jsx("span",{children:"¡Descarga MultirepuestosRG! 📲"}),e.jsx(L,{onClick:()=>p(!1)})]}),e.jsx(ce,{children:u==="ios"?"Para instalar la app, toca el botón de Compartir (⬆️) y luego “Añadir a pantalla de inicio”.":"Toca el menú (⋮) de tu navegador y luego “Instalar aplicación”."}),e.jsxs(ge,{onClick:()=>p(!1),children:[u==="ios"?e.jsx(q,{}):e.jsx(R,{}),u==="ios"?"Entendido":"Instalar ahora"]})]})]})]})};export{he as default};
