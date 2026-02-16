@@ -36,8 +36,13 @@ const createProduct = async (req, res) => {
 
     const productData = {
       codigo, nombre, costo, venta, existencia,
-      minimo, maximo, id_categoria, id_proveedor,
-      tipo_venta, mayoreo, imagen, descripcion
+      minimo: minimo || null,
+      maximo: maximo || null,
+      id_categoria: id_categoria || null,
+      id_proveedor: id_proveedor || null,
+      tipo_venta,
+      mayoreo: mayoreo || null,
+      imagen, descripcion
     };
 
     const [result] = await connection.query('INSERT INTO productos SET ?', [productData]);
@@ -210,12 +215,16 @@ const updateProduct = async (req, res) => {
     }
 
     // ✅ CAMBIO 3: El objeto a actualizar ya no incluye 'existencia'.
+    // ✅ CAMBIO 3: El objeto a actualizar ya no incluye 'existencia'.
     const productData = {
       codigo, nombre, costo, venta,
-      minimo, maximo,
+      minimo: minimo || null,
+      maximo: maximo || null,
       id_categoria: id_categoria || null,
       id_proveedor: id_proveedor || null,
-      tipo_venta, mayoreo, descripcion, imagen
+      tipo_venta,
+      mayoreo: mayoreo || null,
+      descripcion, imagen
     };
 
     // Actualiza el producto en la base de datos
