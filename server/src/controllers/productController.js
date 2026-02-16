@@ -81,55 +81,48 @@ const getAllProducts = async (_req, res) => {
     `;
     const [rows] = await db.query(query);
 
-    // 1. Obtener carritos activos (últimos 60 min) EXCLUYENDO al usuario actual
-    const requestingUserId = _req.user?.id_usuario || _req.user?.id;
-    // FIXED: Column name is carts_json, not cart_data
-    const [carts] = await db.query(
-      "SELECT user_id, carts_json FROM active_carts WHERE updated_at > NOW() - INTERVAL 60 MINUTE AND user_id != ?",
-      [requestingUserId || -1]
-    );
+    // 1. Obtener carritos activos (Fall-back seguro)
+    let reservedMap = new Map();
+    try {
+      const requestingUserId = _req.user?.id_usuario || _req.user?.id;
+      const [carts] = await db.query(
+        "SELECT user_id, carts_json FROM active_carts WHERE updated_at > NOW() - INTERVAL 60 MINUTE AND user_id != ?",
+        [requestingUserId || -1]
+      );
 
-    // 2. Calcular stock reservado por producto
-    const reservedMap = new Map();
-    carts.forEach(c => {
-      try {
-        // FIXED: Use carts_json. Native JSON type in MySQL might not need parsing if driver handles it, 
-        // but often it returns string or object. If Object (mysql2), no need to parse.
-        // Let's handle both.
-        let items = c.carts_json;
-        if (typeof items === 'string') {
-          items = JSON.parse(items);
-        }
-        if (!items) items = [];
+      carts.forEach(c => {
+        try {
+          let items = c.carts_json;
+          if (typeof items === 'string') items = JSON.parse(items);
+          if (!items) items = [];
+          if (Array.isArray(items)) {
+            items.forEach(ticket => {
+              if (ticket.items && Array.isArray(ticket.items)) {
+                ticket.items.forEach(item => {
+                  const pid = item.id_producto || item.id;
+                  const qty = Number(item.quantity || item.cantidad || 0);
+                  reservedMap.set(pid, (reservedMap.get(pid) || 0) + qty);
+                });
+              }
+            });
+          }
+        } catch (e) { /* ignore parse error */ }
+      });
+    } catch (cartError) {
+      console.error('⚠️ Error calculating available stock from carts:', cartError.message);
+      // Proceed without reserved stock calculation to avoid 500
+    }
 
-        // Structure of active carts is: [ { id, name, items: [...] }, ... ]
-        // So we need to iterate over the tickets (carts), then the items in those tickets.
-        if (Array.isArray(items)) {
-          items.forEach(ticket => {
-            if (ticket.items && Array.isArray(ticket.items)) {
-              ticket.items.forEach(item => {
-                const pid = item.id_producto || item.id;
-                const qty = Number(item.quantity || item.cantidad || 0);
-                reservedMap.set(pid, (reservedMap.get(pid) || 0) + qty);
-              });
-            }
-          });
-        }
-      } catch (e) { /* ignore parse error */ }
-    });
-
-    // 3. Formatear y restar stock reservado
+    // 2. Formatear y restar stock reservado
     const products = rows.map(p => {
       const pid = p.id_producto;
       const reserved = reservedMap.get(pid) || 0;
-      // "existencia" is Physical Stock (DB)
-      // "disponible" is Available Stock (DB - Active Carts)
       const disponible = Math.max(0, p.existencia - reserved);
 
       return {
         ...p,
-        existencia: p.existencia, // Ahora devolvemos el stock FÍSICO REAL
-        disponible: disponible,   // Y el stock disponible por separado
+        existencia: p.existencia,
+        disponible: disponible,
         reserved: reserved,
         imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
       };
