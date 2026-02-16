@@ -446,7 +446,13 @@ const TicketModal = ({
     w.document.write(`<html><head><title>Impresión ${mode.toUpperCase()} - ${companyInfo.name}</title><style>${printStyles}</style></head><body>${htmlToPrint}</body></html>`);
     w.document.close();
     w.focus();
-    w.onload = () => { setTimeout(() => { w.print(); }, 250); };
+    w.onload = () => {
+      setTimeout(() => {
+        w.print();
+        // Close after print dialog is dismissed
+        w.onafterprint = () => { setTimeout(() => w.close(), 300); };
+      }, 350);
+    };
   }, [companyInfo]);
 
   return (

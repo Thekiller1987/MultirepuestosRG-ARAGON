@@ -163,6 +163,12 @@ export default function ClientesYCreditos() {
     const [modal, setModal] = useState({ name: null, data: null });
     const [ticketToPrint, setTicketToPrint] = useState(null);
 
+    // Bridge: AbonoCreditoModal expects showAlert({ title, message, type })
+    const showAlert = ({ title, message, type }) => {
+        if (type === 'error') toast.error(message);
+        else toast.success(message);
+    };
+
     const isCajaOpen = useMemo(() => {
         return cajaSession && !cajaSession.closedAt;
     }, [cajaSession]);
