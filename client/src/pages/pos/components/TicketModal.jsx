@@ -17,6 +17,38 @@ const lockPrintOnce = (key, fn) => {
   }
 };
 
+/* ========= COMANDO ESC/POS PARA ABRIR CAJÓN ========= */
+// ESC p 0 25 250 — Abre el cajón conectado al pin 2 de la impresora térmica
+const DRAWER_KICK_BYTES = [0x1B, 0x70, 0x00, 0x19, 0xFA];
+
+function openCashDrawer() {
+  try {
+    // Crear un iframe oculto que envía el comando ESC/POS al imprimir
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    // Convertir bytes ESC/POS a caracteres para enviar via impresión
+    const rawCmd = DRAWER_KICK_BYTES.map(b => String.fromCharCode(b)).join('');
+    doc.open();
+    doc.write(`<html><head><style>@page{size:80mm 1mm;margin:0;}body{margin:0;padding:0;font-size:0;line-height:0;}</style></head><body><pre style="font-size:0;line-height:0;margin:0;padding:0;">${rawCmd}</pre></body></html>`);
+    doc.close();
+
+    iframe.contentWindow.focus();
+    iframe.contentWindow.print();
+
+    // Limpiar después de enviar
+    setTimeout(() => {
+      try { document.body.removeChild(iframe); } catch (e) { /* ignorar */ }
+    }, 2000);
+
+    console.log('🔓 Comando de apertura de cajón enviado');
+  } catch (err) {
+    console.warn('⚠️ No se pudo abrir el cajón:', err.message);
+  }
+}
+
 /* ========= ESTILO GLOBAL (NO usa @import) ========= */
 const GlobalPrintStyle = createGlobalStyle`
   @media print {
@@ -449,7 +481,11 @@ const TicketModal = ({
     w.onload = () => {
       setTimeout(() => {
         w.print();
-        // Close after print dialog is dismissed
+        // Abrir cajón de dinero al imprimir en 80mm (ventas/tickets)
+        if (mode !== 'A4') {
+          setTimeout(() => openCashDrawer(), 500);
+        }
+        // Cerrar ventana después de imprimir
         w.onafterprint = () => { setTimeout(() => w.close(), 300); };
       }, 350);
     };

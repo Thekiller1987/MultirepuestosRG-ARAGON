@@ -1,4 +1,4 @@
-import{r as o,j as e,h as T,i as z,k as B,n as L,o as q,p as R,q as U,s as t,t as m,v as H}from"./vendor-BHEUBfle.js";import{u as X,l as Y}from"./index-CwDrMf7i.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BzGOTXeo.js";const K="/icons/logo.png",W="#0b1220",J="#1d2b64",k="#4A90E2",F="#3B7ADF",b="#e6ecff",d="#99a3c4",$="rgba(255, 255, 255, 0.08)",S="rgba(255, 255, 255, 0.18)",Q=m`to { transform: rotate(360deg); }`,V=m`
+import{r as o,j as e,h as T,i as z,k as B,n as L,o as q,p as R,q as U,s as t,t as m,v as H}from"./vendor-BJZlzDLx.js";import{u as X,l as Y}from"./index-eefq-jxX.js";import"./scanner-vendor-DfxRpMWJ.js";import"./pdf-vendor-BoQlG7Vl.js";const K="/icons/logo.png",W="#0b1220",J="#1d2b64",k="#4A90E2",F="#3B7ADF",b="#e6ecff",d="#99a3c4",$="rgba(255, 255, 255, 0.08)",S="rgba(255, 255, 255, 0.18)",Q=m`to { transform: rotate(360deg); }`,V=m`
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }

@@ -75,7 +75,7 @@ export const CajaProvider = ({ children, user, socket }) => { // Accept socket a
             };
         }
 
-        const interval = setInterval(refreshSession, 60000);
+        const interval = setInterval(refreshSession, 15000); // 15s fallback (más rápido)
 
         return () => {
             clearInterval(interval);

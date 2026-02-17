@@ -145,7 +145,7 @@ const POS = () => {
         if (!document.hidden) {
           checkForNewOrders(userId);
         }
-      }, 15000);
+      }, 5000); // 5 segundos para actualizaciones rápidas
 
       return () => clearInterval(intervalId);
     }
