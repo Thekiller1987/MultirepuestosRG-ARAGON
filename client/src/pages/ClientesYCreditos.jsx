@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaUsers, FaCreditCard, FaTrashAlt, FaEdit, FaPlus, FaMoneyBillWave, FaArrowLeft, FaRedo, FaHistory, FaPhone, FaIdCard } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useCaja } from '../context/CajaContext';
 import * as api from '../service/api';
 import ClientFormModal from './pos/components/ClientFormModal';
 import AbonoCreditoModal from './pos/components/AbonoCreditoModal';
@@ -159,7 +160,8 @@ const ActionGrid = styled.div`
 `;
 
 export default function ClientesYCreditos() {
-    const { clients, user, token, isLoading, refreshClients, cajaSession, allUsers } = useAuth();
+    const { clients, user, token, isLoading, refreshClients, allUsers } = useAuth();
+    const { isCajaOpen } = useCaja();
     const [modal, setModal] = useState({ name: null, data: null });
     const [ticketToPrint, setTicketToPrint] = useState(null);
 
@@ -168,10 +170,6 @@ export default function ClientesYCreditos() {
         if (type === 'error') toast.error(message);
         else toast.success(message);
     };
-
-    const isCajaOpen = useMemo(() => {
-        return cajaSession && !cajaSession.closedAt;
-    }, [cajaSession]);
 
     const handleDelete = async (cliente) => {
         if (cliente.saldo_pendiente > 0) {
@@ -191,8 +189,7 @@ export default function ClientesYCreditos() {
 
     const handleOpenModal = (name, data = null) => {
         if (name === 'abono' && !isCajaOpen) {
-            toast.error('⚠️ La caja está cerrada. Abre una sesión de caja antes de registrar abonos.');
-            return;
+            toast('⚠️ No se detecta sesión de caja abierta. El abono se registrará pero podría no reflejarse en el cierre de caja.', { icon: '⚠️', duration: 5000 });
         }
         setModal({ name, data });
     };
