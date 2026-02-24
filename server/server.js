@@ -29,9 +29,13 @@ const app = express();
 
 // Helper para CORS dinámico (permite LAN IPs)
 const allowedOrigins = [
+  'https://multirepuestosrg.netlify.app',
   'https://www.multirepuestosrgaragon.com',
   'https://multirepuestosrgaragon.com',
+  'https://multirepuestosrg.com',
   'http://localhost:5173',
+  'http://64.23.228.145',
+  'https://64.23.228.145',
   'http://206.189.73.145',
   'https://206.189.73.145'
 ];
