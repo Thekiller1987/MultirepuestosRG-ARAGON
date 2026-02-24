@@ -1,7 +1,7 @@
 # SPA: evita 404 al refrescar
 [[redirects]]
   from = "/api/*"
-  to = "http://64.23.228.145/api/:splat"
+  to = "http://206.189.73.145/api/:splat"
   status = 200
   force = true
 
