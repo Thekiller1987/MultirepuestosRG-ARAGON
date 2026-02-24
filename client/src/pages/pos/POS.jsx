@@ -1046,7 +1046,8 @@ const POS = () => {
                   quantity: qty,
                   userId
                 };
-                await api.returnItem(payload, token);
+                const response = await api.returnItem(payload, token);
+                const wasCredit = response?.data?.wasCredit || response?.wasCredit || false;
 
                 // 2. Calculate refund amount for Cash Register
                 const unitPrice = item.precio || item.precio_venta || 0;
@@ -1060,8 +1061,12 @@ const POS = () => {
                     at: new Date().toISOString(),
                     userId,
                     userName: currentUser?.nombre_usuario || 'Caja',
-                    note: `Devolución: ${qty}x ${item.nombre}`,
-                    pagoDetalles: { efectivo: refundAmount, ingresoCaja: -refundAmount }, // Explicit cash details
+                    note: `Devolución: ${qty}x ${item.nombre}${wasCredit ? ' (Crédito)' : ''}`,
+                    pagoDetalles: {
+                      efectivo: wasCredit ? 0 : refundAmount,
+                      ingresoCaja: wasCredit ? 0 : -refundAmount,
+                      credito: wasCredit ? -refundAmount : 0
+                    },
                     id: 'REFUND-' + Date.now()
                   };
 
@@ -1076,9 +1081,13 @@ const POS = () => {
                   };
                   setCajaSession(updatedSession);
 
-                  showAlert({ title: "Devolución Exitosa", message: `Devolución registrada en sistema y C$${refundAmount.toFixed(2)} descontados de caja.` });
+                  if (wasCredit) {
+                    showAlert({ title: "Devolución Exitosa", message: `Devolución registrada. Al ser de CRÉDITO, no se descontó dinero de la caja y se redujo la deuda del cliente en C$${refundAmount.toFixed(2)}.` });
+                  } else {
+                    showAlert({ title: "Devolución Exitosa", message: `Devolución registrada en sistema y C$${refundAmount.toFixed(2)} descontados de caja.` });
+                  }
                 } else {
-                  showAlert({ title: "Devolución Exitosa (Caja Cerrada)", message: "Devolución registrada, pero NO se descontó de caja porque está cerrada." });
+                  showAlert({ title: "Devolución Exitosa (Caja Cerrada)", message: "Devolución registrada en el sistema." });
                 }
 
               } catch (error) {

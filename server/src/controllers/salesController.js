@@ -237,8 +237,8 @@ const createReturn = async (req, res) => {
       nota: `Devolución s/Ticket #${originalSaleId}${esCreditoDevolucion ? ' (crédito)' : ''}`
     };
     await connection.query(
-      "INSERT INTO ventas (fecha, total_venta, estado, id_usuario, id_cliente, pago_detalles, tipo_venta) VALUES (NOW(), ?, 'DEVOLUCION', ?, ?, ?, 'DEVOLUCION')",
-      [-refundAmount, userId, originalSale.id_cliente || null, JSON.stringify(logPagoDetalles)]
+      "INSERT INTO ventas (fecha, total_venta, estado, id_usuario, id_cliente, pago_detalles, tipo_venta) VALUES (NOW(), ?, 'DEVOLUCION', ?, ?, ?, ?)",
+      [-refundAmount, userId, originalSale.id_cliente || null, JSON.stringify(logPagoDetalles), originalSale.tipo_venta]
     );
 
     await connection.commit();
