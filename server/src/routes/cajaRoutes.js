@@ -164,8 +164,8 @@ function calcularTotalesSesion(transactions, details) {
       totalGastos += m;
       movimientoNetoEfectivo -= m;
     }
-    // DEVOLUCIONES / CANCELACIONES
-    else if (tipo === 'devolucion' || tipo === 'cancelacion') {
+    // DEVOLUCIONES / CANCELACIONES / ANULACIONES
+    else if (tipo.includes('devolucion') || tipo.includes('cancelacion') || tipo.includes('anulacion')) {
       totalEfectivo -= Number(d.efectivo || 0);
       totalTarjeta -= Number(d.tarjeta || 0);
       totalTransferencia -= Number(d.transferencia || 0);

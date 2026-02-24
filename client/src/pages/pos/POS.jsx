@@ -1016,12 +1016,16 @@ const POS = () => {
                       id: 'CANCEL-' + Date.now()
                     };
 
+                    // Persist to server
+                    api.addCajaTx({ userId, tx: cancelTx }, token).catch(e => {
+                      console.error("Error al persistir cancelación en caja:", e);
+                    });
+
                     const updatedSession = {
                       ...cajaSession,
                       transactions: [cancelTx, ...(cajaSession.transactions || [])]
                     };
                     setCajaSession(updatedSession);
-                    console.log("Caja actualizada por cancelación:", cancelTx);
                   }
                 }
                 // -----------------------------------------------------
@@ -1060,6 +1064,12 @@ const POS = () => {
                     pagoDetalles: { efectivo: refundAmount, ingresoCaja: -refundAmount }, // Explicit cash details
                     id: 'REFUND-' + Date.now()
                   };
+
+                  // Persist to server
+                  api.addCajaTx({ userId, tx: refundTransaction }, token).catch(e => {
+                    console.error("Error al persistir devolución en caja:", e);
+                  });
+
                   const updatedSession = {
                     ...cajaSession,
                     transactions: [refundTransaction, ...(cajaSession.transactions || [])]

@@ -170,8 +170,8 @@ function calculateReportStats(session) {
     // 2. REVENUE IMPACT (Total Accounted)
     let totalAmount = Number(pd.totalVenta !== undefined ? pd.totalVenta : (tx.amount || 0));
 
-    // Corrección de signo para salidas/devoluciones
-    if (t === 'salida' || t.includes('devolucion')) {
+    // Corrección de signo para salidas/devoluciones/cancelaciones
+    if (t === 'salida' || t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
       rawAmount = -Math.abs(rawAmount);
       totalAmount = -Math.abs(totalAmount);
     }
@@ -247,8 +247,8 @@ function calculateReportStats(session) {
     }
 
     // Listas
-    const esDevolucion = t === 'devolucion' || t.includes('devolucion');
-    const esCancelacion = t === 'cancelacion' || t === 'anulacion';
+    const esDevolucion = t.includes('devolucion');
+    const esCancelacion = t.includes('cancelacion') || t.includes('anulacion');
 
     if (t === 'venta_contado' || t === 'venta_mixta' || t === 'venta_credito') {
       cls.ventasContado.push(normalizedTx);

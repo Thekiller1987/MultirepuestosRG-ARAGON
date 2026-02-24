@@ -138,7 +138,7 @@ const CajaModal = ({
       // totalVenta is the authority on total transaction value. If undefined, fallback to tx.amount.
       let totalAmount = Number(pd.totalVenta !== undefined ? pd.totalVenta : (tx.amount || 0));
 
-      if (t === 'salida' || t.includes('devolucion') || t.includes('cancelacion')) {
+      if (t === 'salida' || t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
         rawAmount = -Math.abs(rawAmount); // Dinero físico sale
         totalAmount = -Math.abs(totalAmount); // Reverso contable
       }
@@ -161,15 +161,11 @@ const CajaModal = ({
         tTarjeta += txTarjeta;
         tTransf += txTransf;
         tCredito += txCredito;
-      } else if (t.includes('devolucion') || t.includes('cancelacion')) {
+      } else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
         // Restar no-efectivo devuelto
         tTarjeta -= txTarjeta;
         tTransf -= txTransf;
         tCredito -= txCredito;
-      } else if (t === 'ajuste') {
-        if (pd.target === 'tarjeta') tTarjeta += Number(tx.amount || 0);
-        if (pd.target === 'credito') tCredito += Number(tx.amount || 0);
-        if (pd.target === 'transferencia') tTransf += Number(tx.amount || 0);
       }
 
       // --- ACUMULAR EFECTIVO FÍSICO (Caja) ---
@@ -195,7 +191,7 @@ const CajaModal = ({
       else if (t === 'salida') {
         netCordobas -= Math.abs(montoBase);
       }
-      else if (t.includes('devolucion') || t.includes('cancelacion')) {
+      else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
         netCordobas += montoBase; // montoBase es negativo (dinero sale de caja)
       }
       else if (t === 'ajuste') {
@@ -218,7 +214,7 @@ const CajaModal = ({
       if (t.startsWith('venta') || t.includes('abono') || t === 'entrada') {
         tVentasDia += Math.abs(totalAmount);
       }
-      else if (t.includes('devolucion') || t.includes('cancelacion')) {
+      else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
         // ★ RESTAR devoluciones y cancelaciones del total de ventas
         tVentasDia -= Math.abs(totalAmount);
       }
