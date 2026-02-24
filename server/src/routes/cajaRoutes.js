@@ -549,10 +549,12 @@ router.get('/abiertas/activas', async (req, res) => {
       return {
         id: row.id,
         openedAt: row.fecha_apertura,
+        hora_apertura: row.fecha_apertura,
         openedBy: { id: row.usuario_id, name: row.usuario_nombre },
         monto_inicial: Number(row.monto_inicial || 0),
         tasaDolar: Number(details.tasaDolar || 0),
         abierta_por: row.usuario_nombre,
+        usuario_id: row.usuario_id,
       };
     });
 
