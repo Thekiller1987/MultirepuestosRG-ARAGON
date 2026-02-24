@@ -184,16 +184,14 @@ function calculateReportStats(session) {
     const txTransf = Number(pd.transferencia || 0);
     const txCredito = Number(pd.credito || 0);
 
-    // Acumuladores Informativos de No Efectivo
+    // Acumuladores Informativos de No Efectivo (Solo ventas/abonos reales, NO ajustes)
     if (t.startsWith('venta') || t.includes('abono') || t.includes('pedido') || t.includes('apartado')) {
       tTarjeta += txTarjeta;
       tTransf += txTransf;
       tCredito += txCredito;
-    } else if (t === 'ajuste') {
-      if (pd.target === 'tarjeta') tTarjeta += Number(tx.amount || 0);
-      if (pd.target === 'credito') tCredito += Number(tx.amount || 0);
-      if (pd.target === 'transferencia') tTransf += Number(tx.amount || 0);
     }
+    // NOTA: Los ajustes secretos NO deben inflar tTarjeta/tTransf/tCredito
+    // porque esos son para DISPLAY. Los ajustes ya afectan netCordobas abajo.
 
     // 2. CALCULO DE EFECTIVO FÍSICO (Separado por moneda)
     if (t === 'venta_contado' || t === 'venta_mixta' || t === 'venta_credito' || t.startsWith('venta')) {
@@ -243,11 +241,9 @@ function calculateReportStats(session) {
       netCordobas += rawAmount;
     }
 
-    // 3. TOTAL INGRESOS GRUESOS
+    // 3. TOTAL INGRESOS GRUESOS (Solo transacciones reales, NO ajustes secretos)
     if (t.startsWith('venta') || t.includes('abono') || t === 'entrada') {
       tVentasDia += Math.abs(totalAmount);
-    } else if (t === 'ajuste') {
-      tVentasDia += totalAmount;
     }
 
     // Listas
@@ -928,7 +924,7 @@ const CashReport = () => {
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <strong style={{ fontSize: '1.1rem' }}>{resolveName(session.abierta_por)}</strong>
                 <span style={{ fontSize: '0.85rem', color: '#15803d' }}>
-                  Abierta: {new Date(session.hora_apertura).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  Abierta: {session.hora_apertura ? fmtDT(session.hora_apertura) : '—'}
                 </span>
               </div>
               <Badge isOpen>Abierta</Badge>
@@ -982,10 +978,10 @@ const CashReport = () => {
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <strong style={{ fontSize: '1.1rem' }}>{resolveName(session.abierta_por)}</strong>
                   <span style={{ fontSize: '0.85rem', color: theme.textLight }}>
-                    📅 {new Date(session.hora_apertura).toLocaleDateString('es-NI')} |
-                    🕒 {new Date(session.hora_apertura).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    📅 {session.hora_apertura ? new Date(session.hora_apertura).toLocaleDateString('es-NI') : '—'} |
+                    🕒 {session.hora_apertura ? new Date(session.hora_apertura).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                     {' ➜ '}
-                    {new Date(session.hora_cierre).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {session.hora_cierre ? new Date(session.hora_cierre).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                   </span>
                 </div>
                 <Badge>Cerrada</Badge>
