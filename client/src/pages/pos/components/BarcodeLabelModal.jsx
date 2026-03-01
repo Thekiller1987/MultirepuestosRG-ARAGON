@@ -48,7 +48,6 @@ const PreviewBox = styled.div`
 `;
 
 const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
-  const [quantity, setQuantity] = useState(1);
   const barcodeRef = useRef(null);
 
   if (!isOpen || !product) return null;
@@ -74,12 +73,12 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración CSS adaptada a etiquetas térmicas pequeñas ~50x25mm
+    // Configuración CSS adaptada a etiquetas térmicas pequeñas ~50x30mm
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 152.4mm 101.6mm; margin: 0mm; }
+      @page { size: 50mm 30mm; margin: 0mm; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
         width: 100%; height: 100%; 
@@ -91,46 +90,36 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
       
       .label-container {
-        width: 152.4mm; height: 98mm; /* strictly less than 101.6mm to avoid spilling */
+        width: 50mm; height: 28mm; /* strictly less than 30mm to avoid spilling */
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         box-sizing: border-box;
-        padding: 5mm;
-        page-break-after: always;
+        padding: 1mm;
         overflow: hidden;
       }
 
-      /* Ultimo elemento no necesita salto de pagina */
-      .label-container:last-child {
-        page-break-after: auto;
-      }
-
-      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 3mm; font-size: 5mm; font-weight: 900; text-transform: uppercase; margin-bottom: 3mm; text-align: center; line-height: 1.2; letter-spacing: 0.5mm; width: 100%; }
-      .l-brand img { height: 55mm; width: auto; filter: grayscale(100%) contrast(200%); }
-      .l-name { font-size: 7mm; font-weight: 700; text-align: center; margin-bottom: 3mm; line-height: 1.1; width: 100%; white-space: normal; }
+      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1mm; font-size: 1.8mm; font-weight: 900; text-transform: uppercase; margin-bottom: 1mm; text-align: center; line-height: 1.2; letter-spacing: 0.1mm; width: 100%; }
+      .l-brand img { height: 8mm; width: auto; filter: grayscale(100%) contrast(200%); }
+      .l-name { font-size: 2.2mm; font-weight: 700; text-align: center; margin-bottom: 1mm; line-height: 1.1; width: 100%; white-space: normal; }
       .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; width: 100%; }
-      .l-barcode svg { width: 120mm; height: 25mm; margin-bottom: 3mm;} 
-      .l-price { font-size: 12mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.5mm;}
+      .l-barcode svg { width: 40mm; height: 10mm; margin-bottom: 1mm;} 
+      .l-price { font-size: 4.5mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
     `;
 
-    // Generar N contenedores de etiqueta
-    let labelsHtml = '';
+    // Generar una única etiqueta
     const priceText = `C$${fmt(product.venta)}`;
-    // Truncate name safely para etiquetas
     const shortName = product.nombre || '';
 
-    for (let i = 0; i < qty; i++) {
-      labelsHtml += `
-        <div class="label-container">
-            <div class="l-brand">
-              <img src="${logoUrl}" alt="logo"/>
-              <span>${companyName}</span>
-            </div>
-            <div class="l-name">${shortName}</div>
-            <div class="l-barcode">${svgHtml}</div>
-            <div class="l-price">${priceText}</div>
-        </div>
-        `;
-    }
+    const labelsHtml = `
+      <div class="label-container">
+          <div class="l-brand">
+            <img src="${logoUrl}" alt="logo"/>
+            <span>${companyName}</span>
+          </div>
+          <div class="l-name">${shortName}</div>
+          <div class="l-barcode">${svgHtml}</div>
+          <div class="l-price">${priceText}</div>
+      </div>
+    `;
 
     const w = window.open('', '_blank', 'width=400,height=400');
     if (!w) {
@@ -173,17 +162,9 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
               </PreviewBox>
             </FormGroup>
 
-            <FormGroup>
-              <Label>Cantidad de etiquetas a imprimir al mismo tiempo:</Label>
-              <Input
-                type="number"
-                min="1"
-                max="500"
-                value={quantity}
-                onChange={e => setQuantity(e.target.value)}
-                autoFocus
-              />
-            </FormGroup>
+            <div style={{ fontSize: '0.9rem', color: '#64748b', textAlign: 'center', background: '#f8fafc', padding: '10px', borderRadius: '8px' }}>
+              La cantidad de copias se selecciona directamente en la ventana de impresión que se abrirá a continuación.
+            </div>
 
             <ButtonRow>
               <CancelButton onClick={onClose}>Cancelar</CancelButton>
