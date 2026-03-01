@@ -79,7 +79,7 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 50mm 25mm; margin: 0mm; }
+      @page { size: 101.6mm 152.4mm; margin: 0mm; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
         width: 100%; height: 100%; 
@@ -91,10 +91,10 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
       
       .label-container {
-        width: 50mm; height: 23.5mm; /* strictly less than 25mm to avoid spilling to next label */
-        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+        width: 101.6mm; height: 150mm; /* strictly less than 152.4mm to avoid spilling */
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
         box-sizing: border-box;
-        padding: 0.5mm 1mm;
+        padding: 5mm;
         page-break-after: always;
         overflow: hidden;
       }
@@ -104,24 +104,27 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
         page-break-after: auto;
       }
 
-      .l-brand { display: flex; align-items: center; justify-content: center; gap: 1.5mm; font-size: 1.4mm; font-weight: 900; text-transform: uppercase; margin-bottom: 0.2mm; text-align: center; line-height: 1; letter-spacing: 0.1mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
-      .l-brand img { height: 9mm; width: auto; filter: grayscale(100%) contrast(200%); }
-      .l-name { font-size: 1.6mm; font-weight: 700; text-align: center; margin-bottom: 0.2mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-      .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; }
-      .l-barcode svg { width: auto; height: 7mm; max-width: 46mm; margin-bottom: 0.2mm;} 
-      .l-price { font-size: 3.2mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
+      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 5mm; font-size: 5mm; font-weight: 900; text-transform: uppercase; margin-bottom: 5mm; text-align: center; line-height: 1.2; letter-spacing: 0.5mm; width: 100%; }
+      .l-brand img { height: 45mm; width: auto; filter: grayscale(100%) contrast(200%); }
+      .l-name { font-size: 8mm; font-weight: 700; text-align: center; margin-bottom: 5mm; line-height: 1.2; width: 100%; white-space: normal; }
+      .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; width: 100%; }
+      .l-barcode svg { width: 90mm; height: 30mm; margin-bottom: 5mm;} 
+      .l-price { font-size: 15mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.5mm;}
     `;
 
     // Generar N contenedores de etiqueta
     let labelsHtml = '';
     const priceText = `C$${fmt(product.venta)}`;
     // Truncate name safely para etiquetas
-    const shortName = (product.nombre || '').substring(0, 30);
+    const shortName = product.nombre || '';
 
     for (let i = 0; i < qty; i++) {
       labelsHtml += `
         <div class="label-container">
-            <div class="l-brand"><img src="${logoUrl}" alt="logo"/> ${companyName}</div>
+            <div class="l-brand">
+              <img src="${logoUrl}" alt="logo"/>
+              <span>${companyName}</span>
+            </div>
             <div class="l-name">${shortName}</div>
             <div class="l-barcode">${svgHtml}</div>
             <div class="l-price">${priceText}</div>
