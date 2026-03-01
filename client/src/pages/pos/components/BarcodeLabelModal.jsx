@@ -60,9 +60,6 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
   const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const handlePrint = () => {
-    const qty = parseInt(quantity, 10);
-    if (isNaN(qty) || qty < 1) return alert("Por favor ingresa una cantidad válida mayor a 0.");
-
     // Extract the SVG element from our hidden barcode component
     let svgHtml = '';
     if (barcodeRef.current) {
@@ -73,36 +70,34 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración CSS adaptada a etiquetas térmicas pequeñas ~50x30mm
+    // Configuración CSS Adaptativa (se ajusta al papel que elijas en Chrome)
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 50mm 30mm; margin: 0mm; }
+      @page { size: auto; margin: 0mm; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
         width: 100%; height: 100%; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
-        -webkit-print-color-adjust: exact !important; 
-        print-color-adjust: exact !important;
       }
       
       .label-container {
-        width: 50mm; height: 28mm; /* strictly less than 30mm to avoid spilling */
+        width: 100vw; height: 96vh; 
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         box-sizing: border-box;
-        padding: 1mm;
+        padding: 4vw;
         overflow: hidden;
       }
 
-      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1mm; font-size: 1.8mm; font-weight: 900; text-transform: uppercase; margin-bottom: 1mm; text-align: center; line-height: 1.2; letter-spacing: 0.1mm; width: 100%; }
-      .l-brand img { height: 8mm; width: auto; filter: grayscale(100%) contrast(200%); }
-      .l-name { font-size: 2.2mm; font-weight: 700; text-align: center; margin-bottom: 1mm; line-height: 1.1; width: 100%; white-space: normal; }
+      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1vh; font-size: 3.5vh; font-weight: 900; text-transform: uppercase; margin-bottom: 2vh; text-align: center; line-height: 1.2; width: 100%; }
+      .l-brand img { height: 40vh; width: auto; object-fit: contain; filter: grayscale(100%) contrast(200%); }
+      .l-name { font-size: 4vh; font-weight: 700; text-align: center; margin-bottom: 2vh; line-height: 1.1; width: 100%; white-space: normal; }
       .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; width: 100%; }
-      .l-barcode svg { width: 40mm; height: 10mm; margin-bottom: 1mm;} 
-      .l-price { font-size: 4.5mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
+      .l-barcode svg { width: 80%; height: 20vh; margin-bottom: 2vh;} 
+      .l-price { font-size: 10vh; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
     `;
 
     // Generar una única etiqueta
