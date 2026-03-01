@@ -429,15 +429,15 @@ const TicketModal = ({
     // Estilos CSS inyectados para ventana de impresión
     const printStyles = `
       @charset "UTF-8";
-      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : ''} }
-      html, body { background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; color: #000 !important; }
+      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : 'size: 80mm;'} }
+      html, body { background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; height: auto !important; min-height: 0 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; color: #000 !important; display: block !important; }
       
       /* Reset para impresión */
       #print-wrapper-ticket {
-        box-shadow: none !important; border: none !important; margin: 0 auto !important;
+        box-shadow: none !important; border: none !important; margin: 0 auto !important; height: auto !important;
         ${mode === 'A4'
         ? `width: 100% !important; padding: 0 !important; font-size: 10pt !important;`
-        : `width: 100% !important; max-width: 78mm !important; padding: 0 !important; font-size: 8pt !important; overflow: hidden !important;`
+        : `width: 100% !important; max-width: 78mm !important; padding: 0 !important; font-size: 8pt !important; overflow: hidden !important; display: block !important;`
       }
       }
 

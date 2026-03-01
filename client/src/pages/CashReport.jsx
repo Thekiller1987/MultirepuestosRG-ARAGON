@@ -674,7 +674,7 @@ const CashReport = () => {
 
     const cssdetail = `
       @page { size: A4; margin: 15mm; }
-      body { font-family: 'Inter', Helvetica, Arial, sans-serif; padding: 0; margin: 0; color: #1e293b; max-width: none; background: #fff; }
+      body { font-family: 'Inter', Helvetica, Arial, sans-serif; padding: 0; margin: 0; color: #1e293b; max-width: none; background: #fff; height: auto !important; min-height: 0 !important; display: block !important; }
       
       .brand { 
         display: flex; justify-content: space-between; align-items: flex-start;

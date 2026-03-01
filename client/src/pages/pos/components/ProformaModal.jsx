@@ -183,16 +183,16 @@ const ProformaModal = ({
 
     const printStyles = `
       @charset "UTF-8";
-      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : ''} }
+      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : 'size: 80mm;'} }
       html, body {
-        background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
+        background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; height: auto !important; min-height: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; display: block !important;
       }
       
       #print-wrapper-proforma {
-        box-shadow: none !important; border: none !important; margin: 0 !important;
+        box-shadow: none !important; border: none !important; margin: 0 !important; height: auto !important;
         ${mode === 'A4'
         ? `width: 100% !important; padding: 0 !important; font-size: 10pt !important;`
-        : `width: 80mm !important; padding: 6px 4px !important; font-size: 8pt !important;`
+        : `width: 100% !important; max-width: 78mm !important; padding: 6px 4px !important; font-size: 8pt !important; display: block !important;`
       }
       }
 
