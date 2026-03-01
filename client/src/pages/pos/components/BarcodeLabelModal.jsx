@@ -82,7 +82,7 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       @page { size: 50mm 25mm; margin: 0mm; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 50mm; height: 25mm; 
+        width: 100%; height: 100%; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
@@ -91,11 +91,11 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
       
       .label-container {
-        width: 50mm; height: 25mm;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: 50mm; height: 23.5mm; /* strictly less than 25mm to avoid spilling to next label */
+        display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
         box-sizing: border-box;
-        padding: 1mm 2mm;
-        page-break-after: always; /* Crucial para impresoras de rollo continuo emuladas o separar multiples divs */
+        padding: 0.5mm 1mm;
+        page-break-after: always;
         overflow: hidden;
       }
 
@@ -104,12 +104,12 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
         page-break-after: auto;
       }
 
-      .l-brand { display: flex; align-items: center; justify-content: center; gap: 2mm; font-size: 1.8mm; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5mm; text-align: center; line-height: 1; letter-spacing: 0.2mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
-      .l-brand img { height: 7mm; width: auto; filter: grayscale(100%) contrast(200%); }
-      .l-name { font-size: 2mm; font-weight: 700; text-align: center; margin-bottom: 0.5mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .l-brand { display: flex; align-items: center; justify-content: center; gap: 1.5mm; font-size: 1.4mm; font-weight: 900; text-transform: uppercase; margin-bottom: 0.2mm; text-align: center; line-height: 1; letter-spacing: 0.1mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
+      .l-brand img { height: 9mm; width: auto; filter: grayscale(100%) contrast(200%); }
+      .l-name { font-size: 1.6mm; font-weight: 700; text-align: center; margin-bottom: 0.2mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
       .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; }
-      .l-barcode svg { width: auto; height: 8mm; max-width: 44mm; margin-bottom: 0.5mm;} /* Forzar encoger svg si es muy largo */
-      .l-price { font-size: 4.5mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
+      .l-barcode svg { width: auto; height: 7mm; max-width: 46mm; margin-bottom: 0.2mm;} 
+      .l-price { font-size: 3.2mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
     `;
 
     // Generar N contenedores de etiqueta
