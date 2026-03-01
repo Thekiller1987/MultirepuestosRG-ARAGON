@@ -70,7 +70,7 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración Pixel-Perfect (190px x 30px)
+    // Configuración Pixel-Perfect (190px x 30px) - Maximización de elementos
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -85,23 +85,23 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
       
       .label-container {
-        width: 190px; height: 29px; 
+        width: 190px; height: 30px; 
         display: flex; flex-direction: row; align-items: center; justify-content: space-between;
         box-sizing: border-box;
-        padding: 1px 3px;
-        gap: 4px;
+        padding: 0px 2px;
+        gap: 2px;
         overflow: hidden;
       }
 
-      .l-left { flex: 0 0 28px; display: flex; align-items: center; justify-content: center; height: 28px; }
-      .l-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: 28px; }
-      .l-right { flex: 0 0 45px; display: flex; align-items: center; justify-content: flex-end; height: 28px; }
+      .l-left { flex: 0 0 28px; display: flex; align-items: center; justify-content: center; height: 30px; }
+      .l-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: 30px; gap: 0px; }
+      .l-right { flex: 0 0 50px; display: flex; align-items: center; justify-content: flex-end; height: 30px; }
 
-      .l-brand-logo { width: 26px; height: 26px; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
-      .l-name { font-size: 7px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin-bottom: 2px; }
-      .l-barcode { display: flex; justify-content: center; width: 100%; height: 16px; margin: 0; padding: 0; }
-      .l-barcode svg { width: 100%; height: 16px !important; } 
-      .l-price { font-size: 9px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
+      .l-brand-logo { width: 28px; height: 28px; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
+      .l-name { font-size: 8px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin-bottom: 1px; margin-top: -1px; }
+      .l-barcode { display: flex; justify-content: center; width: 100%; height: 18px; margin: 0; padding: 0; }
+      .l-barcode svg { width: 100%; height: 18px !important; } 
+      .l-price { font-size: 11px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
     `;
 
     // Generar una única etiqueta
