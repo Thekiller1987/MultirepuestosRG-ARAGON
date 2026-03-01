@@ -73,8 +73,8 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
     // Configuración Adaptativa Automática (Sin Logo)
     const labelW = settings?.label_width || 190;
     const labelH = settings?.label_height || 30;
-    const nameS = settings?.label_name_size || 10;
-    const bcH = settings?.label_barcode_height || 22;
+    const nameS = settings?.label_name_size || 8;
+    const bcH = settings?.label_barcode_height || 28;
     const priceS = settings?.label_price_size || 14;
 
     const printStyles = `
@@ -91,23 +91,23 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
       
       .label-container {
-        width: 100vw; height: 95vh; 
-        display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+        width: 100vw; height: 100vh; 
+        display: flex; flex-direction: row; align-items: flex-start; justify-content: space-between;
         box-sizing: border-box;
-        padding: 1px 4px;
-        gap: 8px;
+        padding: 0px 2px;
+        gap: 2px;
         overflow: hidden;
       }
 
       .l-info { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: 100%; }
       .l-barcode-cont { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
 
-      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; margin-bottom: 1px; }
+      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin: 0; }
       .l-price { font-size: ${priceS}px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
       
-      .l-barcode { display: flex; justify-content: center; width: 140px; height: ${bcH}px; margin: 0; padding: 0; }
+      .l-barcode { display: flex; justify-content: center; width: 150px; height: ${bcH}px; margin: 0; padding: 0; }
       .l-barcode svg { width: 100%; height: ${bcH}px !important; } 
-      .l-barcode-val { font-size: 8px; font-weight: 600; margin-top: 1px; }
+      .l-barcode-val { font-size: 7px; font-weight: 600; margin-top: 0px; line-height: 1; }
     `;
 
     // Generar una única etiqueta
