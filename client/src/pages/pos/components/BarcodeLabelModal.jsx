@@ -70,7 +70,7 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración CSS Adaptativa (se ajusta al papel que elijas en Chrome)
+    // Configuración CSS Adaptativa y Optimizada para Térmicas
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -85,19 +85,20 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
       
       .label-container {
-        width: 100vw; height: 96vh; 
+        width: 100vw; height: 90vh; /* Shrunk to 90vh to ensure it never overflows to 2 labels */
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         box-sizing: border-box;
-        padding: 4vw;
+        padding: 2vh 4vw;
         overflow: hidden;
       }
 
-      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1vh; font-size: 3.5vh; font-weight: 900; text-transform: uppercase; margin-bottom: 2vh; text-align: center; line-height: 1.2; width: 100%; }
-      .l-brand img { height: 40vh; width: auto; object-fit: contain; filter: grayscale(100%) contrast(200%); }
-      .l-name { font-size: 4vh; font-weight: 700; text-align: center; margin-bottom: 2vh; line-height: 1.1; width: 100%; white-space: normal; }
+      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.5vh; font-size: 2.5vh; font-weight: 900; text-transform: uppercase; margin-bottom: 1.5vh; text-align: center; line-height: 1.1; width: 100%; }
+      /* Agressive filters to make logo pure black/white for thermal printers */
+      .l-brand img { height: 35vh; width: auto; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.5); }
+      .l-name { font-size: 3vh; font-weight: 700; text-align: center; margin-bottom: 1.5vh; line-height: 1.1; width: 100%; white-space: normal; }
       .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; width: 100%; }
-      .l-barcode svg { width: 80%; height: 20vh; margin-bottom: 2vh;} 
-      .l-price { font-size: 10vh; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
+      .l-barcode svg { width: 95%; height: 25vh; margin-bottom: 1.5vh;} 
+      .l-price { font-size: 6vh; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
     `;
 
     // Generar una única etiqueta
