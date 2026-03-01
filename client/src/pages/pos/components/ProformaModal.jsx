@@ -233,12 +233,11 @@ const ProformaModal = ({
     w.document.write(`<html><head><title>PROFORMA - ${companyInfo.name}</title><style>${printStyles}</style></head><body>${htmlToPrint}</body></html>`);
     w.document.close();
     w.focus();
-    w.onload = function () {
-      setTimeout(() => {
-        w.print();
-        setTimeout(() => w.close(), 1000);
-      }, 250);
-    };
+    // In Kiosk mode, calling w.print() directly inside the handler is better after rendering.
+    setTimeout(() => {
+      w.print();
+      setTimeout(() => w.close(), 1000);
+    }, 250);
 
     w.onafterprint = () => {
       w.close();

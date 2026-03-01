@@ -822,12 +822,10 @@ const CashReport = () => {
     win.document.write(html);
     win.document.close();
     win.focus();
-    win.onload = () => {
-      setTimeout(() => {
-        win.print();
-        setTimeout(() => { try { win.close(); } catch { } }, 1000);
-      }, 500);
-    };
+    setTimeout(() => {
+      win.print();
+      setTimeout(() => { try { win.close(); } catch { } }, 1000);
+    }, 500);
   };
 
   // Componente para mostrar desglose de transacciones en cada card de cierre

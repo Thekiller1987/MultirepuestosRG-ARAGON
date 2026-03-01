@@ -317,12 +317,10 @@ const CajaModal = ({
     w.focus();
 
     // Auto-imprimir y luego (opcional) cerrar ventana
-    w.onload = function () {
-      setTimeout(() => {
-        w.print();
-        setTimeout(() => { try { w.close(); } catch { } }, 1000); // Fallback cierre kiosko
-      }, 300);
-    };
+    setTimeout(() => {
+      w.print();
+      setTimeout(() => { try { w.close(); } catch { } }, 1000); // Fallback cierre kiosko
+    }, 300);
     w.onafterprint = () => {
       try { w.close(); } catch { }
     };

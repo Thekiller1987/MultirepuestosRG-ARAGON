@@ -482,20 +482,15 @@ const TicketModal = ({
     w.document.close();
     w.focus();
 
-    // Auto-imprimir y cerrar pestaña (esencial para Kiosk Mode)
-    w.onload = () => {
-      setTimeout(() => {
-        w.print();
-        // Abrir cajón de dinero al imprimir en 80mm (ventas/tickets)
-        if (mode !== 'A4') {
-          setTimeout(() => openCashDrawer(), 500);
-        }
-
-        // Timeout de seguridad fuerte si onafterprint falla en KioskMode
-        setTimeout(() => w.close(), 1000);
-
-      }, 350);
-    };
+    // In Kiosk mode, calling w.print() directly inside the handler is better.
+    // Delay slightly so the DOM has time to render images/logos.
+    setTimeout(() => {
+      w.print();
+      if (mode !== 'A4') {
+        setTimeout(() => openCashDrawer(), 500);
+      }
+      setTimeout(() => w.close(), 1000); // Fallback cierre kiosko
+    }, 350);
 
     w.onafterprint = () => {
       w.close();
