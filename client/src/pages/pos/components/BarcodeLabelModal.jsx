@@ -70,38 +70,38 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración CSS Optimizada (152.4mm x 101.6mm)
+    // Configuración Adaptativa (Líquida): Se ajusta a cualquier tamaño de papel
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 152.4mm 101.6mm; margin: 0mm; }
+      @page { size: auto; margin: 0mm; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 152.4mm; height: 101.6mm; 
+        width: 100%; height: 100%; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: 152.4mm; height: 98mm; 
+        width: 100vw; height: 95vh; 
         display: flex; flex-direction: row; align-items: center; justify-content: center;
         box-sizing: border-box;
-        padding: 5mm;
-        gap: 8mm;
+        padding: 4vh 4vw;
+        gap: 4vw;
         overflow: hidden;
       }
 
-      .l-left { flex: 0 0 50mm; display: flex; align-items: center; justify-content: center; }
-      .l-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4mm; }
+      .l-left { flex: 0 0 30vw; display: flex; align-items: center; justify-content: center; }
+      .l-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1vh; overflow: hidden; }
 
-      .l-brand-logo { height: 60mm; width: auto; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
-      .l-brand-name { font-size: 5mm; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1.2; margin-bottom: 2mm; width: 100%; }
-      .l-name { font-size: 7mm; font-weight: 700; text-align: center; line-height: 1.1; width: 100%; white-space: normal; }
+      .l-brand-logo { width: 100%; height: auto; max-height: 80vh; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
+      .l-brand-name { font-size: 3vh; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1.1; width: 100%; overflow: hidden; white-space: nowrap; }
+      .l-name { font-size: 4vh; font-weight: 700; text-align: center; line-height: 1.1; width: 100%; white-space: normal; overflow: hidden; }
       .l-barcode { display: flex; justify-content: center; width: 100%; }
-      .l-barcode svg { width: 80mm; height: 25mm; } 
-      .l-price { font-size: 15mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
+      .l-barcode svg { width: 90%; height: 25vh; } 
+      .l-price { font-size: 10vh; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
     `;
 
     // Generar una única etiqueta
