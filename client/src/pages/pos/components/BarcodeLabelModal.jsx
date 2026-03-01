@@ -104,9 +104,9 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
         page-break-after: auto;
       }
 
-      .l-brand { display: flex; align-items: center; justify-content: center; gap: 2mm; font-size: 2.2mm; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5mm; text-align: center; line-height: 1; letter-spacing: 0.2mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
-      .l-brand img { height: 4mm; width: auto; filter: grayscale(100%) contrast(200%); }
-      .l-name { font-size: 2.5mm; font-weight: 700; text-align: center; margin-bottom: 0.5mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .l-brand { display: flex; align-items: center; justify-content: center; gap: 2mm; font-size: 1.8mm; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5mm; text-align: center; line-height: 1; letter-spacing: 0.2mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
+      .l-brand img { height: 7mm; width: auto; filter: grayscale(100%) contrast(200%); }
+      .l-name { font-size: 2mm; font-weight: 700; text-align: center; margin-bottom: 0.5mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
       .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; }
       .l-barcode svg { width: auto; height: 8mm; max-width: 44mm; margin-bottom: 0.5mm;} /* Forzar encoger svg si es muy largo */
       .l-price { font-size: 4.5mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
@@ -158,7 +158,7 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
               <Label>Vista Previa de Generación</Label>
               <PreviewBox>
                 <div style={{ fontSize: '0.8rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <img src={logoUrl} alt="logo" style={{ height: '14px', filter: 'grayscale(100%)' }} />
+                  <img src={logoUrl} alt="logo" style={{ height: '22px', filter: 'grayscale(100%)' }} />
                   {companyName}
                 </div>
                 <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{product.nombre}</div>

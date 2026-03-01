@@ -202,14 +202,14 @@ const StockTag = styled(InfoTag)`
 `;
 
 const CardFooter = styled.div`
-  margin-top: auto; padding: 1rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; gap: 0.75rem;
+  margin-top: auto; padding: 0.75rem; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
 `;
 
 const ActionButton = styled.button`
-  flex: 1; padding: 0.6rem; 
-  border-radius: 10px; border: 1px solid; cursor: pointer; 
-  font-size: 0.85rem; font-weight: 600; 
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+  flex: 1 1 40%; min-width: max-content; padding: 0.5rem; 
+  border-radius: 8px; border: 1px solid; cursor: pointer; 
+  font-size: 0.75rem; font-weight: 600; 
+  display: flex; align-items: center; justify-content: center; gap: 4px;
   transition: all 0.2s;
 
   &.adjust { 
