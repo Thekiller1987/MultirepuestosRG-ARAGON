@@ -5,6 +5,8 @@ import { useSettings } from '../../../context/SettingsContext';
 import { useAuthToken } from '../../../context/AuthContext'; // Helper if exists, or useAuth
 import { toast } from 'react-hot-toast';
 import * as settingsApi from '../../../service/settingsApi';
+import { FaBoxOpen } from 'react-icons/fa';
+import { CashDrawerManager } from './CashDrawer/CashDrawerManager';
 
 // --- STYLES ---
 const ModalOverlay = styled.div`
@@ -163,6 +165,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
                         <Tab active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')}>
                             <FaFileInvoice /> Personalización Tickets
                         </Tab>
+                        <Tab active={activeTab === 'dispositivos'} onClick={() => setActiveTab('dispositivos')}>
+                            <FaBoxOpen /> Dispositivos
+                        </Tab>
                     </Tabs>
 
                     {activeTab === 'general' && (
@@ -267,6 +272,12 @@ const SettingsModal = ({ isOpen, onClose }) => {
                                 />
                                 <small>Notas internas o firmas requeridas.</small>
                             </FormGroup>
+                        </div>
+                    )}
+
+                    {activeTab === 'dispositivos' && (
+                        <div>
+                            <CashDrawerManager />
                         </div>
                     )}
                 </Content>

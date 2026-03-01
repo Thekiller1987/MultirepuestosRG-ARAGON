@@ -3,8 +3,7 @@ import styled from 'styled-components';
 import { useSettings } from '../context/SettingsContext';
 import { updateSettings as apiUpdateSettings, uploadLogo } from '../service/settingsApi';
 import { useAuth } from '../context/AuthContext';
-import { FaSave, FaBuilding, FaPhone, FaMapMarkerAlt, FaIdCard, FaImage, FaReceipt, FaFileInvoice, FaExchangeAlt, FaBoxOpen } from 'react-icons/fa';
-import { CashDrawerManager } from './pos/components/CashDrawer/CashDrawerManager';
+import { FaSave, FaBuilding, FaPhone, FaMapMarkerAlt, FaIdCard, FaImage, FaReceipt, FaFileInvoice, FaExchangeAlt } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 2rem;
@@ -287,11 +286,6 @@ const SettingsPage = () => {
                         style={{ minHeight: '60px' }}
                     />
                 </FormGroup>
-
-                <SectionTitle><FaBoxOpen /> Caja Dispositivos</SectionTitle>
-                <div style={{ marginBottom: '2rem' }}>
-                    <CashDrawerManager />
-                </div>
 
                 <Button type="submit" disabled={loading || uploadingLogo}>
                     <FaSave /> {loading ? 'Guardando...' : 'Guardar Cambios'}
