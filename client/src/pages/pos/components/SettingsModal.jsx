@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FaSave, FaWindowClose, FaBuilding, FaFileInvoice, FaCog } from 'react-icons/fa';
+import { FaSave, FaWindowClose, FaBuilding, FaFileInvoice, FaCog, FaBarcode } from 'react-icons/fa';
 import { useSettings } from '../../../context/SettingsContext';
 import { useAuthToken } from '../../../context/AuthContext'; // Helper if exists, or useAuth
 import { toast } from 'react-hot-toast';
