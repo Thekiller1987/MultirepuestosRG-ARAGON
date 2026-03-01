@@ -70,22 +70,29 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración Pixel-Perfect (190px x 30px) - Maximización de elementos
+    // Configuración Dinámica (Cargada desde Base de Datos)
+    const labelW = settings?.label_width || 190;
+    const labelH = settings?.label_height || 30;
+    const logoS = settings?.label_logo_size || 28;
+    const nameS = settings?.label_name_size || 8;
+    const bcH = settings?.label_barcode_height || 18;
+    const priceS = settings?.label_price_size || 11;
+
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 190px 30px; margin: 0px; }
+      @page { size: ${labelW}px ${labelH}px; margin: 0px; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 190px; height: 30px; 
+        width: ${labelW}px; height: ${labelH}px; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: 190px; height: 30px; 
+        width: ${labelW}px; height: ${labelH}px; 
         display: flex; flex-direction: row; align-items: center; justify-content: space-between;
         box-sizing: border-box;
         padding: 0px 2px;
@@ -93,15 +100,15 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
         overflow: hidden;
       }
 
-      .l-left { flex: 0 0 28px; display: flex; align-items: center; justify-content: center; height: 30px; }
-      .l-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: 30px; gap: 0px; }
-      .l-right { flex: 0 0 50px; display: flex; align-items: center; justify-content: flex-end; height: 30px; }
+      .l-left { flex: 0 0 ${logoS}px; display: flex; align-items: center; justify-content: center; height: ${labelH}px; }
+      .l-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: ${labelH}px; gap: 0px; }
+      .l-right { flex: 0 0 auto; min-width: 40px; display: flex; align-items: center; justify-content: flex-end; height: ${labelH}px; padding-right: 2px; }
 
-      .l-brand-logo { width: 28px; height: 28px; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
-      .l-name { font-size: 8px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin-bottom: 1px; margin-top: -1px; }
-      .l-barcode { display: flex; justify-content: center; width: 100%; height: 18px; margin: 0; padding: 0; }
-      .l-barcode svg { width: 100%; height: 18px !important; } 
-      .l-price { font-size: 11px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
+      .l-brand-logo { width: ${logoS}px; height: ${logoS}px; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
+      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin-bottom: 1px; }
+      .l-barcode { display: flex; justify-content: center; width: 100%; height: ${bcH}px; margin: 0; padding: 0; }
+      .l-barcode svg { width: 100%; height: ${bcH}px !important; } 
+      .l-price { font-size: ${priceS}px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
     `;
 
     // Generar una única etiqueta

@@ -87,7 +87,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
     const [formData, setFormData] = useState({
         empresa_nombre: '', empresa_ruc: '', empresa_telefono: '',
         empresa_direccion: '', empresa_eslogan: '', empresa_logo_url: '',
-        ticket_sales_footer: '', ticket_proforma_footer: '', ticket_transfer_footer: ''
+        ticket_sales_footer: '', ticket_proforma_footer: '', ticket_transfer_footer: '',
+        label_width: 190, label_height: 30, label_logo_size: 28,
+        label_name_size: 8, label_price_size: 11, label_barcode_height: 18
     });
 
     const [activeTab, setActiveTab] = useState('general'); // general | tickets
@@ -167,6 +169,9 @@ const SettingsModal = ({ isOpen, onClose }) => {
                         </Tab>
                         <Tab active={activeTab === 'dispositivos'} onClick={() => setActiveTab('dispositivos')}>
                             <FaBoxOpen /> Dispositivos
+                        </Tab>
+                        <Tab active={activeTab === 'labels'} onClick={() => setActiveTab('labels')}>
+                            <FaBarcode /> Etiquetas
                         </Tab>
                     </Tabs>
 
@@ -278,6 +283,52 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     {activeTab === 'dispositivos' && (
                         <div>
                             <CashDrawerManager />
+                        </div>
+                    )}
+
+                    {activeTab === 'labels' && (
+                        <div>
+                            <p style={{ marginBottom: '1rem', color: '#64748b' }}>
+                                Configura las dimensiones (en píxeles) y el tamaño de los elementos para las etiquetas térmicas.
+                            </p>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                                    <h4 style={{ margin: '0 0 1rem 0', color: '#1e293b' }}>Dimensiones de Hoja</h4>
+                                    <FormGroup>
+                                        <label>Ancho (px)</label>
+                                        <input type="number" name="label_width" value={formData.label_width || ''} onChange={handleChange} />
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <label>Alto (px)</label>
+                                        <input type="number" name="label_height" value={formData.label_height || ''} onChange={handleChange} />
+                                    </FormGroup>
+                                </div>
+
+                                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                                    <h4 style={{ margin: '0 0 1rem 0', color: '#1e293b' }}>Tamaño de Elementos</h4>
+                                    <FormGroup>
+                                        <label>Tamaño Logo (px)</label>
+                                        <input type="number" name="label_logo_size" value={formData.label_logo_size || ''} onChange={handleChange} />
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <label>Tamaño Nombre Producto (px)</label>
+                                        <input type="number" name="label_name_size" value={formData.label_name_size || ''} onChange={handleChange} />
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <label>Altura Código de Barras (px)</label>
+                                        <input type="number" name="label_barcode_height" value={formData.label_barcode_height || ''} onChange={handleChange} />
+                                    </FormGroup>
+                                    <FormGroup>
+                                        <label>Tamaño Precio (px)</label>
+                                        <input type="number" name="label_price_size" value={formData.label_price_size || ''} onChange={handleChange} />
+                                    </FormGroup>
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fff9db', border: '1px solid #ffe066', borderRadius: '8px', color: '#856404', fontSize: '0.85rem' }}>
+                                <strong>Nota:</strong> Los valores son en píxeles. Si la etiqueta sale cortada, reduce el Alto o los tamaños de los elementos.
+                            </div>
                         </div>
                     )}
                 </Content>

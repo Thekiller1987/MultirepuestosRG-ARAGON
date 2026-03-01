@@ -16,24 +16,39 @@ const initSettings = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 ticket_sales_footer TEXT,
                 ticket_proforma_footer TEXT,
-                ticket_transfer_footer TEXT
+                ticket_transfer_footer TEXT,
+                label_width INT DEFAULT 190,
+                label_height INT DEFAULT 30,
+                label_logo_size INT DEFAULT 28,
+                label_name_size INT DEFAULT 8,
+                label_price_size INT DEFAULT 11,
+                label_barcode_height INT DEFAULT 18
             )
         `);
         // Insert default if not exists
         await pool.query(`INSERT IGNORE INTO business_config (id) VALUES (1)`);
 
         // Migration for existing tables: Add columns if they don't exist
-        const columns = ['ticket_sales_footer', 'ticket_proforma_footer', 'ticket_transfer_footer'];
+        const columns = [
+            { name: 'ticket_sales_footer', type: 'TEXT' },
+            { name: 'ticket_proforma_footer', type: 'TEXT' },
+            { name: 'ticket_transfer_footer', type: 'TEXT' },
+            { name: 'label_width', type: 'INT DEFAULT 190' },
+            { name: 'label_height', type: 'INT DEFAULT 30' },
+            { name: 'label_logo_size', type: 'INT DEFAULT 28' },
+            { name: 'label_name_size', type: 'INT DEFAULT 8' },
+            { name: 'label_price_size', type: 'INT DEFAULT 11' },
+            { name: 'label_barcode_height', type: 'INT DEFAULT 18' }
+        ];
         for (const col of columns) {
             try {
-                // Check if column exists first to avoid error spam
-                const [rows] = await pool.query(`SHOW COLUMNS FROM business_config LIKE '${col}'`);
+                const [rows] = await pool.query(`SHOW COLUMNS FROM business_config LIKE '${col.name}'`);
                 if (rows.length === 0) {
-                    await pool.query(`ALTER TABLE business_config ADD COLUMN ${col} TEXT`);
-                    console.log(`✅ Columna ${col} agregada a business_config`);
+                    await pool.query(`ALTER TABLE business_config ADD COLUMN ${col.name} ${col.type}`);
+                    console.log(`✅ Columna ${col.name} agregada a business_config`);
                 }
             } catch (e) {
-                console.error(`Error verificando columna ${col}:`, e);
+                console.error(`Error verificando columna ${col.name}:`, e);
             }
         }
     } catch (error) {
@@ -61,7 +76,9 @@ const updateSettings = async (req, res) => {
     const {
         empresa_nombre, empresa_ruc, empresa_telefono,
         empresa_direccion, empresa_eslogan, empresa_logo_url,
-        ticket_sales_footer, ticket_proforma_footer, ticket_transfer_footer
+        ticket_sales_footer, ticket_proforma_footer, ticket_transfer_footer,
+        label_width, label_height, label_logo_size,
+        label_name_size, label_price_size, label_barcode_height
     } = req.body;
 
     try {
@@ -76,12 +93,20 @@ const updateSettings = async (req, res) => {
                 empresa_logo_url = ?,
                 ticket_sales_footer = ?,
                 ticket_proforma_footer = ?,
-                ticket_transfer_footer = ?
+                ticket_transfer_footer = ?,
+                label_width = ?,
+                label_height = ?,
+                label_logo_size = ?,
+                label_name_size = ?,
+                label_price_size = ?,
+                label_barcode_height = ?
             WHERE id = 1
         `, [
             empresa_nombre, empresa_ruc, empresa_telefono,
             empresa_direccion, empresa_eslogan, empresa_logo_url,
-            ticket_sales_footer, ticket_proforma_footer, ticket_transfer_footer
+            ticket_sales_footer, ticket_proforma_footer, ticket_transfer_footer,
+            label_width, label_height, label_logo_size,
+            label_name_size, label_price_size, label_barcode_height
         ]);
 
         const [updated] = await pool.query('SELECT * FROM business_config WHERE id = 1');
