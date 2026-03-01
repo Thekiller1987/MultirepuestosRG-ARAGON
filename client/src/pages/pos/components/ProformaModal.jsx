@@ -183,16 +183,16 @@ const ProformaModal = ({
 
     const printStyles = `
       @charset "UTF-8";
-      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : 'size: 80mm;'} }
+      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : 'size: 80mm auto;'} }
       html, body {
-        background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; height: auto !important; min-height: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; display: block !important;
+        background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
       }
       
       #print-wrapper-proforma {
-        box-shadow: none !important; border: none !important; margin: 0 !important; height: auto !important;
+        box-shadow: none !important; border: none !important; margin: 0 !important;
         ${mode === 'A4'
         ? `width: 100% !important; padding: 0 !important; font-size: 10pt !important;`
-        : `width: 100% !important; max-width: 78mm !important; padding: 6px 4px !important; font-size: 8pt !important; display: block !important;`
+        : `width: 100% !important; max-width: 78mm !important; padding: 6px 4px !important; font-size: 8pt !important;`
       }
       }
 
@@ -233,10 +233,9 @@ const ProformaModal = ({
     w.document.write(`<html><head><title>PROFORMA - ${companyInfo.name}</title><style>${printStyles}</style></head><body>${htmlToPrint}</body></html>`);
     w.document.close();
     w.focus();
-    // In Kiosk mode, calling w.print() directly inside the handler is better after rendering.
+    // Retraso para que el DOM pinte antes de llamar al Print Dialog de Google
     setTimeout(() => {
       w.print();
-      setTimeout(() => w.close(), 1000);
     }, 250);
 
     w.onafterprint = () => {
