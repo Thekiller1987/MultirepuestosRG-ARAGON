@@ -48,36 +48,34 @@ const PreviewBox = styled.div`
 `;
 
 const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
-    const [quantity, setQuantity] = useState(1);
-    const barcodeRef = useRef(null);
+  const [quantity, setQuantity] = useState(1);
+  const barcodeRef = useRef(null);
 
-    if (!isOpen || !product) return null;
+  if (!isOpen || !product) return null;
 
-    // Usa valor seguro; si el producto no tiene código, se imprime N/A, pero el barcode fallará renderizando si está muy vacío, por lo que ponemos "0000" fallback.
-    const barcodeValue = product.codigo && String(product.codigo).trim().length > 0 ? String(product.codigo).trim() : '0000000';
-    const companyName = settings?.empresa_nombre || 'Multirepuestos RG';
+  const barcodeValue = product.codigo && String(product.codigo).trim().length > 0 ? String(product.codigo).trim() : '0000000';
+  const companyName = settings?.empresa_nombre || 'MultirepuestosRG ARAGÓN';
+  const logoUrl = settings?.empresa_logo_url || '/icons/logo.png';
 
-    // Format price
-    const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Format price
+  const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    const handlePrint = () => {
-        const qty = parseInt(quantity, 10);
-        if (isNaN(qty) || qty < 1) return alert("Por favor ingresa una cantidad válida mayor a 0.");
+  const handlePrint = () => {
+    const qty = parseInt(quantity, 10);
+    if (isNaN(qty) || qty < 1) return alert("Por favor ingresa una cantidad válida mayor a 0.");
 
-        // Extract the SVG element from our hidden barcode component
-        let svgHtml = '';
-        if (barcodeRef.current) {
-            // Encontrar el SVG generado por react-barcode
-            const svgElement = barcodeRef.current.querySelector('svg');
-            if (svgElement) {
-                svgHtml = svgElement.outerHTML;
-            }
-        }
+    // Extract the SVG element from our hidden barcode component
+    let svgHtml = '';
+    if (barcodeRef.current) {
+      // Encontrar el SVG generado por react-barcode
+      const svgElement = barcodeRef.current.querySelector('svg');
+      if (svgElement) {
+        svgHtml = svgElement.outerHTML;
+      }
+    }
 
-        // Configuración CSS adaptada a etiquetas térmicas pequeñas ~50x25mm
-        // Al no tener control exacto del margen de la impresora desde navegador, 
-        // se recomienda padding mínimo y usar flex/grid para centrar.
-        const printStyles = `
+    // Configuración CSS adaptada a etiquetas térmicas pequeñas ~50x25mm
+    const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
@@ -106,91 +104,93 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
         page-break-after: auto;
       }
 
-      .l-brand { font-size: 2mm; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5mm; text-align: center; line-height: 1; letter-spacing: 0.2mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
-      .l-name { font-size: 2.3mm; font-weight: 700; text-align: center; margin-bottom: 0.5mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .l-brand { display: flex; align-items: center; justify-content: center; gap: 2mm; font-size: 2.2mm; font-weight: 900; text-transform: uppercase; margin-bottom: 0.5mm; text-align: center; line-height: 1; letter-spacing: 0.2mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
+      .l-brand img { height: 4mm; width: auto; filter: grayscale(100%) contrast(200%); }
+      .l-name { font-size: 2.5mm; font-weight: 700; text-align: center; margin-bottom: 0.5mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
       .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; }
       .l-barcode svg { width: auto; height: 8mm; max-width: 44mm; margin-bottom: 0.5mm;} /* Forzar encoger svg si es muy largo */
       .l-price { font-size: 4.5mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
     `;
 
-        // Generar N contenedores de etiqueta
-        let labelsHtml = '';
-        const priceText = `C$${fmt(product.venta)}`;
-        // Truncate name safely para etiquetas
-        const shortName = (product.nombre || '').substring(0, 30);
+    // Generar N contenedores de etiqueta
+    let labelsHtml = '';
+    const priceText = `C$${fmt(product.venta)}`;
+    // Truncate name safely para etiquetas
+    const shortName = (product.nombre || '').substring(0, 30);
 
-        for (let i = 0; i < qty; i++) {
-            labelsHtml += `
+    for (let i = 0; i < qty; i++) {
+      labelsHtml += `
         <div class="label-container">
-            <div class="l-brand">${companyName}</div>
+            <div class="l-brand"><img src="${logoUrl}" alt="logo"/> ${companyName}</div>
             <div class="l-name">${shortName}</div>
             <div class="l-barcode">${svgHtml}</div>
             <div class="l-price">${priceText}</div>
         </div>
         `;
-        }
+    }
 
-        const w = window.open('', '_blank', 'width=400,height=400');
-        if (!w) {
-            alert("El navegador bloqueó la ventana emergente.");
-            return;
-        }
+    const w = window.open('', '_blank', 'width=400,height=400');
+    if (!w) {
+      alert("El navegador bloqueó la ventana emergente.");
+      return;
+    }
 
-        w.document.write(`<html><head><title>Etiqueta_${barcodeValue}</title><style>${printStyles}</style></head><body>${labelsHtml}</body></html>`);
-        w.document.close();
-        w.focus();
+    w.document.write(`<html><head><title>Etiqueta_${barcodeValue}</title><style>${printStyles}</style></head><body>${labelsHtml}</body></html>`);
+    w.document.close();
+    w.focus();
 
-        setTimeout(() => {
-            w.print();
-        }, 400);
+    // Mantenemos el cuadro de Chrome abierto para poder elegir la impresora correcta
+    setTimeout(() => {
+      w.print();
+    }, 500);
 
-        w.onafterprint = () => {
-            try { w.close(); } catch { }
-            onClose();
-        };
-    };
+    onClose(); // Cierra el modal reactivo verde, pero deja el cuadro de Chrome activo
+  };
 
-    return (
-        <AnimatePresence>
-            <ModalOverlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
-                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}>
-                    <ModalContent onClick={e => e.stopPropagation()}>
-                        <ModalTitle><FaBarcode style={{ color: '#10b981' }} /> Imprimir Etiqueta Térmica</ModalTitle>
+  return (
+    <AnimatePresence>
+      <ModalOverlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}>
+          <ModalContent onClick={e => e.stopPropagation()}>
+            <ModalTitle><FaBarcode style={{ color: '#10b981' }} /> Imprimir Etiqueta Térmica</ModalTitle>
 
-                        <FormGroup>
-                            <Label>Vista Previa de Generación</Label>
-                            <PreviewBox>
-                                <div style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{settings?.empresa_nombre || 'Multirepuestos RG'}</div>
-                                <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{product.nombre}</div>
-                                {/* Oculto, pero en el DOM para extraer el SVG */}
-                                <div ref={barcodeRef}>
-                                    <Barcode value={barcodeValue} format="CODE128" width={2} height={40} displayValue={true} fontSize={14} background="transparent" margin={0} />
-                                </div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: '900', marginTop: '2px' }}>C${fmt(product.venta)}</div>
-                            </PreviewBox>
-                        </FormGroup>
+            <FormGroup>
+              <Label>Vista Previa de Generación</Label>
+              <PreviewBox>
+                <div style={{ fontSize: '0.8rem', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <img src={logoUrl} alt="logo" style={{ height: '14px', filter: 'grayscale(100%)' }} />
+                  {companyName}
+                </div>
+                <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{product.nombre}</div>
+                {/* Oculto, pero en el DOM para extraer el SVG */}
+                <div ref={barcodeRef}>
+                  <Barcode value={barcodeValue} format="CODE128" width={2} height={40} displayValue={true} fontSize={14} background="transparent" margin={0} />
+                </div>
+                <div style={{ fontSize: '1.2rem', fontWeight: '900', marginTop: '2px' }}>C${fmt(product.venta)}</div>
+              </PreviewBox>
+            </FormGroup>
 
-                        <FormGroup>
-                            <Label>Cantidad de etiquetas a imprimir al mismo tiempo:</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                max="500"
-                                value={quantity}
-                                onChange={e => setQuantity(e.target.value)}
-                                autoFocus
-                            />
-                        </FormGroup>
+            <FormGroup>
+              <Label>Cantidad de etiquetas a imprimir al mismo tiempo:</Label>
+              <Input
+                type="number"
+                min="1"
+                max="500"
+                value={quantity}
+                onChange={e => setQuantity(e.target.value)}
+                autoFocus
+              />
+            </FormGroup>
 
-                        <ButtonRow>
-                            <CancelButton onClick={onClose}>Cancelar</CancelButton>
-                            <PrintButton onClick={handlePrint}><FaPrint /> Imprimir Etiquetas</PrintButton>
-                        </ButtonRow>
-                    </ModalContent>
-                </motion.div>
-            </ModalOverlay>
-        </AnimatePresence>
-    );
+            <ButtonRow>
+              <CancelButton onClick={onClose}>Cancelar</CancelButton>
+              <PrintButton onClick={handlePrint}><FaPrint /> Imprimir Etiquetas</PrintButton>
+            </ButtonRow>
+          </ModalContent>
+        </motion.div>
+      </ModalOverlay>
+    </AnimatePresence>
+  );
 };
 
 export default BarcodeLabelModal;
