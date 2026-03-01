@@ -3,7 +3,7 @@ import {
   FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, FaTrashAlt, FaLock,
   FaHistory, FaSync, FaKeyboard, FaTimes,
   FaFileInvoice, FaMoneyBillWave, FaArrowDown, FaArrowUp,
-  FaPercentage, FaTag, FaEdit, FaPencilAlt
+  FaPercentage, FaTag, FaEdit, FaPencilAlt, FaBoxOpen
 } from 'react-icons/fa';
 import { AnimatePresence } from 'framer-motion';
 
@@ -164,6 +164,22 @@ const POS = () => {
 
   const openModal = (name, data = null) => setModal({ name, data });
   const closeModal = () => setModal({ name: null, data: null });
+
+  const handleOpenDrawer = () => {
+    // Renderiza un iframe temporal e imprime un punto invisible para obligar al Windows Spooler
+    // a enviar la página a la térmica y patear la gaveta vía RJ11.
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    iframe.contentWindow.document.write('<html><body><p style="color:white; font-size:1px;">.</p></body></html>');
+    iframe.contentWindow.document.close();
+    iframe.contentWindow.focus();
+
+    setTimeout(() => {
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 2000);
+    }, 200);
+  };
 
   const refreshData = async () => {
     try {
@@ -411,6 +427,9 @@ const POS = () => {
       }
 
       showAlert({ title: "¡Éxito!", message: "Venta procesada." });
+
+      // Abrir el cajón eléctrico automáticamente incluso si no se imprime ticket (a petición del usuario)
+      handleOpenDrawer();
 
       // 2. Ejecutar proceso en background
       processSalePromise(); // No awaits
@@ -687,6 +706,9 @@ const POS = () => {
         <S.BackButton to="/dashboard"><FaArrowLeft /> Regresar</S.BackButton>
         <div style={{ fontWeight: '800', letterSpacing: '1px', userSelect: 'none' }} onDoubleClick={handleSecretTrigger}>SISTEMA POS</div>
         <div className="right-actions">
+          <S.Button secondary onClick={handleOpenDrawer} title="Abrir Gaveta (Sin Venta)">
+            <FaBoxOpen color="#3b82f6" />
+          </S.Button>
           <S.Button secondary onClick={refreshData} title="Sincronizar">
             <FaSync />
           </S.Button>

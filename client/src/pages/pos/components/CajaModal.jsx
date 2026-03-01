@@ -291,7 +291,7 @@ const CajaModal = ({
         .brand .brand-logo-container {
            display: flex !important; justify-content: center !important; margin-bottom: 5px !important;
         }
-        .brand img { margin: 0 auto !important; width: 60% !important; max-width: 140px !important; display: block !important; filter: none !important; opacity: 1 !important; }
+        .brand img { margin: 0 auto !important; width: 90% !important; max-width: 240px !important; display: block !important; filter: grayscale(100%) contrast(200%) brightness(50%) !important; opacity: 1 !important; }
         .brand h2 { font-size: 20pt !important; letter-spacing: 2px !important; margin-bottom: 5px !important; text-transform: uppercase !important; font-weight: 900 !important; }
         .brand p { font-size: 11pt !important; font-weight: 800 !important; margin: 3px 0 !important; }
         .section-title { font-size: 13pt !important; margin-bottom: 12px !important; border-bottom: 2px dashed #000 !important; font-weight: 900 !important; text-decoration: none !important; padding-bottom: 4px !important; }

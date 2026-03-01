@@ -468,7 +468,7 @@ const TicketModal = ({
         #print-wrapper-ticket * { color: #000 !important; font-weight: 700 !important; }
         #print-wrapper-ticket .brand { text-align: center !important; border-bottom: 2px dashed #000 !important; padding-bottom: 10px !important; margin-bottom: 10px !important; }
         #print-wrapper-ticket .brand-logo-container { display: flex !important; justify-content: center !important; margin-bottom: 5px !important; }
-        #print-wrapper-ticket .brand img { margin: 0 auto !important; width: 60% !important; max-width: 140px !important; display: block !important; filter: none !important; opacity: 1 !important; }
+        #print-wrapper-ticket .brand img { margin: 0 auto !important; width: 90% !important; max-width: 240px !important; display: block !important; filter: grayscale(100%) contrast(200%) brightness(50%) !important; opacity: 1 !important; }
         #print-wrapper-ticket table.items th { border-bottom: 2px dashed #000 !important; font-weight: 900 !important; }
         #print-wrapper-ticket .grand-total { font-size: 14pt !important; font-weight: 900 !important; border-top: 2px solid #000 !important; padding-top: 5px !important; margin-top: 5px !important; }
         #print-wrapper-ticket .thanks { font-weight: 800 !important; border-top: 2px dashed #000 !important; }
