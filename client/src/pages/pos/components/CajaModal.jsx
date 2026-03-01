@@ -278,7 +278,7 @@ const CajaModal = ({
         html, body {
           background: #fff; margin: 0 !important; padding: 0 !important;
           -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
-          color: #000 !important; font-family: 'League Spartan', sans-serif !important;
+          color: #000 !important; font-family: 'League Spartan', 'Consolas', sans-serif !important;
         }
         #print-wrapper-caja, #print-wrapper-caja * {
           color: #000 !important; font-weight: 700 !important;
@@ -288,12 +288,20 @@ const CajaModal = ({
         #print-wrapper-caja {
           width: 80mm !important; padding: 0 !important; border: none !important;
         }
-        .brand h2 { font-size: 20pt !important; letter-spacing: 2px !important; margin-bottom: 5px !important; }
-        .section-title { font-size: 14pt !important; margin-bottom: 12px !important; border-bottom: 2px solid #000 !important; }
-        .row { font-size: 12pt !important; margin-bottom: 6px !important; font-weight: 900 !important; }
-        .row.big { font-size: 16pt !important; margin-top: 15px !important; border-top: 4px solid #000 !important; }
-        .row.alert { font-size: 18pt !important; padding: 10px !important; border: 4px solid #000 !important; }
+        .brand .brand-logo-container {
+           display: flex !important; justify-content: center !important; margin-bottom: 5px !important;
+        }
+        .brand img { margin: 0 auto !important; width: 60% !important; max-width: 140px !important; display: block !important; filter: none !important; opacity: 1 !important; }
+        .brand h2 { font-size: 20pt !important; letter-spacing: 2px !important; margin-bottom: 5px !important; text-transform: uppercase !important; font-weight: 900 !important; }
+        .brand p { font-size: 11pt !important; font-weight: 800 !important; margin: 3px 0 !important; }
+        .section-title { font-size: 13pt !important; margin-bottom: 12px !important; border-bottom: 2px dashed #000 !important; font-weight: 900 !important; text-decoration: none !important; padding-bottom: 4px !important; }
+        .row { font-size: 11pt !important; margin-bottom: 6px !important; font-weight: 800 !important; }
+        .row.big { font-size: 14pt !important; margin-top: 15px !important; border-top: 2px solid #000 !important; padding-top: 8px !important; font-weight: 900 !important; }
+        .row.alert { font-size: 16pt !important; padding: 6px !important; border: 2px dashed #000 !important; }
+        .row.sub { font-size: 10pt !important; font-weight: 700 !important; font-style: normal !important; color: #000 !important; margin-bottom: 8px !important; }
         .text-right { text-align: right !important; }
+        table th { border-bottom: 2px dashed #000 !important; font-weight: 900 !important; font-size: 10pt !important; }
+        table td { border-bottom: 1px dashed #000 !important; font-weight: 700 !important; font-size: 10pt !important; }
         
         @media print {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -484,7 +492,9 @@ const CajaModal = ({
             <div style={{ display: 'none' }}>
               <PrintWrapper id="print-wrapper-caja" className="print-80">
                 <div className="brand">
-                  <img src="/icons/logo.png" alt="Logo" style={{ filter: 'grayscale(100%) contrast(150%)' }} />
+                  <div className="brand-logo-container">
+                    <img src="/icons/logo.png" alt="Logo" style={{ filter: 'none', opacity: 1, margin: '0 auto', maxWidth: '140px', display: 'block' }} />
+                  </div>
                   <h2>CIERRE DE CAJA</h2>
                   <p>Multirepuestos RG</p>
                   <p>{new Date().toLocaleString('es-NI')}</p>

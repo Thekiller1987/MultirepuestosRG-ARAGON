@@ -180,9 +180,20 @@ function calculateReportStats(session) {
     const normalizedTx = { ...tx, pagoDetalles: pd, displayAmount: totalAmount }; // Use totalAmount for display in lists
 
     // Desglose NO EFECTIVO
-    const txTarjeta = Number(pd.tarjeta || 0);
-    const txTransf = Number(pd.transferencia || 0);
-    const txCredito = Number(pd.credito || 0);
+    let txTarjeta = Number(pd.tarjeta || 0);
+    let txTransf = Number(pd.transferencia || 0);
+    let txCredito = Number(pd.credito || 0);
+
+    // ★ SANITY CHECK: Evitar bug de "125 Millones" si el cajero tipeó un voucher en el campo de monto de tarjeta
+    const sumNoEfe = txTarjeta + txTransf + txCredito;
+    let overflowCambioFalso = 0;
+    if (sumNoEfe > Math.abs(totalAmount) && (txTarjeta > 10000 || txTransf > 10000)) {
+      // Si el total no-efectivo es ridículamente mayor al total de la venta, es un error de tipeo.
+      // Capamos los montos al total de la venta para no romper el reporte.
+      overflowCambioFalso = sumNoEfe - Math.abs(totalAmount);
+      if (txTarjeta > Math.abs(totalAmount)) txTarjeta = Math.abs(totalAmount);
+      if (txTransf > Math.abs(totalAmount)) txTransf = Math.abs(totalAmount);
+    }
 
     // Acumuladores Informativos de No Efectivo (Solo ventas/abonos reales, NO ajustes)
     if (t.startsWith('venta') || t.includes('abono') || t.includes('pedido') || t.includes('apartado')) {
@@ -197,8 +208,13 @@ function calculateReportStats(session) {
     if (t === 'venta_contado' || t === 'venta_mixta' || t === 'venta_credito' || t.startsWith('venta')) {
       if (pd.efectivo !== undefined || pd.dolares !== undefined) {
         const cashInCordobas = Number(pd.efectivo || 0);
+        // Descontamos el falso cambio generado por el error de tipeo en tarjeta
+        let cashOutCordobas = Number(pd.cambio || 0);
+        if (overflowCambioFalso > 0 && cashOutCordobas >= overflowCambioFalso) {
+          cashOutCordobas -= overflowCambioFalso;
+        }
+
         const cashInDolares = Number(pd.dolares || 0);
-        const cashOutCordobas = Number(pd.cambio || 0);
 
         netCordobas += (cashInCordobas - cashOutCordobas);
         netDolares += cashInDolares;
@@ -209,7 +225,7 @@ function calculateReportStats(session) {
       }
     }
     else if (t.includes('abono')) {
-      if (pd.dolares !== undefined) {
+      if (pd.dolares !== undefined || pd.efectivo !== undefined) {
         netDolares += Number(pd.dolares || 0);
         netCordobas += Number(pd.efectivo || 0);
       } else {
@@ -223,22 +239,19 @@ function calculateReportStats(session) {
     else if (t === 'salida') {
       netCordobas -= Math.abs(rawAmount);
     }
-    else if (t.includes('devolucion')) {
-      netCordobas += rawAmount; // already negative
+    else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
+      if (pd.efectivo !== undefined) netCordobas -= Number(pd.efectivo || 0);
+      if (pd.dolares !== undefined) netDolares -= Number(pd.dolares || 0);
+      if (pd.efectivo === undefined && pd.dolares === undefined) netCordobas += rawAmount; // already negative
     }
     else if (t === 'ajuste') {
       if (pd.target === 'efectivo') {
         netCordobas += rawAmount;
         if (pd.hidden) totalHidden += rawAmount;
       }
-      if (pd.target === 'dolares') {
+      else if (pd.target === 'dolares') {
         netDolares += rawAmount;
       }
-    }
-    else {
-      // Default: Si no es un tipo específico, asumimos que el rawAmount es el impacto en efectivo
-      // Esto cubre tipos como 'abono' que no tienen desglose de efectivo/dolares explícito
-      netCordobas += rawAmount;
     }
 
     // 3. TOTAL INGRESOS GRUESOS (Solo transacciones reales, NO ajustes secretos)

@@ -46,34 +46,34 @@ const PrintWrapper = styled.div`
   /* Encabezado */
   .brand {
     text-align: center;
-    border-bottom: 1px dashed #333;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+    border-bottom: 2px dashed #000;
+    padding-bottom: 15px;
+    margin-bottom: 12px;
   }
-  .brand h1 { margin: 6px 0 2px; font-size: 1.35rem; font-weight: 700; color: #0b72b9; line-height: 1.25; }
-  .brand small { color: #555; display: block; margin: 3px 0; line-height: 1.35; white-space: normal; word-break: break-word; }
+  .brand h1 { margin: 6px 0 2px; font-size: 1.5rem; font-weight: 900; color: #000; line-height: 1.25; text-transform: uppercase; }
+  .brand small { color: #000; display: block; margin: 3px 0; line-height: 1.35; white-space: normal; word-break: break-word; font-weight: 700; font-size: 0.95rem; }
 
   /* Meta */
-  .meta { font-size: .9rem; margin-bottom: 12px; border-bottom: 1px dashed #ccc; padding-bottom: 8px; }
-  .meta p { margin: 2px 0; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px 8px; font-weight: 400; }
-  .meta-label { font-weight: 700; }
-  .meta-value { font-weight: 400; }
+  .meta { font-size: 0.95rem; margin-bottom: 12px; border-bottom: 2px dashed #000; padding-bottom: 8px; font-weight: 700; color: #000; }
+  .meta p { margin: 3px 0; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px 8px; font-weight: 700; }
+  .meta-label { font-weight: 900; }
+  .meta-value { font-weight: 800; text-align: right; }
 
   /* Tabla */
-  table.items { width: 100%; border-collapse: collapse; font-size: .9rem; table-layout: fixed; }
-  table.items th, table.items td { padding: 6px 4px; vertical-align: top; word-wrap: break-word; }
-  table.items th { border-bottom: 2px solid #333; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; color: #1e3a8a; }
+  table.items { width: 100%; border-collapse: collapse; font-size: 1rem; table-layout: fixed; }
+  table.items th, table.items td { padding: 4px 2px; vertical-align: top; word-wrap: break-word; color: #000; font-weight: 700; }
+  table.items th { border-bottom: 2px solid #000; font-weight: 900; text-transform: uppercase; font-size: 0.85rem; color: #000; }
   &.compact table.items th, &.compact table.items td { padding: 4px 2px; }
   .text-right { text-align: right; }
   .col-qty { width: 15%; text-align: center; }
   .col-unit { width: 25%; text-align: right; }
   .col-total { width: 25%; text-align: right; }
-  table.items td:nth-child(2) { white-space: normal; text-align: left; }
+  table.items td:nth-child(2) { white-space: normal; text-align: left; font-weight: 800; }
 
   /* Totales */
-  .totals { border-top: 2px solid #333; padding-top: 6px; margin-top: 12px; }
-  .badge { display: inline-block; font-weight: 700; letter-spacing: .5px; padding: 6px 10px; border: 2px solid #0b72b9; border-radius: 4px; margin: 10px auto; text-align: center; color: #0b72b9; font-size: 0.8rem; }
-  .thanks { text-align: center; font-size: .85rem; border-top: 1px dashed #333; padding-top: 10px; margin-top: 12px; color: #444; line-height: 1.4; }
+  .totals { border-top: 2px dashed #000; padding-top: 6px; margin-top: 12px; }
+  .badge { display: inline-block; font-weight: 900; letter-spacing: .5px; padding: 6px 10px; border: 2px solid #000; border-radius: 4px; margin: 10px auto; text-align: center; color: #000; font-size: 0.85rem; }
+  .thanks { text-align: center; font-size: 1rem; border-top: 2px dashed #000; padding-top: 10px; margin-top: 12px; color: #000; line-height: 1.4; font-weight: 800; }
 
   /* ====== A4 SPECIFIC LAYOUT ====== */
   &.print-a4 {
@@ -116,8 +116,13 @@ const Wrapper = styled.div`
 `;
 
 const TicketLogo = styled.img`
-  width: 100%; max-width: 160px; height: auto; display: block; margin: 0 auto 6px; border-radius: 6px;
+  width: 100%; max-width: 160px; height: auto; display: block; margin: 0 auto; border-radius: 6px;
   &.a4-logo { margin: 0; max-width: 140px; }
+
+  @media print {
+    filter: none !important;
+    opacity: 1 !important;
+  }
 `;
 
 const Tag = styled.span`
@@ -211,7 +216,14 @@ const ProformaModal = ({
         #print-wrapper-proforma .totals { display: flex !important; justify-content: flex-end !important; margin-top: 20px !important; border-top: none !important; }
         #print-wrapper-proforma .totals-box { width: 300px !important; background: #f8fafc !important; padding: 15px !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important; }
       ` : `
-        #print-wrapper-proforma .brand { text-align: center !important; border-bottom: 1px dashed #333 !important; }
+        #print-wrapper-proforma { font-family: 'Consolas', monospace !important; color: #000 !important; font-weight: 700 !important; }
+        #print-wrapper-proforma * { color: #000 !important; font-weight: 700 !important; }
+        #print-wrapper-proforma .brand { text-align: center !important; border-bottom: 2px dashed #000 !important; padding-bottom: 10px !important; margin-bottom: 10px !important; }
+        #print-wrapper-proforma .brand-logo-container { display: flex !important; justify-content: center !important; margin-bottom: 5px !important; }
+        #print-wrapper-proforma .brand img { margin: 0 auto !important; width: 60% !important; max-width: 140px !important; display: block !important; filter: none !important; opacity: 1 !important; }
+        #print-wrapper-proforma table.items th { border-bottom: 2px dashed #000 !important; font-weight: 900 !important; }
+        #print-wrapper-proforma .grand-total { font-size: 14pt !important; font-weight: 900 !important; border-top: 2px solid #000 !important; padding-top: 5px !important; margin-top: 5px !important; }
+        #print-wrapper-proforma .thanks { font-weight: 800 !important; border-top: 2px dashed #000 !important; }
         #print-wrapper-proforma .meta p { display: flex !important; justify-content: space-between !important; }
       `}
     `;
@@ -309,14 +321,14 @@ const ProformaModal = ({
             <div className="totals">
               <div className="totals-box">
                 <TotalsRow><span>Subtotal:</span><span>C${fmt(subtotal)}</span></TotalsRow>
-                {discount > 0 && <TotalsRow style={{ color: '#dc3545' }}><span>Descuento:</span><span>- C${fmt(discount)}</span></TotalsRow>}
-                <TotalsRow className="grand-total" style={{ fontWeight: 'bold', fontSize: '1.2rem', marginTop: 5, borderTop: '2px solid black' }}>
+                {discount > 0 && <TotalsRow style={{ color: '#000' }}><span>Descuento:</span><span>- C${fmt(discount)}</span></TotalsRow>}
+                <TotalsRow className="grand-total" style={{ fontWeight: '900', fontSize: '1.4rem', marginTop: 5, borderTop: '2px solid black', paddingTop: 5 }}>
                   <span>TOTAL:</span><span>C${fmt(total)}</span>
                 </TotalsRow>
 
-                <div style={{ marginTop: 12, textAlign: 'center' }}>
+                <div style={{ marginTop: 15, textAlign: 'center' }}>
                   <span className="badge">DOCUMENTO NO VÁLIDO COMO FACTURA</span>
-                  <p style={{ margin: '5px 0 0', fontSize: '0.75rem', color: '#666' }}>Precios sujetos a cambio. Válido por 3 días.</p>
+                  <p style={{ margin: '8px 0 0', fontSize: '0.9rem', color: '#000', fontWeight: '800' }}>Precios sujetos a cambio. Válido por 3 días.</p>
                 </div>
               </div>
             </div>

@@ -235,6 +235,17 @@ const PaymentModal = ({
       showAlert?.({ title: 'Dato Requerido', message: 'Ingrese el número de referencia para la transferencia.', type: 'warning' });
       return;
     }
+
+    // ★ SANITY CHECK: Prevenir error de tipeo donde ponen el voucher en el campo de monto
+    if ((numTarjeta + numTransferencia) > (Number(total) + 0.1)) {
+      showAlert?.({
+        title: 'Monto Inválido',
+        message: 'La suma de pagos con Tarjeta y Transferencia no puede ser mayor al total de la venta.',
+        type: 'error'
+      });
+      return;
+    }
+
     if (saving) return;
     setSaving(true);
 
