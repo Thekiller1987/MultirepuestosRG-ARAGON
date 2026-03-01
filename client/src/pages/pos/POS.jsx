@@ -166,12 +166,24 @@ const POS = () => {
   const closeModal = () => setModal({ name: null, data: null });
 
   const handleOpenDrawer = () => {
-    // Renderiza un iframe temporal e imprime un punto invisible para obligar al Windows Spooler
-    // a enviar la página a la térmica y patear la gaveta vía RJ11.
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
     document.body.appendChild(iframe);
-    iframe.contentWindow.document.write('<html><body><p style="color:white; font-size:1px;">.</p></body></html>');
+
+    // Inyectamos CSS para eliminar márgenes, altura y evitar que imprima salto de página
+    const printContent = `
+      <html>
+        <head>
+          <style>
+            @page { margin: 0; size: auto; }
+            body { margin: 0; padding: 0; display: none; visibility: hidden; height: 0; overflow: hidden; }
+          </style>
+        </head>
+        <body></body>
+      </html>
+    `;
+
+    iframe.contentWindow.document.write(printContent);
     iframe.contentWindow.document.close();
     iframe.contentWindow.focus();
 

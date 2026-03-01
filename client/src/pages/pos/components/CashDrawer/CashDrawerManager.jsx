@@ -44,14 +44,27 @@ export const CashDrawerManager = () => {
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
-        iframe.contentWindow.document.write('<html><body><p style="color:white; font-size:1px;">.</p></body></html>');
+
+        const printContent = `
+          <html>
+            <head>
+              <style>
+                @page { margin: 0; size: auto; }
+                body { margin: 0; padding: 0; display: none; visibility: hidden; height: 0; overflow: hidden; }
+              </style>
+            </head>
+            <body></body>
+          </html>
+        `;
+
+        iframe.contentWindow.document.write(printContent);
         iframe.contentWindow.document.close();
         iframe.contentWindow.focus();
 
         setTimeout(() => {
             iframe.contentWindow.print();
             setTimeout(() => document.body.removeChild(iframe), 2000);
-            setStatus("Se envió la orden a la impresora térmica para abrir el cajón.");
+            setStatus("Se envió la orden de impresión invisible al navegador. (Asegúrate de tener --kiosk-printing activado)");
         }, 200);
     };
 
@@ -61,24 +74,23 @@ export const CashDrawerManager = () => {
             <MethodBox>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                     <FaInfoCircle color="#0f172a" size={20} />
-                    <h4 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>Cajón vía Impresora (Cable tipo Teléfono / RJ11)</h4>
+                    <h4 style={{ margin: 0, color: '#0f172a', fontSize: '1.1rem' }}>Cajón vía Impresora (Cero Instalación)</h4>
                 </div>
 
                 <p style={{ margin: '0 0 15px 0', color: '#475569', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                    Para abrir este tipo de cajón desde aquí o automáticamente desde el Punto de Venta, tu impresora térmica debe estar configurada en Windows para patear la gaveta.
+                    El sistema enviará una impresión silenciosa a la impresora térmica, quien se encargará de patear el cajón de forma natural sin instalar ningún programa local.
                     <br /><br />
-                    <b>Configuración en Windows:</b>
-                    <ol style={{ marginTop: '5px', paddingLeft: '20px' }}>
-                        <li>Ve a <b>Panel de Control</b> {'>'} <b>Dispositivos e Impresoras</b>.</li>
-                        <li>Clic derecho en tu Impresora Térmica y selecciona <b>"Propiedades de impresora"</b> (Printer Properties).</li>
-                        <li>Ve a la pestaña <b>Configuración del Dispositivo</b> (Device Settings) o <b>Preferencias / Avanzado</b>.</li>
-                        <li>Busca una opción llamada <b>Cash Drawer</b> (Gaveta de Dinero) o parecida.</li>
-                        <li>Cámbiala a <b>"Open before printing"</b> (Abrir antes de imprimir) o <b>"Open after printing"</b> y guarda los cambios.</li>
-                    </ol>
+                    <b>REQUISITO OBLIGATORIO:</b> Para que Google Chrome no te muestre la pantalla blanca de imprimir pidiendo tu permiso cada vez y abriendo el cajón al aire, debes abrir Google Chrome en modo kiosko.
+                    <ul style={{ marginTop: '5px', paddingLeft: '20px', color: '#0f172a' }}>
+                        <li>Cierra Chrome por completo.</li>
+                        <li>Da clic derecho a tu acceso directo de Chrome y elige <b>Propiedades</b>.</li>
+                        <li>Al final del renglón <b>"Destino"</b> (después de las comillas), escribe <b>--kiosk-printing</b> y guarda.</li>
+                        <li>Abre el sistema con ese acceso directo, asegúrate que la térmica sea la "Impresora Predeterminada de Windows" y las gavetas abrirán instantáneamente.</li>
+                    </ul>
                 </p>
 
                 <Button onClick={openDrawer}>
-                    <FaBoxOpen size={24} /> Abrir Cajón
+                    <FaBoxOpen size={24} /> Probar Envío
                 </Button>
 
                 {status && (

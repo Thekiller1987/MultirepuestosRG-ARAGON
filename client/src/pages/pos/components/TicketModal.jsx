@@ -104,14 +104,14 @@ const PrintWrapper = styled.div`
 
   /* --- ITEMS --- */
   table.items { width: 100%; border-collapse: collapse; font-size: 1rem; table-layout: fixed; }
-  table.items th, table.items td { padding: 4px 2px; vertical-align: top; word-wrap: break-word; color: #000; font-weight: 700; }
+  table.items th, table.items td { padding: 4px 2px; vertical-align: top; word-wrap: break-word; word-break: break-word; color: #000; font-weight: 700; }
   table.items th { border-bottom: 2px solid #000; font-weight: 900; text-transform: uppercase; font-size: 0.85rem; color: #000; }
   &.compact table.items th, &.compact table.items td { padding: 4px 2px; }
   .text-right { text-align: right; }
   .col-qty { width: 15%; text-align: center; }
-  .col-unit { width: 25%; text-align: right; }
+  .col-unit { width: 30%; text-align: right; }
   .col-total { width: 25%; text-align: right; }
-  table.items td:nth-child(2) { white-space: normal; text-align: left; font-weight: 800; }
+  table.items td:nth-child(2) { white-space: normal; text-align: left; font-weight: 800; width: 30%; }
 
   /* --- TOTALS --- */
   .totals { border-top: 2px dashed #000; padding-top: 6px; margin-top: 12px; }
@@ -429,15 +429,15 @@ const TicketModal = ({
     // Estilos CSS inyectados para ventana de impresión
     const printStyles = `
       @charset "UTF-8";
-      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm auto'}; margin: ${mode === 'A4' ? '12mm' : '0'}; }
+      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm 297mm'}; margin: ${mode === 'A4' ? '12mm' : '0'}; }
       html, body { background: #fff; margin: 0 !important; padding: 0 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; color: #000 !important; }
       
       /* Reset para impresión */
       #print-wrapper-ticket {
-        box-shadow: none !important; border: none !important; margin: 0 !important;
+        box-shadow: none !important; border: none !important; margin: 0 auto !important;
         ${mode === 'A4'
         ? `width: 100% !important; padding: 0 !important; font-size: 10pt !important;`
-        : `width: 80mm !important; padding: 6px 4px !important; font-size: 8pt !important;`
+        : `width: 100% !important; max-width: 78mm !important; padding: 0 !important; font-size: 8pt !important; overflow: hidden !important;`
       }
       }
 
