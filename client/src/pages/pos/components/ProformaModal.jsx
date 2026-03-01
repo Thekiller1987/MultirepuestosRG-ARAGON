@@ -183,7 +183,7 @@ const ProformaModal = ({
 
     const printStyles = `
       @charset "UTF-8";
-      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm 297mm'}; margin: 0; }
+      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : ''} }
       html, body {
         background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
       }
