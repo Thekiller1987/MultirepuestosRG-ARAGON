@@ -70,35 +70,38 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración CSS Adaptativa y Optimizada para Térmicas
+    // Configuración CSS Optimizada (152.4mm x 101.6mm)
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: auto; margin: 0mm; }
+      @page { size: 152.4mm 101.6mm; margin: 0mm; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 100%; height: 100%; 
+        width: 152.4mm; height: 101.6mm; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: 100vw; height: 90vh; /* Shrunk to 90vh to ensure it never overflows to 2 labels */
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: 152.4mm; height: 98mm; 
+        display: flex; flex-direction: row; align-items: center; justify-content: center;
         box-sizing: border-box;
-        padding: 2vh 4vw;
+        padding: 5mm;
+        gap: 8mm;
         overflow: hidden;
       }
 
-      .l-brand { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 0.5vh; font-size: 2.5vh; font-weight: 900; text-transform: uppercase; margin-bottom: 1.5vh; text-align: center; line-height: 1.1; width: 100%; }
-      /* Agressive filters to make logo pure black/white for thermal printers */
-      .l-brand img { height: 35vh; width: auto; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.5); }
-      .l-name { font-size: 3vh; font-weight: 700; text-align: center; margin-bottom: 1.5vh; line-height: 1.1; width: 100%; white-space: normal; }
-      .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; width: 100%; }
-      .l-barcode svg { width: 95%; height: 25vh; margin-bottom: 1.5vh;} 
-      .l-price { font-size: 6vh; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
+      .l-left { flex: 0 0 50mm; display: flex; align-items: center; justify-content: center; }
+      .l-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4mm; }
+
+      .l-brand-logo { height: 60mm; width: auto; object-fit: contain; filter: grayscale(100%) contrast(1000%) brightness(0.2); }
+      .l-brand-name { font-size: 5mm; font-weight: 900; text-transform: uppercase; text-align: center; line-height: 1.2; margin-bottom: 2mm; width: 100%; }
+      .l-name { font-size: 7mm; font-weight: 700; text-align: center; line-height: 1.1; width: 100%; white-space: normal; }
+      .l-barcode { display: flex; justify-content: center; width: 100%; }
+      .l-barcode svg { width: 80mm; height: 25mm; } 
+      .l-price { font-size: 15mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; }
     `;
 
     // Generar una única etiqueta
@@ -107,13 +110,15 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
 
     const labelsHtml = `
       <div class="label-container">
-          <div class="l-brand">
-            <img src="${logoUrl}" alt="logo"/>
-            <span>${companyName}</span>
+          <div class="l-left">
+            <img class="l-brand-logo" src="${logoUrl}" alt="logo"/>
           </div>
-          <div class="l-name">${shortName}</div>
-          <div class="l-barcode">${svgHtml}</div>
-          <div class="l-price">${priceText}</div>
+          <div class="l-right">
+            <div class="l-brand-name">${companyName}</div>
+            <div class="l-name">${shortName}</div>
+            <div class="l-barcode">${svgHtml}</div>
+            <div class="l-price">${priceText}</div>
+          </div>
       </div>
     `;
 
