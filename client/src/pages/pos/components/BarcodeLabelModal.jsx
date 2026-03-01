@@ -70,45 +70,41 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // La impresora LTT204 rechaza tamaños menores a 10mm (30px es muy poco y hace parpadear en rojo). 
-    // Usamos 'auto' para que respete el tamaño configurado en Windows.
-    const nameS = settings?.label_name_size || 8;
-    const bcH = settings?.label_barcode_height || 18;
-    const priceS = settings?.label_price_size || 11;
-
+    // La LTT204 rechaza menos de 10mm de alto (parpadea rojo).
+    // Configuramos medida fija sugerida por el usuario: 70mm ancho y 12mm alto (170mm excede el ancho máximo de 115mm de la impresora).
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: auto; margin: 0; }
+      @page { size: 70mm 12mm; margin: 0; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 100vw; height: 100vh; 
+        width: 70mm; height: 12mm; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: 100vw; height: 100vh; 
+        width: 70mm; height: 12mm; 
         display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
         box-sizing: border-box;
-        padding: 1mm 2mm;
+        padding: 0.5mm 1mm;
         overflow: hidden;
         page-break-inside: avoid;
       }
 
-      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; text-align: center; margin-bottom: 2px; }
+      .l-name { font-size: 7pt; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; text-align: center; margin-bottom: 0.5mm; }
       
-      .l-bottom { display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1; overflow: hidden; }
+      .l-bottom { display: flex; flex-direction: row; align-items: center; justify-content: center; flex: 1; overflow: hidden; gap: 2mm; }
       
-      .l-barcode-cont { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; overflow: hidden; }
-      .l-barcode { display: flex; justify-content: flex-start; width: 100%; height: ${bcH}px; }
-      .l-barcode svg { width: auto !important; height: ${bcH}px !important; max-width: 100%; } 
-      .l-barcode-val { font-size: 7px; font-weight: 600; margin-top: 1px; line-height: 1; }
+      .l-barcode-cont { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; overflow: hidden; }
+      .l-barcode { display: flex; justify-content: center; height: 6mm; }
+      .l-barcode svg { width: auto !important; height: 6mm !important; max-width: 100%; } 
+      .l-barcode-val { font-size: 5pt; font-weight: 600; margin-top: 0.5mm; line-height: 1; text-align: center; }
       
-      .l-price-cont { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-left: 2px; }
-      .l-price { font-size: ${priceS}px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
+      .l-price-cont { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-right: 1mm; }
+      .l-price { font-size: 10pt; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
     `;
 
     // Generar una única etiqueta
