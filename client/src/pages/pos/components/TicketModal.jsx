@@ -32,7 +32,7 @@ function openCashDrawer() {
     // Convertir bytes ESC/POS a caracteres para enviar via impresión
     const rawCmd = DRAWER_KICK_BYTES.map(b => String.fromCharCode(b)).join('');
     doc.open();
-    doc.write(`<html><head><style>@page{size:80mm 1mm;margin:0;}body{margin:0;padding:0;font-size:0;line-height:0;}</style></head><body><pre style="font-size:0;line-height:0;margin:0;padding:0;">${rawCmd}</pre></body></html>`);
+    doc.write(`<html><head><title>_</title><style>@page{margin:0;size:80mm auto;}body{margin:0;padding:0;font-size:0;line-height:0;color:transparent;}</style></head><body><pre style="font-size:0;line-height:0;margin:0;padding:0;color:transparent;">${rawCmd}</pre></body></html>`);
     doc.close();
 
     iframe.contentWindow.focus();
