@@ -70,34 +70,44 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración por Coordenadas Absolutas (Layout Fijo sin Logo)
+    // Configuración Adaptativa Automática (Sin Logo)
+    const labelW = settings?.label_width || 190;
+    const labelH = settings?.label_height || 30;
+    const nameS = settings?.label_name_size || 10;
+    const bcH = settings?.label_barcode_height || 22;
+    const priceS = settings?.label_price_size || 14;
+
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 300px 250px; margin: 0px; }
+      @page { size: auto; margin: 0px; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 300px; height: 250px; 
+        width: 100%; height: 100%; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: 300px; height: 250px; 
-        position: relative;
+        width: 100vw; height: 95vh; 
+        display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+        box-sizing: border-box;
+        padding: 1px 4px;
+        gap: 8px;
         overflow: hidden;
       }
 
-      .abs-empresa { position: absolute; left: 106px; top: 120px; font-size: 10px; font-weight: 700; white-space: nowrap; }
-      .abs-producto { position: absolute; left: 104px; top: 132px; font-size: 9px; font-weight: 400; width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .abs-precio { position: absolute; left: 105px; top: 140px; font-size: 14px; font-weight: 900; }
+      .l-info { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: 100%; }
+      .l-barcode-cont { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+
+      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; margin-bottom: 1px; }
+      .l-price { font-size: ${priceS}px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
       
-      .abs-barcode { position: absolute; left: 85px; top: 152px; width: 190px; height: 30px; }
-      .abs-barcode svg { width: 100%; height: 30px !important; }
-      
-      .abs-barcode-text { position: absolute; left: 150px; top: 183px; font-size: 10px; font-weight: 600; }
+      .l-barcode { display: flex; justify-content: center; width: 140px; height: ${bcH}px; margin: 0; padding: 0; }
+      .l-barcode svg { width: 100%; height: ${bcH}px !important; } 
+      .l-barcode-val { font-size: 8px; font-weight: 600; margin-top: 1px; }
     `;
 
     // Generar una única etiqueta
@@ -106,11 +116,14 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
 
     const labelsHtml = `
       <div class="label-container">
-          <div class="abs-empresa">${companyName}</div>
-          <div class="abs-producto">${shortName}</div>
-          <div class="abs-precio">${priceText}</div>
-          <div class="abs-barcode">${svgHtml}</div>
-          <div class="abs-barcode-text">${product.codigo_barra || ''}</div>
+          <div class="l-info">
+            <div class="l-name">${shortName}</div>
+            <div class="l-price">${priceText}</div>
+          </div>
+          <div class="l-barcode-cont">
+            <div class="l-barcode">${svgHtml}</div>
+            <div class="l-barcode-val">${product.codigo_barra || ''}</div>
+          </div>
       </div>
     `;
 
