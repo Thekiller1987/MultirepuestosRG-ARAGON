@@ -70,9 +70,8 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuración Dinámica Original (Cargada desde Base de Datos)
-    const labelW = settings?.label_width || 190;
-    const labelH = settings?.label_height || 30;
+    // La impresora LTT204 rechaza tamaños menores a 10mm (30px es muy poco y hace parpadear en rojo). 
+    // Usamos 'auto' para que respete el tamaño configurado en Windows.
     const nameS = settings?.label_name_size || 8;
     const bcH = settings?.label_barcode_height || 18;
     const priceS = settings?.label_price_size || 11;
@@ -81,30 +80,34 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: ${labelW}px ${labelH}px; margin: 0px; }
+      @page { size: auto; margin: 0; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: ${labelW}px; height: ${labelH}px; 
+        width: 100vw; height: 100vh; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: ${labelW}px; height: ${labelH}px; 
-        display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+        width: 100vw; height: 100vh; 
+        display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
         box-sizing: border-box;
-        padding: 0px 2px;
-        gap: 2px;
+        padding: 1mm 2mm;
         overflow: hidden;
+        page-break-inside: avoid;
       }
 
-      .l-mid { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; height: ${labelH}px; gap: 0px; }
-      .l-right { flex: 0 0 auto; min-width: 40px; display: flex; align-items: center; justify-content: flex-end; height: ${labelH}px; padding-right: 2px; }
-
-      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1; margin-bottom: 1px; }
-      .l-barcode { display: flex; justify-content: flex-start; width: 100%; height: ${bcH}px; margin: 0; padding: 0; }
-      .l-barcode svg { width: auto; height: ${bcH}px !important; max-width: 100%; } 
+      .l-name { font-size: ${nameS}px; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; text-align: center; margin-bottom: 2px; }
+      
+      .l-bottom { display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1; overflow: hidden; }
+      
+      .l-barcode-cont { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; height: 100%; overflow: hidden; }
+      .l-barcode { display: flex; justify-content: flex-start; width: 100%; height: ${bcH}px; }
+      .l-barcode svg { width: auto !important; height: ${bcH}px !important; max-width: 100%; } 
+      .l-barcode-val { font-size: 7px; font-weight: 600; margin-top: 1px; line-height: 1; }
+      
+      .l-price-cont { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-left: 2px; }
       .l-price { font-size: ${priceS}px; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
     `;
 
@@ -114,13 +117,16 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
 
     const labelsHtml = `
       <div class="label-container">
-          <div class="l-mid">
-            <div class="l-name">${shortName}</div>
+        <div class="l-name">${shortName}</div>
+        <div class="l-bottom">
+          <div class="l-barcode-cont">
             <div class="l-barcode">${svgHtml}</div>
+            <div class="l-barcode-val">${product.codigo_barra || ''}</div>
           </div>
-          <div class="l-right">
-            <div class="l-price">${priceText}</div>
+          <div class="l-price-cont">
+            <span class="l-price">${priceText}</span>
           </div>
+        </div>
       </div>
     `;
 
