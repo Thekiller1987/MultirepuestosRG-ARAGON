@@ -8,6 +8,7 @@ import {
   FaSearch, FaTimes, FaPlusCircle, FaMinusCircle, FaExclamationTriangle,
   FaBarcode, FaFont, FaImage, FaEye
 } from 'react-icons/fa';
+import BarcodeLabelModal from './pos/components/BarcodeLabelModal';
 
 /* ================================
    STYLED COMPONENTS LOCALES
@@ -847,6 +848,7 @@ const InventoryManagement = () => {
   const [archivePrompt, setArchivePrompt] = useState({ open: false, product: null, detail: null });
   const [currentPage, setCurrentPage] = useState(1);
   const [viewImage, setViewImage] = useState({ isOpen: false, imageUrl: null });
+  const [labelModal, setLabelModal] = useState({ isOpen: false, product: null });
 
   // Resetear a página 1 cuando cambian filtros o búsqueda
   useEffect(() => {
@@ -1173,6 +1175,7 @@ const InventoryManagement = () => {
                 <InfoTag><span>Costo Total</span><strong>{p.__fmt.costoTotal}</strong></InfoTag>
               </CardBody>
               <CardFooter>
+                <ActionButton className="adjust" title="Imprimir Etiqueta" onClick={() => setLabelModal({ isOpen: true, product: p })}><FaBarcode /> Etiqueta</ActionButton>
                 <ActionButton className="adjust" title="Ajustar Stock" onClick={() => setAdjustmentModal({ isOpen: true, product: p })}><FaPlusCircle /><FaMinusCircle style={{ marginLeft: 4 }} /></ActionButton>
                 <ActionButton className="edit" onClick={() => openEditModal(p)}><FaEdit /> Editar</ActionButton>
                 <ActionButton className="delete" onClick={() => openDeleteModal(p)}><FaTrash /> Eliminar</ActionButton>
@@ -1292,6 +1295,11 @@ const InventoryManagement = () => {
       <AnimatePresence>
         {viewImage.isOpen && <ImageViewModal isOpen={viewImage.isOpen} imageSrc={viewImage.imageUrl} onClose={() => setViewImage({ isOpen: false, imageUrl: null })} />}
       </AnimatePresence>
+      <BarcodeLabelModal
+        isOpen={labelModal.isOpen}
+        onClose={() => setLabelModal({ isOpen: false, product: null })}
+        product={labelModal.product}
+      />
     </PageWrapper>
   );
 };

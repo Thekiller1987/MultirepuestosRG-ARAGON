@@ -1,0 +1,196 @@
+import React, { useState, useRef } from 'react';
+import styled from 'styled-components';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaPrint, FaTimes, FaBarcode } from 'react-icons/fa';
+import Barcode from 'react-barcode';
+
+const ModalOverlay = styled(motion.div)`
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+  background: rgba(15, 23, 42, 0.6); z-index: 999; 
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  backdrop-filter: blur(4px);
+`;
+
+const ModalContent = styled.div`
+  background: white; width: 100%; max-width: 450px; 
+  border-radius: 20px; padding: 2rem; 
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex; flex-direction: column; gap: 1.5rem;
+`;
+
+const ModalTitle = styled.h2` 
+  margin: 0; color: #1e293b; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; 
+  border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem;
+`;
+
+const FormGroup = styled.div` display: flex; flex-direction: column; gap: 6px; `;
+const Label = styled.label` font-size: 0.95rem; font-weight: 600; color: #475569; `;
+const Input = styled.input`
+  padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1.1rem; color: #1e293b; text-align: center;
+  &:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+`;
+
+const ButtonRow = styled.div` display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; `;
+const CancelButton = styled.button`
+  background: #f1f5f9; color: #475569; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  &:hover { background: #e2e8f0; color: #1e293b; }
+`;
+const PrintButton = styled.button`
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s;
+  &:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3); }
+  &:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+`;
+
+const PreviewBox = styled.div`
+  background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 1rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  overflow: hidden;
+`;
+
+const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
+    const [quantity, setQuantity] = useState(1);
+    const barcodeRef = useRef(null);
+
+    if (!isOpen || !product) return null;
+
+    // Usa valor seguro; si el producto no tiene código, se imprime N/A, pero el barcode fallará renderizando si está muy vacío, por lo que ponemos "0000" fallback.
+    const barcodeValue = product.codigo && String(product.codigo).trim().length > 0 ? String(product.codigo).trim() : '0000000';
+    const companyName = settings?.empresa_nombre || 'Multirepuestos RG';
+
+    // Format price
+    const fmt = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const handlePrint = () => {
+        const qty = parseInt(quantity, 10);
+        if (isNaN(qty) || qty < 1) return alert("Por favor ingresa una cantidad válida mayor a 0.");
+
+        // Extract the SVG element from our hidden barcode component
+        let svgHtml = '';
+        if (barcodeRef.current) {
+            // Encontrar el SVG generado por react-barcode
+            const svgElement = barcodeRef.current.querySelector('svg');
+            if (svgElement) {
+                svgHtml = svgElement.outerHTML;
+            }
+        }
+
+        // Configuración CSS adaptada a etiquetas térmicas pequeñas ~50x25mm
+        // Al no tener control exacto del margen de la impresora desde navegador, 
+        // se recomienda padding mínimo y usar flex/grid para centrar.
+        const printStyles = `
+      @charset "UTF-8";
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+      
+      @page { size: 50mm 25mm; margin: 0mm; }
+      html, body { 
+        margin: 0 !important; padding: 0 !important; 
+        width: 50mm; height: 25mm; 
+        background: #fff; color: #000; 
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important;
+      }
+      
+      .label-container {
+        width: 50mm; height: 25mm;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        box-sizing: border-box;
+        padding: 1mm 2mm;
+        page-break-after: always; /* Crucial para impresoras de rollo continuo emuladas o separar multiples divs */
+        overflow: hidden;
+      }
+
+      /* Ultimo elemento no necesita salto de pagina */
+      .label-container:last-child {
+        page-break-after: auto;
+      }
+
+      .l-brand { font-size: 2mm; font-weight: 700; text-transform: uppercase; margin-bottom: 0.5mm; text-align: center; line-height: 1; letter-spacing: 0.2mm; white-space: nowrap; overflow: hidden; max-width: 100%; }
+      .l-name { font-size: 2.3mm; font-weight: 700; text-align: center; margin-bottom: 0.5mm; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .l-barcode { margin: 0; padding: 0; display: flex; justify-content: center; }
+      .l-barcode svg { width: auto; height: 8mm; max-width: 44mm; margin-bottom: 0.5mm;} /* Forzar encoger svg si es muy largo */
+      .l-price { font-size: 4.5mm; font-weight: 900; text-align: center; line-height: 1; margin: 0; letter-spacing: -0.2mm;}
+    `;
+
+        // Generar N contenedores de etiqueta
+        let labelsHtml = '';
+        const priceText = `C$${fmt(product.venta)}`;
+        // Truncate name safely para etiquetas
+        const shortName = (product.nombre || '').substring(0, 30);
+
+        for (let i = 0; i < qty; i++) {
+            labelsHtml += `
+        <div class="label-container">
+            <div class="l-brand">${companyName}</div>
+            <div class="l-name">${shortName}</div>
+            <div class="l-barcode">${svgHtml}</div>
+            <div class="l-price">${priceText}</div>
+        </div>
+        `;
+        }
+
+        const w = window.open('', '_blank', 'width=400,height=400');
+        if (!w) {
+            alert("El navegador bloqueó la ventana emergente.");
+            return;
+        }
+
+        w.document.write(`<html><head><title>Etiqueta_${barcodeValue}</title><style>${printStyles}</style></head><body>${labelsHtml}</body></html>`);
+        w.document.close();
+        w.focus();
+
+        setTimeout(() => {
+            w.print();
+        }, 400);
+
+        w.onafterprint = () => {
+            try { w.close(); } catch { }
+            onClose();
+        };
+    };
+
+    return (
+        <AnimatePresence>
+            <ModalOverlay initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }}>
+                    <ModalContent onClick={e => e.stopPropagation()}>
+                        <ModalTitle><FaBarcode style={{ color: '#10b981' }} /> Imprimir Etiqueta Térmica</ModalTitle>
+
+                        <FormGroup>
+                            <Label>Vista Previa de Generación</Label>
+                            <PreviewBox>
+                                <div style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>{settings?.empresa_nombre || 'Multirepuestos RG'}</div>
+                                <div style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>{product.nombre}</div>
+                                {/* Oculto, pero en el DOM para extraer el SVG */}
+                                <div ref={barcodeRef}>
+                                    <Barcode value={barcodeValue} format="CODE128" width={2} height={40} displayValue={true} fontSize={14} background="transparent" margin={0} />
+                                </div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: '900', marginTop: '2px' }}>C${fmt(product.venta)}</div>
+                            </PreviewBox>
+                        </FormGroup>
+
+                        <FormGroup>
+                            <Label>Cantidad de etiquetas a imprimir al mismo tiempo:</Label>
+                            <Input
+                                type="number"
+                                min="1"
+                                max="500"
+                                value={quantity}
+                                onChange={e => setQuantity(e.target.value)}
+                                autoFocus
+                            />
+                        </FormGroup>
+
+                        <ButtonRow>
+                            <CancelButton onClick={onClose}>Cancelar</CancelButton>
+                            <PrintButton onClick={handlePrint}><FaPrint /> Imprimir Etiquetas</PrintButton>
+                        </ButtonRow>
+                    </ModalContent>
+                </motion.div>
+            </ModalOverlay>
+        </AnimatePresence>
+    );
+};
+
+export default BarcodeLabelModal;
