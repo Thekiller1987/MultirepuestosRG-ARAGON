@@ -429,8 +429,8 @@ const TicketModal = ({
     // Estilos CSS inyectados para ventana de impresión
     const printStyles = `
       @charset "UTF-8";
-      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm 297mm'}; margin: ${mode === 'A4' ? '12mm' : '0'}; }
-      html, body { background: #fff; margin: 0 !important; padding: 0 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; color: #000 !important; }
+      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm 297mm'}; margin: 0; }
+      html, body { background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"}; color: #000 !important; }
       
       /* Reset para impresión */
       #print-wrapper-ticket {
@@ -481,6 +481,8 @@ const TicketModal = ({
     w.document.write(`<html><head><title>Impresión ${mode.toUpperCase()} - ${companyInfo.name}</title><style>${printStyles}</style></head><body>${htmlToPrint}</body></html>`);
     w.document.close();
     w.focus();
+
+    // Auto-imprimir y cerrar pestaña (esencial para Kiosk Mode)
     w.onload = () => {
       setTimeout(() => {
         w.print();
@@ -488,11 +490,18 @@ const TicketModal = ({
         if (mode !== 'A4') {
           setTimeout(() => openCashDrawer(), 500);
         }
-        // Cerrar ventana después de imprimir
-        w.onafterprint = () => { setTimeout(() => w.close(), 300); };
+
+        // Timeout de seguridad fuerte si onafterprint falla en KioskMode
+        setTimeout(() => w.close(), 1000);
+
       }, 350);
     };
-  }, [companyInfo]);
+
+    w.onafterprint = () => {
+      w.close();
+      if (onClose) onClose();
+    };
+  }, [companyInfo, onClose, transaction]);
 
   return (
     <ModalOverlay className="no-print">

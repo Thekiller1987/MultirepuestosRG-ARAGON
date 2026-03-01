@@ -88,7 +88,7 @@ function useAuthToken() {
 
 /* =============== PRINT STYLES (PDF Limpio) =============== */
 const PrintStyles = createGlobalStyle`
-  @page { size: A4; margin: 12mm; }
+  @page { size: A4; margin: 0; }
   @media print {
     /* Ocultar controles / botones */
     .no-print { display: none !important; }
@@ -822,7 +822,12 @@ const CashReport = () => {
     win.document.write(html);
     win.document.close();
     win.focus();
-    // setTimeout(() => win.print(), 500); 
+    win.onload = () => {
+      setTimeout(() => {
+        win.print();
+        setTimeout(() => { try { win.close(); } catch { } }, 1000);
+      }, 500);
+    };
   };
 
   // Componente para mostrar desglose de transacciones en cada card de cierre

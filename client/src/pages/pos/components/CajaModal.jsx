@@ -274,7 +274,7 @@ const CajaModal = ({
     const printStyles = `
         @charset "UTF-8";
         @import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;600;800;900&display=swap');
-        @page { size: 80mm auto; margin: 0; }
+        @page { size: 80mm 297mm; margin: 0; }
         html, body {
           background: #fff; margin: 0 !important; padding: 0 !important;
           -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
@@ -317,7 +317,10 @@ const CajaModal = ({
 
     // Auto-imprimir y luego (opcional) cerrar ventana
     w.onload = function () {
-      setTimeout(() => { w.print(); }, 300);
+      setTimeout(() => {
+        w.print();
+        setTimeout(() => { try { w.close(); } catch { } }, 1000); // Fallback cierre kiosko
+      }, 300);
     };
     w.onafterprint = () => {
       try { w.close(); } catch { }

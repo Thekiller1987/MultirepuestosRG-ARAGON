@@ -183,9 +183,9 @@ const ProformaModal = ({
 
     const printStyles = `
       @charset "UTF-8";
-      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm auto'}; margin: ${mode === 'A4' ? '12mm' : '0'}; }
+      @page { size: ${mode === 'A4' ? 'A4 portrait' : '80mm 297mm'}; margin: 0; }
       html, body {
-        background: #fff; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
+        background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
       }
       
       #print-wrapper-proforma {
@@ -233,8 +233,18 @@ const ProformaModal = ({
     w.document.write(`<html><head><title>PROFORMA - ${companyInfo.name}</title><style>${printStyles}</style></head><body>${htmlToPrint}</body></html>`);
     w.document.close();
     w.focus();
-    w.onload = function () { setTimeout(() => { w.print(); }, 250); };
-  }, [companyInfo]);
+    w.onload = function () {
+      setTimeout(() => {
+        w.print();
+        setTimeout(() => w.close(), 1000);
+      }, 250);
+    };
+
+    w.onafterprint = () => {
+      w.close();
+      if (onClose) onClose();
+    };
+  }, [companyInfo, onClose]);
 
   const compact = cart.length <= 2;
 
