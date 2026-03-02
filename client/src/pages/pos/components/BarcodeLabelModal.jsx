@@ -86,25 +86,32 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       
       .label-container {
         width: 53.09mm; height: 25.15mm; 
-        display: flex; flex-direction: column; align-items: stretch; justify-content: center;
+        display: flex; flex-direction: column; align-items: stretch; justify-content: space-between;
         box-sizing: border-box;
-        padding: 2mm;
+        padding: 1.5mm 2mm;
         overflow: hidden;
         page-break-inside: avoid;
-        gap: 1mm;
       }
 
-      .l-name { font-size: 8pt; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; text-align: center; }
+      .l-header { display: flex; align-items: center; justify-content: center; gap: 1mm; }
+      .l-logo { height: 3.5mm; max-width: 10mm; object-fit: contain; filter: grayscale(100%); }
+      .l-company { font-size: 5.5pt; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40mm; }
+
+      .l-name { font-size: 6pt; font-weight: 600; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; margin-top: 0.5mm; }
       
-      .l-bottom { display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1; overflow: hidden; gap: 2mm; }
+      .l-barcode-cont { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; overflow: hidden; margin-top: 1mm; }
+      .l-barcode { display: flex; justify-content: center; height: 11mm; align-items: center; width: 100%; }
+      .l-barcode svg { width: auto !important; height: 100% !important; max-width: 48mm; } 
       
-      .l-barcode-cont { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; overflow: hidden; }
-      .l-barcode { display: flex; justify-content: center; height: 12mm; align-items: center; }
-      .l-barcode svg { width: auto !important; height: 100% !important; max-width: 100%; } 
-      .l-barcode-val { font-size: 6pt; font-weight: 600; margin-top: 1mm; line-height: 1; text-align: center; }
-      
-      .l-price-cont { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-      .l-price { font-size: 13pt; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
+      .l-bottom-row { 
+         display: grid; 
+         grid-template-columns: 1fr auto 1fr; 
+         width: 100%; 
+         align-items: center;
+         margin-top: 1mm;
+      }
+      .l-barcode-val { grid-column: 2; font-size: 6pt; font-weight: 700; text-align: center; line-height: 1; }
+      .l-price { grid-column: 3; font-size: 7.5pt; font-weight: 900; text-align: right; padding-right: 1mm; line-height: 1; }
     `;
 
     // Generar una única etiqueta
@@ -113,13 +120,15 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
 
     const labelsHtml = `
       <div class="label-container">
+        <div class="l-header">
+           <img src="${logoUrl}" class="l-logo" alt="logo" />
+           <span class="l-company">${companyName}</span>
+        </div>
         <div class="l-name">${shortName}</div>
-        <div class="l-bottom">
-          <div class="l-barcode-cont">
-            <div class="l-barcode">${svgHtml}</div>
-            <div class="l-barcode-val">${product.codigo_barra || ''}</div>
-          </div>
-          <div class="l-price-cont">
+        <div class="l-barcode-cont">
+          <div class="l-barcode">${svgHtml}</div>
+          <div class="l-bottom-row">
+            <span class="l-barcode-val">${product.codigo_barra || ''}</span>
             <span class="l-price">${priceText}</span>
           </div>
         </div>
