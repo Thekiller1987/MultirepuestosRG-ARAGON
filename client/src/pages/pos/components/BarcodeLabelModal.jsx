@@ -70,40 +70,41 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
     }
 
-    // Configuramos medida fija sugerida por el usuario: 50mm ancho y 20mm alto.
+    // Configuramos medida fija según medidas físicas exactas: 53.09mm ancho y 25.15mm alto.
     const printStyles = `
       @charset "UTF-8";
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
       
-      @page { size: 50mm 20mm; margin: 0; }
+      @page { size: 53.09mm 25.15mm; margin: 0; }
       html, body { 
         margin: 0 !important; padding: 0 !important; 
-        width: 50mm; height: 20mm; 
+        width: 53.09mm; height: 25.15mm; 
         background: #fff; color: #000; 
         font-family: 'Inter', sans-serif;
         overflow: hidden;
       }
       
       .label-container {
-        width: 50mm; height: 20mm; 
-        display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+        width: 53.09mm; height: 25.15mm; 
+        display: flex; flex-direction: column; align-items: stretch; justify-content: center;
         box-sizing: border-box;
-        padding: 1mm;
+        padding: 2mm;
         overflow: hidden;
         page-break-inside: avoid;
+        gap: 1mm;
       }
 
-      .l-name { font-size: 8pt; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; text-align: center; margin-bottom: 1mm; margin-top: 1mm; }
+      .l-name { font-size: 8pt; font-weight: 700; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; text-align: center; }
       
-      .l-bottom { display: flex; flex-direction: row; align-items: center; justify-content: center; flex: 1; overflow: hidden; gap: 2mm; }
+      .l-bottom { display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1; overflow: hidden; gap: 2mm; }
       
       .l-barcode-cont { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; overflow: hidden; }
-      .l-barcode { display: flex; justify-content: center; height: 10mm; }
-      .l-barcode svg { width: auto !important; height: 10mm !important; max-width: 100%; } 
-      .l-barcode-val { font-size: 6pt; font-weight: 600; margin-top: 0.5mm; line-height: 1; text-align: center; }
+      .l-barcode { display: flex; justify-content: center; height: 12mm; align-items: center; }
+      .l-barcode svg { width: auto !important; height: 100% !important; max-width: 100%; } 
+      .l-barcode-val { font-size: 6pt; font-weight: 600; margin-top: 1mm; line-height: 1; text-align: center; }
       
-      .l-price-cont { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-right: 1mm; }
-      .l-price { font-size: 11pt; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
+      .l-price-cont { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      .l-price { font-size: 13pt; font-weight: 900; line-height: 1; margin: 0; white-space: nowrap; }
     `;
 
     // Generar una única etiqueta
