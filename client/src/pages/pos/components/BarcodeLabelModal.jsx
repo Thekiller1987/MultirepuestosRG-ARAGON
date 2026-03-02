@@ -94,7 +94,7 @@ const BarcodeLabelModal = ({ isOpen, onClose, product, settings }) => {
       }
 
       .l-header { display: flex; align-items: center; justify-content: center; gap: 1mm; }
-      .l-logo { height: 3.5mm; max-width: 10mm; object-fit: contain; filter: grayscale(100%); }
+      .l-logo { height: 3.5mm; max-width: 10mm; object-fit: contain; filter: grayscale(100%) brightness(0%); }
       .l-company { font-size: 5.5pt; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40mm; }
 
       .l-name { font-size: 6pt; font-weight: 600; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; margin-top: 0.5mm; }
