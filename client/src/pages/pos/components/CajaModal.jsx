@@ -116,7 +116,9 @@ const CajaModal = ({
     cajaInicial, netCordobas, netDolares, efectivoEsperado, efectivoEsperadoCordobas, efectivoEsperadoDolares,
     ventasContado, devoluciones, cancelaciones, entradas, salidas, abonos,
     totalTarjeta, totalTransferencia, totalCredito, totalNoEfectivo,
-    sumDevolucionesCancelaciones, totalVentasDia, tasaRef, totalHidden
+    sumDevolucionesCancelaciones, totalVentasDia, tasaRef, totalHidden,
+    ventasBrutasEfectivo, ventasBrutasTarjeta, ventasBrutasTransf, ventasBrutasCredito,
+    abonosEfectivo, abonosTarjeta, abonosTransf
   } = useMemo(() => {
     const cajaInicialN = Number(session?.initialAmount || 0);
     const tasaRef = Number(session?.tasaDolar || initialTasaDolar || 36.60);
@@ -124,6 +126,10 @@ const CajaModal = ({
     const cls = { ventasContado: [], devoluciones: [], cancelaciones: [], entradas: [], salidas: [], abonos: [] };
     let netCordobas = 0, netDolares = 0, tTarjeta = 0, tTransf = 0, tCredito = 0, tVentasDia = 0, sumDevsCancels = 0;
     let totalHidden = 0; // Track hidden adjustments
+    
+    // Desglose más granular:
+    let ventasBrutasEfectivo = 0, ventasBrutasTarjeta = 0, ventasBrutasTransf = 0, ventasBrutasCredito = 0;
+    let abonosEfectivo = 0, abonosTarjeta = 0, abonosTransf = 0;
 
     for (const tx of transactions) {
       const t = (tx?.type || '').toLowerCase();
@@ -162,6 +168,17 @@ const CajaModal = ({
         tTarjeta += txTarjeta;
         tTransf += txTransf;
         tCredito += txCredito;
+        
+        if (t.includes('abono')) {
+          abonosTarjeta += txTarjeta;
+          abonosTransf += txTransf;
+          abonosEfectivo += Math.max(0, totalAmount - txTarjeta - txTransf);
+        } else {
+          ventasBrutasTarjeta += txTarjeta;
+          ventasBrutasTransf += txTransf;
+          ventasBrutasCredito += txCredito;
+          ventasBrutasEfectivo += Math.max(0, totalAmount - txTarjeta - txTransf - txCredito);
+        }
       } else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
         // Restar no-efectivo devuelto
         tTarjeta -= txTarjeta;
@@ -246,7 +263,9 @@ const CajaModal = ({
       ventasContado: cls.ventasContado, devoluciones: cls.devoluciones, cancelaciones: cls.cancelaciones, entradas: cls.entradas, salidas: cls.salidas, abonos: cls.abonos,
       totalTarjeta: tTarjeta, totalTransferencia: tTransf, totalCredito: tCredito, totalNoEfectivo: tTarjeta + tTransf + tCredito,
       sumDevolucionesCancelaciones: sumDevsCancels, totalVentasDia: tVentasDia, tasaRef,
-      totalHidden
+      totalHidden,
+      ventasBrutasEfectivo, ventasBrutasTarjeta, ventasBrutasTransf, ventasBrutasCredito,
+      abonosEfectivo, abonosTarjeta, abonosTransf
     };
   }, [transactions, session, initialTasaDolar, clients]);
 
@@ -398,35 +417,45 @@ const CajaModal = ({
                 <div style={{ background: '#fff', padding: 15, borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '4px solid #28a745' }}>
                   <div style={{ fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Efectivo Real</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#28a745' }}>{money(totalContadoFisico)}</div>
-                </div>
+}
                 <div style={{ background: '#fff', padding: 15, borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: `4px solid ${diferencia < 0 ? '#dc3545' : '#ffc107'}` }}>
                   <div style={{ fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Diferencia</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '800', color: diferencia !== 0 ? (diferencia < 0 ? '#dc3545' : '#e0a800') : '#28a745' }}>{diferencia > 0 ? '+' : ''}{money(diferencia)}</div>
                 </div>
-              </div>
 
-              {/* Tabla de Arqueo Web */}
-              <div style={{ background: '#fff', padding: 20, borderRadius: 8, boxShadow: '0 2px 10px rgba(0,0,0,0.05)', marginBottom: 20 }}>
-                <h4 style={{ margin: '0 0 15px', borderBottom: '1px solid #eee', paddingBottom: 10 }}>Arqueo Detallado</h4>
+              <div style={{ background: '#fff', padding: 0, borderRadius: 8, boxShadow: '0 4px 15px rgba(0,0,0,0.08)', marginBottom: 25, overflow: 'hidden' }}>
+                <div style={{ background: '#1e293b', padding: '15px 20px', color: 'white' }}>
+                  <h4 style={{ margin: 0, fontSize: '1.2rem', letterSpacing: '0.5px' }}>Ventas Detalladas y Arqueo</h4>
+                </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #f1f1f1' }}><td style={{ padding: 10 }}>Fondo Inicial</td><td className="text-right" style={{ padding: 10, fontWeight: 'bold' }}>{money(cajaInicial)}</td></tr>
-
-                    {/* Sección Detallada de Ventas */}
-                    {/* Sección Detallada de Ventas */}
-                    <tr style={{ background: '#f8f9fa' }}><td colSpan="2" style={{ padding: '8px 10px', fontSize: '0.85rem', fontWeight: 'bold', color: '#007bff' }}>RESUMEN DE INGRESOS</td></tr>
-                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem' }}>(+) Ingresos Netos (Ventas + Abonos)</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem' }}>{money(totalVentasDia)}</td></tr>
-                    {sumDevolucionesCancelaciones > 0 && <tr><td style={{ padding: '4px 10px 4px 30px', fontSize: '0.85rem', color: '#dc3545', fontStyle: 'italic' }}>↳ (-){money(sumDevolucionesCancelaciones)} en devoluciones/cancelaciones</td><td></td></tr>}
+                    {/* SECCIÓN 1: VENTAS */}
+                    <tr style={{ background: '#f1f5f9' }}><td colSpan="2" style={{ padding: '10px 15px', fontSize: '0.9rem', fontWeight: '800', color: '#0f172a' }}>1. TUS VENTAS HOY</td></tr>
+                    {ventasBrutasEfectivo > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.95rem', color: '#334155' }}>(+) Ventas en Efectivo</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.95rem', fontWeight: 'bold' }}>{money(ventasBrutasEfectivo)}</td></tr>}
+                    {ventasBrutasTarjeta > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#64748b' }}>(+) Ventas con Tarjeta</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#64748b' }}>{money(ventasBrutasTarjeta)}</td></tr>}
+                    {ventasBrutasTransf > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#64748b' }}>(+) Ventas por Transferencia</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#64748b' }}>{money(ventasBrutasTransf)}</td></tr>}
+                    {ventasBrutasCredito > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#f59e0b' }}>(+) Ventas al Crédito</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#f59e0b' }}>{money(ventasBrutasCredito)}</td></tr>}
+                    {ventasBrutasEfectivo === 0 && ventasBrutasTarjeta === 0 && ventasBrutasTransf === 0 && ventasBrutasCredito === 0 && <tr><td colSpan="2" style={{ padding: '8px 15px 8px 35px', fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>Sin ventas nuevas hoy</td></tr>}
                     
-                    <tr style={{ background: '#f8f9fa' }}><td colSpan="2" style={{ padding: '8px 10px', fontSize: '0.85rem', fontWeight: 'bold', color: '#666' }}>MENOS: PAGOS NO EFECTIVOS</td></tr>
-                    {totalTarjeta > 0 && <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Tarjetas</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalTarjeta)}</td></tr>}
-                    {totalTransferencia > 0 && <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Transferencias</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalTransferencia)}</td></tr>}
-                    {totalCredito > 0 && <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Créditos</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalCredito)}</td></tr>}
-                    <tr style={{ borderBottom: '1px dashed #ccc' }}><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.85rem', color: '#555', fontStyle: 'italic' }}>Subtotal no efectivo:</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.85rem', color: '#555' }}>- {money(totalNoEfectivo)}</td></tr>
+                    {/* SECCIÓN 2: ABONOS */}
+                    <tr style={{ background: '#f0fdf4' }}><td colSpan="2" style={{ padding: '10px 15px', fontSize: '0.9rem', fontWeight: '800', color: '#166534', borderTop: '1px solid #e2e8f0' }}>2. ABONOS RECIBIDOS</td></tr>
+                    {abonosEfectivo > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.95rem', color: '#334155' }}>(+) Abonos en Efectivo</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.95rem', fontWeight: 'bold' }}>{money(abonosEfectivo)}</td></tr>}
+                    {abonosTarjeta > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#64748b' }}>(+) Abonos con Tarjeta</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#64748b' }}>{money(abonosTarjeta)}</td></tr>}
+                    {abonosTransf > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#64748b' }}>(+) Abonos por Transferencia</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#64748b' }}>{money(abonosTransf)}</td></tr>}
+                    {abonos.length === 0 && <tr><td colSpan="2" style={{ padding: '8px 15px 8px 35px', fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>Sin abonos recibidos hoy</td></tr>}
 
-                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545', marginTop: 10 }}>(+) Otros Movimientos (Salidas caja)</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</td></tr>
+                    {/* SECCIÓN 3: EGRESOS */}
+                    <tr style={{ background: '#fef2f2' }}><td colSpan="2" style={{ padding: '10px 15px', fontSize: '0.9rem', fontWeight: '800', color: '#991b1b', borderTop: '1px solid #e2e8f0' }}>3. EGRESOS Y RETIROS</td></tr>
+                    {sumDevolucionesCancelaciones > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#ef4444' }}>(-) Devoluciones / Cancelaciones</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#ef4444' }}>- {money(sumDevolucionesCancelaciones)}</td></tr>}
+                    {salidas.length > 0 && <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.9rem', color: '#ef4444' }}>(-) Salidas de Caja Físicas</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.9rem', color: '#ef4444' }}>- {money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</td></tr>}
+                    {sumDevolucionesCancelaciones === 0 && salidas.length === 0 && <tr><td colSpan="2" style={{ padding: '8px 15px 8px 35px', fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>Sin egresos ni devoluciones hoy</td></tr>}
 
-                    <tr style={{ borderBottom: '1px solid #f1f1f1', background: '#e8f5e9' }}><td style={{ padding: 10, fontWeight: 'bold', fontSize: '1.1rem' }}>Esperado Físico (Total C$)</td><td className="text-right" style={{ padding: 10, fontWeight: 'bold', fontSize: '1.1rem', color: '#146c43' }}>{money(efectivoEsperado)}</td></tr>
+                    {/* SECCIÓN 4: RESUMEN EXACTO CAJA */}
+                    <tr style={{ background: '#f1f5f9' }}><td colSpan="2" style={{ padding: '10px 15px', fontSize: '0.9rem', fontWeight: '800', color: '#0f172a', borderTop: '2px solid #cbd5e1' }}>4. RESUMEN DEL EFECTIVO (CAJA FÍSICA)</td></tr>
+                    <tr><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.95rem' }}>(+) Fondo Inicial con el que abriste</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.95rem' }}>{money(cajaInicial)}</td></tr>
+                    <tr style={{ background: '#f8fafc' }}><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.95rem' }}>(+) Efectivo Recibido (Sólo cash de Ventas y Abonos)</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.95rem', color: '#16a34a', fontWeight: 'bold' }}>+ {money(ventasBrutasEfectivo + abonosEfectivo)}</td></tr>
+                    {salidas.length > 0 && <tr style={{ background: '#f8fafc' }}><td style={{ padding: '8px 15px 8px 35px', fontSize: '0.95rem' }}>(-) Efectivo Retirado (Salidas físicas)</td><td className="text-right" style={{ padding: '8px 15px', fontSize: '0.95rem', color: '#dc2626', fontWeight: 'bold' }}>- {money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</td></tr>}
+                    <tr style={{ borderTop: '2px solid #94a3b8', background: '#dcfce7' }}><td style={{ padding: '15px', fontWeight: '900', fontSize: '1.2rem', color: '#166534' }}>ESPERADO FÍSICO (Total C$)</td><td className="text-right" style={{ padding: '15px', fontWeight: '900', fontSize: '1.3rem', color: '#15803d' }}>{money(efectivoEsperado)}</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -510,28 +539,34 @@ const CajaModal = ({
                 </div>
 
                 <div className="section">
-                  <div className="section-title">1. INGRESOS NETOS DEL DÍA</div>
-                  <div className="row big"><span>TOTAL NETO:</span><span>{money(totalVentasDia)}</span></div>
-                  <div className="row sub">(Ventas + Abonos - Devoluciones - Cancelaciones)</div>
-                  {sumDevolucionesCancelaciones > 0 && <div className="row" style={{ color: '#dc3545' }}><span>(-) Devol/Cancel:</span><span>-{money(sumDevolucionesCancelaciones)}</span></div>}
+                  <div className="section-title">1. TUS VENTAS HOY</div>
+                  {ventasBrutasEfectivo > 0 && <div className="row"><span>(+) Efectivo:</span><span>{money(ventasBrutasEfectivo)}</span></div>}
+                  {ventasBrutasTarjeta > 0 && <div className="row"><span>(+) Tarjeta:</span><span>{money(ventasBrutasTarjeta)}</span></div>}
+                  {ventasBrutasTransf > 0 && <div className="row"><span>(+) Transferencia:</span><span>{money(ventasBrutasTransf)}</span></div>}
+                  {ventasBrutasCredito > 0 && <div className="row"><span>(+) Crédito:</span><span>{money(ventasBrutasCredito)}</span></div>}
+                  {ventasBrutasEfectivo === 0 && ventasBrutasTarjeta === 0 && ventasBrutasTransf === 0 && ventasBrutasCredito === 0 && <div className="row sub">Sin ventas hoy</div>}
                 </div>
 
                 <div className="section">
-                  <div className="section-title">2. DESGLOSE NO EFECTIVO</div>
-                  {totalTarjeta > 0 && <div className="row"><span>(-) Tarjetas:</span><span>{money(totalTarjeta)}</span></div>}
-                  {totalTransferencia > 0 && <div className="row"><span>(-) Transf.:</span><span>{money(totalTransferencia)}</span></div>}
-                  {totalCredito > 0 && <div className="row"><span>(-) Créditos:</span><span>{money(totalCredito)}</span></div>}
-                  <div className="row" style={{ borderTop: '1px dashed #000' }}><span>TOTAL NO EFECTIVO:</span><span>{money(totalNoEfectivo)}</span></div>
+                  <div className="section-title">2. ABONOS RECIBIDOS</div>
+                  {abonosEfectivo > 0 && <div className="row"><span>(+) Efectivo:</span><span>{money(abonosEfectivo)}</span></div>}
+                  {abonosTarjeta > 0 && <div className="row"><span>(+) Tarjeta:</span><span>{money(abonosTarjeta)}</span></div>}
+                  {abonosTransf > 0 && <div className="row"><span>(+) Transferencia:</span><span>{money(abonosTransf)}</span></div>}
+                  {abonos.length === 0 && <div className="row sub">Sin abonos hoy</div>}
                 </div>
 
                 <div className="section">
-                  <div className="section-title">3. FLUJO EFECTIVO (RESUMEN)</div>
-                  <div className="row"><span>Fondo Inicial:</span><span>{money(cajaInicial)}</span></div>
-                  <div className="row"><span>(+) Ingresos Netos:</span><span>{money(totalVentasDia)}</span></div>
-                  <div className="row"><span>(-) No Efectivo:</span><span>-{money(totalNoEfectivo)}</span></div>
-                  {Math.abs(salidas.reduce((s, t) => s + Math.abs(t.displayAmount || 0), 0)) > 0 && (
-                    <div className="row"><span>(-) Salidas:</span><span>-{money(salidas.reduce((s, t) => s + Math.abs(t.displayAmount || 0), 0))}</span></div>
-                  )}
+                  <div className="section-title">3. EGRESOS Y RETIROS</div>
+                  {sumDevolucionesCancelaciones > 0 && <div className="row"><span>(-) Devol/Cancel:</span><span>-{money(sumDevolucionesCancelaciones)}</span></div>}
+                  {salidas.length > 0 && <div className="row"><span>(-) Salidas:</span><span>-{money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</span></div>}
+                  {sumDevolucionesCancelaciones === 0 && salidas.length === 0 && <div className="row sub">Sin egresos hoy</div>}
+                </div>
+
+                <div className="section">
+                  <div className="section-title">4. FLUJO EFECTIVO (CAJA FÍSICA)</div>
+                  <div className="row"><span>(+) Fondo Inicial:</span><span>{money(cajaInicial)}</span></div>
+                  <div className="row"><span>(+) Recibido (Puro Cash):</span><span>{money(ventasBrutasEfectivo + abonosEfectivo)}</span></div>
+                  {salidas.length > 0 && <div className="row"><span>(-) Salidas Físicas:</span><span>-{money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</span></div>}
                 </div>
 
                 <div className="section">

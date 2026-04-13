@@ -555,6 +555,8 @@ router.get('/abiertas/activas', async (req, res) => {
         tasaDolar: Number(details.tasaDolar || 0),
         abierta_por: row.usuario_nombre,
         usuario_id: row.usuario_id,
+        transactions: details.transactions || [],
+        detalles_json: row.detalles_json
       };
     });
 
