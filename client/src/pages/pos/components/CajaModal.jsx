@@ -95,6 +95,7 @@ const CajaModal = ({
   const [montoApertura, setMontoApertura] = useState('');
   const [tasaDolar, setTasaDolar] = useState(initialTasaDolar || 36.60);
   const [montoContado, setMontoContado] = useState('');
+  const [montoContadoDolares, setMontoContadoDolares] = useState('');
   const [viewingReport, setViewingReport] = useState(false);
   const navigate = useNavigate();
 
@@ -249,7 +250,8 @@ const CajaModal = ({
     };
   }, [transactions, session, initialTasaDolar, clients]);
 
-  const diferencia = (Number(montoContado || 0) - efectivoEsperado);
+  const totalContadoFisico = Number(montoContado || 0) + (Number(montoContadoDolares || 0) * tasaRef);
+  const diferencia = totalContadoFisico - efectivoEsperado;
   const openedAt = session?.openedAt ? new Date(session.openedAt) : null;
 
   // --------- HANDLERS ----------
@@ -260,7 +262,7 @@ const CajaModal = ({
   };
 
   const handlePrepareClose = () => {
-    if (isNaN(parseFloat(montoContado))) return showAlert({ title: 'Requerido', message: 'Ingrese el monto contado físico.' });
+    if (montoContado === '' && montoContadoDolares === '') return showAlert({ title: 'Requerido', message: 'Ingrese el monto contado físico (C$ o $).' });
     setViewingReport(true);
   };
 
@@ -329,7 +331,7 @@ const CajaModal = ({
     doPrint();
     // 2. Cerrar caja en sistema tras breve delay (para que dé tiempo al popup de impresión de aparecer)
     setTimeout(() => {
-      onCloseCaja(Number(montoContado));
+      onCloseCaja(Number(montoContado || 0) + (Number(montoContadoDolares || 0) * tasaRef));
     }, 800);
   };
 
@@ -395,7 +397,7 @@ const CajaModal = ({
                 </div>
                 <div style={{ background: '#fff', padding: 15, borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '4px solid #28a745' }}>
                   <div style={{ fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Efectivo Real</div>
-                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#28a745' }}>{money(montoContado)}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#28a745' }}>{money(totalContadoFisico)}</div>
                 </div>
                 <div style={{ background: '#fff', padding: 15, borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: `4px solid ${diferencia < 0 ? '#dc3545' : '#ffc107'}` }}>
                   <div style={{ fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Diferencia</div>
@@ -413,12 +415,18 @@ const CajaModal = ({
                     {/* Sección Detallada de Ventas */}
                     {/* Sección Detallada de Ventas */}
                     <tr style={{ background: '#f8f9fa' }}><td colSpan="2" style={{ padding: '8px 10px', fontSize: '0.85rem', fontWeight: 'bold', color: '#007bff' }}>RESUMEN DE INGRESOS</td></tr>
-                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem' }}>(+) Ingresos Netos (Ventas + Abonos - Devoluciones)</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem' }}>{money(totalVentasDia)}</td></tr>
-                    {sumDevolucionesCancelaciones > 0 && <tr><td style={{ padding: '4px 10px 4px 30px', fontSize: '0.85rem', color: '#dc3545', fontStyle: 'italic' }}>↳ Incluye: -{money(sumDevolucionesCancelaciones)} en devoluciones/cancelaciones</td><td></td></tr>}
-                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Tarjetas / Transf / Crédito</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalNoEfectivo)}</td></tr>
-                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Salidas de Efectivo</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</td></tr>
+                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem' }}>(+) Ingresos Netos (Ventas + Abonos)</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem' }}>{money(totalVentasDia)}</td></tr>
+                    {sumDevolucionesCancelaciones > 0 && <tr><td style={{ padding: '4px 10px 4px 30px', fontSize: '0.85rem', color: '#dc3545', fontStyle: 'italic' }}>↳ (-){money(sumDevolucionesCancelaciones)} en devoluciones/cancelaciones</td><td></td></tr>}
+                    
+                    <tr style={{ background: '#f8f9fa' }}><td colSpan="2" style={{ padding: '8px 10px', fontSize: '0.85rem', fontWeight: 'bold', color: '#666' }}>MENOS: PAGOS NO EFECTIVOS</td></tr>
+                    {totalTarjeta > 0 && <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Tarjetas</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalTarjeta)}</td></tr>}
+                    {totalTransferencia > 0 && <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Transferencias</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalTransferencia)}</td></tr>}
+                    {totalCredito > 0 && <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545' }}>(-) Créditos</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(totalCredito)}</td></tr>}
+                    <tr style={{ borderBottom: '1px dashed #ccc' }}><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.85rem', color: '#555', fontStyle: 'italic' }}>Subtotal no efectivo:</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.85rem', color: '#555' }}>- {money(totalNoEfectivo)}</td></tr>
 
-                    <tr style={{ borderBottom: '1px solid #f1f1f1', background: '#e8f5e9' }}><td style={{ padding: 10, fontWeight: 'bold', fontSize: '1.1rem' }}>Esperado en Caja</td><td className="text-right" style={{ padding: 10, fontWeight: 'bold', fontSize: '1.1rem', color: '#146c43' }}>{money(efectivoEsperado)}</td></tr>
+                    <tr><td style={{ padding: '4px 10px 4px 20px', fontSize: '0.9rem', color: '#dc3545', marginTop: 10 }}>(+) Otros Movimientos (Salidas caja)</td><td className="text-right" style={{ padding: '4px 10px', fontSize: '0.9rem', color: '#dc3545' }}>- {money(salidas.reduce((a, b) => a + Math.abs(b.displayAmount || 0), 0))}</td></tr>
+
+                    <tr style={{ borderBottom: '1px solid #f1f1f1', background: '#e8f5e9' }}><td style={{ padding: 10, fontWeight: 'bold', fontSize: '1.1rem' }}>Esperado Físico (Total C$)</td><td className="text-right" style={{ padding: 10, fontWeight: 'bold', fontSize: '1.1rem', color: '#146c43' }}>{money(efectivoEsperado)}</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -532,8 +540,9 @@ const CajaModal = ({
                   <div className="row sub">({money(efectivoEsperadoCordobas)} + {usd(efectivoEsperadoDolares)})</div>
 
                   <div className="row" style={{ marginTop: 8, paddingTop: 4, borderTop: '1px dashed #ccc' }}>
-                    <span>EFECTIVO REAL:</span><span>{money(montoContado)}</span>
+                    <span>EFECTIVO CONTADO:</span><span>{money(totalContadoFisico)}</span>
                   </div>
+                  <div className="row sub" style={{ marginBottom: 10 }}>({money(Number(montoContado || 0))} en Billetes C$ + {usd(Number(montoContadoDolares || 0))} en Billetes $)</div>
 
                   <div className={`row alert`} style={{ color: diferencia !== 0 ? '#000' : '#000', borderColor: diferencia !== 0 ? '#000' : '#000' }}>
                     <span>DIFERENCIA:</span><span>{diferencia > 0 ? '+' : ''}{money(diferencia)}</span>
@@ -643,17 +652,25 @@ const CajaModal = ({
               <TotalsRow $bold style={{ marginTop: 10, borderTop: '2px solid #ccc', paddingTop: 10, fontSize: '1.5rem' }}><span>TOTAL (C$):</span><span>{money(efectivoEsperado)}</span></TotalsRow>
             </div>
 
-            <label style={{ display: 'block', marginTop: 20, fontWeight: 800, fontSize: '1.3rem' }}>Monto Contado Físico (C$)</label>
-            <SearchInput type="number" step="0.01" value={montoContado} onChange={e => setMontoContado(e.target.value)} autoFocus placeholder="Total Billetes + Monedas" style={{ fontSize: '1.5rem', padding: '12px', height: 'auto' }} />
+            <div style={{ display: 'flex', gap: 15, marginTop: 20 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontWeight: 800, fontSize: '1.2rem', marginBottom: 5, color: '#198754' }}>Billetes Córdobas (C$)</label>
+                <SearchInput type="number" step="0.01" value={montoContado} onChange={e => setMontoContado(e.target.value)} autoFocus placeholder="Total C$" style={{ fontSize: '1.5rem', padding: '12px', height: 'auto' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontWeight: 800, fontSize: '1.2rem', marginBottom: 5, color: '#0d6efd' }}>Billetes Dólares ($)</label>
+                <SearchInput type="number" step="0.01" value={montoContadoDolares} onChange={e => setMontoContadoDolares(e.target.value)} placeholder="Total $" style={{ fontSize: '1.5rem', padding: '12px', height: 'auto' }} />
+              </div>
+            </div>
 
-            {montoContado && (
+            {(montoContado !== '' || montoContadoDolares !== '') && (
               <TotalsRow $bold style={{ marginTop: 15, color: diferencia !== 0 ? '#dc3545' : '#28a745', fontSize: '1.8rem', padding: '10px', background: diferencia !== 0 ? '#fff5f5' : '#f0fff4', borderRadius: 8, border: `2px solid ${diferencia !== 0 ? '#dc3545' : '#28a745'}` }}>
-                <span>Diferencia:</span><span>{money(diferencia)}</span>
+                <span>Diferencia Total:</span><span>{diferencia > 0 ? '+' : ''}{money(diferencia)}</span>
               </TotalsRow>
             )}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <Button primary style={{ flex: 1 }} onClick={handlePrepareClose} disabled={!canClose || !montoContado}>Ver Reporte</Button>
+              <Button primary style={{ flex: 1 }} onClick={handlePrepareClose} disabled={!canClose || (montoContado === '' && montoContadoDolares === '')}>Desglosar e Imprimir</Button>
               <Button $cancel onClick={onClose}>Cancelar</Button>
             </div>
           </div>

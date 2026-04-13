@@ -105,7 +105,7 @@ const PrintWrapper = styled.div`
       width: 80mm !important; font-family: 'Consolas', monospace !important; padding: 6px 4px !important; border: none !important; box-shadow: none !important; font-size: 8pt;
     }
     &.print-a4 {
-      width: 190mm !important; font-size: 10pt !important; padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; max-height: 277mm !important; overflow: hidden !important; font-family: 'Inter', Helvetica, Arial, sans-serif !important;
+      width: 100% !important; max-width: 210mm !important; font-size: 10pt !important; padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; max-height: none !important; overflow: visible !important; font-family: 'Inter', Helvetica, Arial, sans-serif !important;
     }
     &.compact { font-size: 7.5pt; }
   }
@@ -183,38 +183,48 @@ const ProformaModal = ({
 
     const printStyles = `
       @charset "UTF-8";
-      @page { margin: 0; ${mode === 'A4' ? 'size: A4 portrait;' : 'size: 80mm auto;'} }
+      @page { margin: ${mode === 'A4' ? '15mm' : '0'}; ${mode === 'A4' ? 'size: A4 portrait;' : 'size: 80mm auto;'} }
       html, body {
-        background: #fff; margin: 0 !important; padding: ${mode === 'A4' ? '12mm' : '0'} !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
+        background: #fff; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000 !important; font-family: ${mode === 'A4' ? "'Inter', Helvetica, Arial, sans-serif" : "'Consolas', monospace"};
+        height: auto !important; min-height: 100% !important; overflow: visible !important;
       }
       
       #print-wrapper-proforma {
-        box-shadow: none !important; border: none !important; margin: 0 !important;
+        box-shadow: none !important; border: none !important; margin: 0 !important; overflow: visible !important; height: auto !important; max-height: none !important;
         ${mode === 'A4'
-        ? `width: 100% !important; padding: 0 !important; font-size: 10pt !important;`
+        ? `width: 100% !important; max-width: none !important; padding: 0 !important; font-size: 10pt !important;`
         : `width: 100% !important; max-width: 78mm !important; padding: 6px 4px !important; font-size: 8pt !important;`
       }
       }
 
       ${mode === 'A4' ? `
-        #print-wrapper-proforma .brand { display: flex !important; justify-content: space-between !important; align-items: flex-start !important; text-align: left !important; border-bottom: 3px solid #1e3a8a !important; margin-bottom: 25px !important; padding-bottom: 15px !important; }
+        #print-wrapper-proforma .brand { display: flex !important; justify-content: space-between !important; align-items: flex-start !important; text-align: left !important; border-bottom: 3px solid #1e3a8a !important; margin-bottom: 25px !important; padding-bottom: 15px !important; page-break-inside: avoid; }
         #print-wrapper-proforma .brand-logo-container { width: 140px !important; order: 1 !important; }
         #print-wrapper-proforma .brand-info { flex: 1 !important; text-align: right !important; order: 2 !important; }
         #print-wrapper-proforma .brand h1 { font-size: 22pt !important; color: #1e3a8a !important; margin: 0 0 5px 0 !important; }
         #print-wrapper-proforma .brand small { display: block !important; font-size: 9pt !important; margin: 2px 0 !important; color: #334155 !important; }
         
-        #print-wrapper-proforma .meta { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 30px !important; background: #f8fafc !important; border: 1px solid #e2e8f0 !important; padding: 15px !important; margin-bottom: 30px !important; border-radius: 8px !important; }
+        #print-wrapper-proforma .meta { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 30px !important; background: #f8fafc !important; border: 1px solid #e2e8f0 !important; padding: 15px !important; margin-bottom: 30px !important; border-radius: 8px !important; page-break-inside: avoid; }
         #print-wrapper-proforma .meta p { display: grid !important; grid-template-columns: 100px 1fr !important; width: 100% !important; border-bottom: 1px dashed #e2e8f0 !important; padding-bottom: 4px !important; margin-bottom: 4px !important; }
         #print-wrapper-proforma .meta-title { font-weight: 800 !important; text-transform: uppercase !important; color: #1e3a8a !important; border-bottom: 2px solid #cbd5e1 !important; margin-bottom: 10px !important; padding-bottom: 5px !important; display: block !important; width: 100% !important; }
 
-        #print-wrapper-proforma table.items { width: 100% !important; border-collapse: collapse !important; border: 1px solid #e2e8f0 !important; }
+        #print-wrapper-proforma table.items { width: 100% !important; border-collapse: collapse !important; border: 1px solid #e2e8f0 !important; page-break-inside: auto; }
+        #print-wrapper-proforma table.items thead { display: table-header-group; }
+        #print-wrapper-proforma table.items tbody { display: table-row-group; }
+        #print-wrapper-proforma table.items tr { page-break-inside: avoid; page-break-after: auto; }
         #print-wrapper-proforma table.items th { background: #f1f5f9 !important; color: #334155 !important; padding: 12px 8px !important; border-bottom: 2px solid #cbd5e1 !important; font-size: 9pt !important; text-align: left !important; }
         #print-wrapper-proforma table.items td { padding: 10px 8px !important; border-bottom: 1px solid #f1f5f9 !important; font-size: 9.5pt !important; vertical-align: top !important; }
         #print-wrapper-proforma .col-qty { text-align: center !important; }
         #print-wrapper-proforma .col-unit, #print-wrapper-proforma .col-total { text-align: right !important; }
         
-        #print-wrapper-proforma .totals { display: flex !important; justify-content: flex-end !important; margin-top: 20px !important; border-top: none !important; }
+        #print-wrapper-proforma .totals { display: flex !important; justify-content: flex-end !important; margin-top: 20px !important; border-top: none !important; page-break-inside: avoid; }
         #print-wrapper-proforma .totals-box { width: 300px !important; background: #f8fafc !important; padding: 15px !important; border: 1px solid #e2e8f0 !important; border-radius: 8px !important; }
+        /* Fix for styled components TotalsRow */
+        #print-wrapper-proforma .totals-box > div { display: flex !important; justify-content: space-between !important; padding: 6px 0 !important; font-size: 10pt !important; color: #475569 !important; font-weight: 600 !important; }
+        #print-wrapper-proforma .totals-box > div.grand-total { font-size: 14pt !important; font-weight: 900 !important; color: #0f172a !important; border-top: 2px solid #cbd5e1 !important; margin-top: 10px !important; padding-top: 10px !important; }
+        #print-wrapper-proforma .totals-box > div:last-child { display: block !important; text-align: center !important; margin-top: 15px !important; border: none !important; padding: 0 !important; font-weight: normal !important; }
+        
+        #print-wrapper-proforma .thanks { margin-top: 40px !important; padding-bottom: 20px !important; page-break-inside: avoid; }
       ` : `
         #print-wrapper-proforma { font-family: 'Consolas', monospace !important; color: #000 !important; font-weight: 700 !important; }
         #print-wrapper-proforma * { color: #000 !important; font-weight: 700 !important; }

@@ -41,6 +41,7 @@ const POS = () => {
   // Estados Locales
   const [products, setProductsState] = useState(initialProducts || []);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const [searchType, setSearchType] = useState('description');
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [modal, setModal] = useState({ name: null, data: null });
@@ -302,6 +303,7 @@ const POS = () => {
   };
 
   const handleFinishSale = async (pagoDetalles) => {
+    if (isProcessing) return false;
     const orderToCloseId = activeOrderId;
     const currentOrder = orders.find(o => o.id === orderToCloseId);
 
@@ -309,6 +311,8 @@ const POS = () => {
       showAlert({ title: "Carrito Vacío", message: "No hay productos para facturar." });
       return false;
     }
+
+    setIsProcessing(true);
 
     const payloadItems = cart.map(i => ({
       id_producto: i.id_producto || i.id,
@@ -331,128 +335,67 @@ const POS = () => {
       originalOrderId: currentOrder?.serverSaleId || null
     };
 
-    // --- LÓGICA DE COBRO INSTANTÁNEO ---
+    try {
+      // 🚨 FLUJO SÍNCRONO IMPENETRABLE:
+      // Esperar obligatoriamente a la Base de Datos antes de borrar la pantalla o modificar inventario
+      const response = await api.createSale(saleData, token);
 
-    // 1. Preparar datos
-    // ... (payloadItems y saleData ya definidos) ...
+      const responseData = response.data || response || {};
+      const savedSale = { ...saleData, ...responseData };
+      savedSale.id = responseData.id || responseData.saleId || responseData._id || 'N/A';
+      savedSale.items = payloadItems;
+      savedSale.pagoDetalles = pagoDetalles;
+      savedSale.fecha = new Date().toISOString();
 
-    // 2. Si se requiere IMPRESIÓN, debemos esperar (Await) para tener el ID real
-    //    Si NO se requiere, hacemos "Fire and Forget" para ser instantáneos.
-    const isInstant = !pagoDetalles.shouldPrintNow;
-
-    const processSalePromise = async () => {
-      try {
-        const response = await api.createSale(saleData, token);
-
-        // Background refresh inventory
-        refreshProducts().catch(console.error);
-
-        const responseData = response.data || response || {};
-        const savedSale = { ...saleData, ...responseData };
-        savedSale.id = responseData.id || responseData.saleId || responseData._id || 'N/A';
-        savedSale.items = payloadItems;
-        savedSale.pagoDetalles = pagoDetalles;
-        savedSale.fecha = new Date().toISOString();
-
-        if (pagoDetalles.shouldPrintNow) {
-          setTicketData(savedSale); // Abre Modal Ticket con ID real
-          // Clear cart AFTER setting ticket data to ensure UI consistency behind modal
-          handleRemoveOrder(orderToCloseId);
-        } else {
-          // Éxito silencioso o pequeño toast (ya mostramos alerta abajo si era instant)
-          // If not printing, clear immediately
-          handleRemoveOrder(orderToCloseId);
-        }
-
-        // Registrar en Caja (Background)
-        if (isCajaOpen && cajaSession) {
-          const details = { ...pagoDetalles };
-          const isCash = !details.tarjeta && !details.transferencia && !details.credito;
-          if (isCash && details.efectivo === undefined) details.efectivo = saleData.totalVenta;
-
-          const clientNameFound = clients.find(c => c.id_cliente === Number(pagoDetalles.clienteId))?.nombre || "Consumidor Final";
-          const totalSale = Number(saleData.totalVenta || 0);
-          details.efectivo = Number(details.efectivo || 0);
-
-          const newTransaction = {
-            type: 'venta',
-            amount: totalSale,
-            at: new Date().toISOString(),
-            userId,
-            note: `Venta #${savedSale.id} - ${clientNameFound}`,
-            pagoDetalles: details,
-            id: savedSale.id
-          };
-
-          // Enviar a servidor sin esperar en UI
-          api.addCajaTx({ userId, tx: newTransaction }, token).catch(console.error);
-
-          // Actualizar sesión local (si no lo hicimos antes)
-          // Nota: Si ya lo hicimos antes, esto podría duplicar visualmente si no tenemos cuidado, 
-          // pero como estamos en la promesa, esto corre "después".
-          // Mejor: Actualizar la sesión local SOLO si es await. Si es instant, lo hacemos afuera.
-          if (!isInstant) {
-            const updatedSession = { ...cajaSession, transactions: [newTransaction, ...(cajaSession.transactions || [])] };
-            setCajaSession(updatedSession);
-          }
-        }
-
-      } catch (err) {
-        console.error("CRITICAL: Error saving sale in background:", err);
-        // ★ NOTIFICACIÓN DE FALLO (User Request)
-        showAlert({
-          title: "⚠️ Error de Sincronización",
-          message: `La venta por C$ ${fmt(total)} NO se guardó en el servidor.\nError: ${err.message}.\n\nPor favor, anote los detalles o reintente.`
-        });
-        // TODO: En un sistema real, guardaríamos esto en IndexedDB para reintento automático.
-      }
-    };
-
-    if (isInstant) {
-      // --- MODO INSTANTÁNEO ---
-      // 1. Actualizar UI inmediatamente (Optimistic)
+      // UI update (RECIÉN DESPUÉS DEL CÓDIGO 200 OK)
       handleRemoveOrder(orderToCloseId);
+      
+      if (pagoDetalles.shouldPrintNow) {
+        setTicketData(savedSale); // Abre Modal Ticket con ID real ya impreso
+      } else {
+        showAlert({ title: "¡Éxito!", message: "Venta guardada exitosamente." });
+        handleOpenDrawer(); // Abrir cajón aún si no imprime ticket porque se concretó el pago
+      }
 
-      setProductsState(prev => prev.map(p => {
-        const sold = payloadItems.find(i => i.id_producto === (p.id_producto || p.id));
-        if (sold) return { ...p, existencia: Math.max(0, p.existencia - sold.quantity) };
-        return p;
-      }));
-
-      // Actualizar Caja Localmente (Optimistic)
+      // Caja Update (Síncrona local)
       if (isCajaOpen && cajaSession) {
         const details = { ...pagoDetalles };
+        const isCash = !details.tarjeta && !details.transferencia && !details.credito;
+        if (isCash && details.efectivo === undefined) details.efectivo = saleData.totalVenta;
+
         const clientNameFound = clients.find(c => c.id_cliente === Number(pagoDetalles.clienteId))?.nombre || "Consumidor Final";
         const totalSale = Number(saleData.totalVenta || 0);
-        // ... (Logic duplicated largely for local show) ...
-        const tempTx = {
+        details.efectivo = Number(details.efectivo || 0);
+
+        const newTransaction = {
           type: 'venta',
           amount: totalSale,
           at: new Date().toISOString(),
           userId,
-          note: `Venta (Pendiente) - ${clientNameFound}`,
+          note: `Venta #${savedSale.id} - ${clientNameFound}`,
           pagoDetalles: details,
-          id: 'PEND-' + Date.now()
+          id: savedSale.id
         };
-        const updatedSession = { ...cajaSession, transactions: [tempTx, ...(cajaSession.transactions || [])] };
+
+        // Fire-and-forget de caja
+        api.addCajaTx({ userId, tx: newTransaction }, token).catch(e => console.error("Error CAJA:", e));
+
+        const updatedSession = { ...cajaSession, transactions: [newTransaction, ...(cajaSession.transactions || [])] };
         setCajaSession(updatedSession);
       }
 
-      showAlert({ title: "¡Éxito!", message: "Venta procesada." });
-
-      // Abrir el cajón eléctrico automáticamente incluso si no se imprime ticket (a petición del usuario)
-      handleOpenDrawer();
-
-      // 2. Ejecutar proceso en background
-      processSalePromise(); // No awaits
-
+      setIsProcessing(false);
       return true;
 
-    } else {
-      // --- MODO CON ESPERA (IMPRESIÓN) ---
-      // Debemos esperar para tener el ID y mostrar el ticket
-      await processSalePromise();
-      return true;
+    } catch (err) {
+      console.error("CRITICAL: Error al procesar factura de forma impenetrable:", err);
+      setIsProcessing(false);
+      
+      showAlert({
+        title: "⚠️ FACTURA NO GENERADA",
+        message: `Hubo un error de conexión.\n\nServidor dice: ${err.message || 'Desconocido'}.\n\nTu carrito y los productos siguen intactos. Espera o revisa el internet y da clic en Cobrar nuevamente.`
+      });
+      return false;
     }
   };
 
@@ -870,11 +813,11 @@ const POS = () => {
 
               <S.Button
                 primary
-                style={{ width: '100%', marginTop: '12px', padding: '16px', fontSize: '1.2rem', fontWeight: 'bold' }}
+                style={{ width: '100%', marginTop: '12px', padding: '16px', fontSize: '1.2rem', fontWeight: 'bold', opacity: isProcessing ? 0.7 : 1, cursor: isProcessing ? 'wait' : 'pointer' }}
                 onClick={() => openModal('payment', { total })}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || isProcessing}
               >
-                $ COBRAR (F2)
+                {isProcessing ? 'EJECUTANDO(No cerrar)...' : '$ COBRAR (F2)'}
               </S.Button>
             </div>
           </div>
