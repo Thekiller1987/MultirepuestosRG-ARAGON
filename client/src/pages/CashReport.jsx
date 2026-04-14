@@ -153,6 +153,9 @@ function calculateReportStats(session) {
   // Desglose más granular:
   let ventasBrutasEfectivo = 0, ventasBrutasTarjeta = 0, ventasBrutasTransf = 0, ventasBrutasCredito = 0;
   let abonosEfectivo = 0, abonosTarjeta = 0, abonosTransf = 0;
+  
+  // Flujo Neto Exacto usando la tasa al momento de la venta (como el servidor)
+  let exactMovimientoNeto = 0;
 
   for (const tx of transactions) {
     const t = (tx?.type || '').toLowerCase();
@@ -223,49 +226,60 @@ function calculateReportStats(session) {
     if (t === 'venta_contado' || t === 'venta_mixta' || t === 'venta_credito' || t.startsWith('venta')) {
       if (pd.efectivo !== undefined || pd.dolares !== undefined) {
         const cashInCordobas = Number(pd.efectivo || 0);
-        // Descontamos el falso cambio generado por el error de tipeo en tarjeta
         let cashOutCordobas = Number(pd.cambio || 0);
         if (overflowCambioFalso > 0 && cashOutCordobas >= overflowCambioFalso) {
           cashOutCordobas -= overflowCambioFalso;
         }
-
         const cashInDolares = Number(pd.dolares || 0);
+        const tasaMomento = Number(pd.tasaDolarAlMomento || session?.tasaDolar || 1);
 
         netCordobas += (cashInCordobas - cashOutCordobas);
         netDolares += cashInDolares;
+        exactMovimientoNeto += (cashInCordobas + (cashInDolares * tasaMomento)) - cashOutCordobas;
       } else {
-        // Si no hay desglose explícito de efectivo/dólares, asumimos que el rawAmount es en córdobas
         const neto = rawAmount - txTarjeta - txTransf - txCredito;
         netCordobas += neto;
+        exactMovimientoNeto += neto;
       }
     }
     else if (t.includes('abono')) {
       if (pd.dolares !== undefined || pd.efectivo !== undefined) {
-        netDolares += Number(pd.dolares || 0);
-        netCordobas += Number(pd.efectivo || 0);
+        const d_dol = Number(pd.dolares || 0);
+        const d_efe = Number(pd.efectivo || 0);
+        netDolares += d_dol;
+        netCordobas += d_efe;
+        exactMovimientoNeto += d_efe + (d_dol * Number(session?.tasaDolar || 1));
       } else {
-        // Abono Cash uses rawAmount (ingresoCaja)
         netCordobas += rawAmount;
+        exactMovimientoNeto += rawAmount;
       }
     }
     else if (t === 'entrada') {
       netCordobas += Math.abs(rawAmount);
+      exactMovimientoNeto += Math.abs(rawAmount);
     }
     else if (t === 'salida') {
       netCordobas -= Math.abs(rawAmount);
+      exactMovimientoNeto -= Math.abs(rawAmount);
     }
     else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
       if (pd.efectivo !== undefined) netCordobas -= Number(pd.efectivo || 0);
       if (pd.dolares !== undefined) netDolares -= Number(pd.dolares || 0);
-      if (pd.efectivo === undefined && pd.dolares === undefined) netCordobas += rawAmount; // already negative
+      if (pd.efectivo === undefined && pd.dolares === undefined) netCordobas += rawAmount; 
+      
+      let impacto = Number(pd.ingresoCaja || tx.amount || 0);
+      exactMovimientoNeto -= Math.abs(impacto);
     }
     else if (t === 'ajuste') {
       if (pd.target === 'efectivo') {
         netCordobas += rawAmount;
+        exactMovimientoNeto += rawAmount;
         if (pd.hidden) totalHidden += rawAmount;
       }
       else if (pd.target === 'dolares') {
         netDolares += rawAmount;
+        // Ajustes directos a veces no tienen tasa clara, usamos la de la sesion para exact
+        exactMovimientoNeto += rawAmount * Number(session?.tasaDolar || 1);
       }
     }
 
@@ -831,6 +845,9 @@ const CashReport = () => {
                   <div class="row bold" style="background:#f0fdf4; padding:8px; border:1px solid #bbf7d0; margin-top:10px;">
                     <span>= ESPERADO FÍSICO (Total C$):</span><span class="text-success">${fmtMoney(stats.efectivoEsperado)}</span>
                   </div>
+                  <div style="font-size: 0.75rem; color: #64748b; text-align: right; margin-top: 5px;">
+                    (Físicos a Contar: C$${stats.efectivoEsperadoCordobas.toFixed(2)} y $${stats.efectivoEsperadoDolares.toFixed(2)})
+                  </div>
                 </div>
             </div>
           </div>
@@ -1025,6 +1042,9 @@ const CashReport = () => {
                     <span>¡ESPERADO ACTUAL EN CAJA!</span>
                     <span>{fmtMoney(stats.efectivoEsperado)}</span>
                 </div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'right', padding: '0 12px 8px 0', background: '#dcfce7' }}>
+                    (Físicos a Contar: C${stats.efectivoEsperadoCordobas.toFixed(2)} y ${stats.efectivoEsperadoDolares.toFixed(2)})
+                </div>
               </div>
 
               {/* TABLA DE PRODUCTOS EN VIVO */}
@@ -1125,7 +1145,7 @@ const CashReport = () => {
                       <span>{fmtMoney(stats.efectivoEsperado)}</span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'right', padding: '0 12px 8px 0', background: '#dcfce7' }}>
-                      (C${stats.efectivoEsperadoCordobas.toFixed(2)} + ${stats.efectivoEsperadoDolares.toFixed(2)})
+                      (Físicos en Caja: C${stats.efectivoEsperadoCordobas.toFixed(2)} y ${stats.efectivoEsperadoDolares.toFixed(2)})
                   </div>
                 </div>
 

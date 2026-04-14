@@ -130,6 +130,9 @@ const CajaModal = ({
     // Desglose más granular:
     let ventasBrutasEfectivo = 0, ventasBrutasTarjeta = 0, ventasBrutasTransf = 0, ventasBrutasCredito = 0;
     let abonosEfectivo = 0, abonosTarjeta = 0, abonosTransf = 0;
+    
+    // Flujo Neto Exacto usando la tasa al momento de la venta (como el servidor)
+    let exactMovimientoNeto = 0;
 
     for (const tx of transactions) {
       const t = (tx?.type || '').toLowerCase();
@@ -189,43 +192,61 @@ const CajaModal = ({
       // --- ACUMULAR EFECTIVO FÍSICO (Caja) ---
       if (t.startsWith('venta') || t === 'venta_contado' || t === 'venta_mixta' || t === 'venta_credito') {
         if (pd.efectivo !== undefined || pd.dolares !== undefined) {
-          netCordobas += (Number(pd.efectivo || 0) - Number(pd.cambio || 0));
-          netDolares += Number(pd.dolares || 0);
+          const cashInCordobas = Number(pd.efectivo || 0);
+          const cashOutCordobas = Number(pd.cambio || 0);
+          const cashInDolares = Number(pd.dolares || 0);
+          const tasaMomento = Number(pd.tasaDolarAlMomento || session?.tasaDolar || initialTasaDolar || 1);
+
+          netCordobas += (cashInCordobas - cashOutCordobas);
+          netDolares += cashInDolares;
+          exactMovimientoNeto += (cashInCordobas + (cashInDolares * tasaMomento)) - cashOutCordobas;
         } else {
           // Legacy: if no breakdown, assume rawAmount is net cash
-          netCordobas += (montoBase - txTarjeta - txTransf - txCredito);
+          const neto = montoBase - txTarjeta - txTransf - txCredito;
+          netCordobas += neto;
+          exactMovimientoNeto += neto;
         }
       } else if (t.includes('abono')) {
         if (pd.dolares !== undefined) {
-          netDolares += Number(pd.dolares || 0);
-          netCordobas += Number(pd.efectivo || 0);
+          const d_dol = Number(pd.dolares || 0);
+          const d_efe = Number(pd.efectivo || 0);
+          netDolares += d_dol;
+          netCordobas += d_efe;
+          exactMovimientoNeto += d_efe + (d_dol * Number(session?.tasaDolar || initialTasaDolar || 1));
         } else {
           // For Abonos, montoBase (based on ingresoCaja) is the net cash
           netCordobas += montoBase;
+          exactMovimientoNeto += montoBase;
         }
       } else if (t === 'entrada') {
         netCordobas += Math.abs(montoBase);
+        exactMovimientoNeto += Math.abs(montoBase);
       }
       else if (t === 'salida') {
         netCordobas -= Math.abs(montoBase);
+        exactMovimientoNeto -= Math.abs(montoBase);
       }
       else if (t.includes('devolucion') || t.includes('cancelacion') || t.includes('anulacion')) {
         netCordobas += montoBase; // montoBase es negativo (dinero sale de caja)
+        exactMovimientoNeto += montoBase;
       }
       else if (t === 'ajuste') {
         if (pd.target === 'efectivo') {
           netCordobas += montoBase;
+          exactMovimientoNeto += montoBase;
           if (pd.hidden) totalHidden += montoBase;
         }
         if (pd.target === 'dolares') {
           netDolares += montoBase; // Add to Net Dollars
-          // We don't track hidden dollars separately yet for "Other Income" derived calc, 
-          // but sticking to C$ for squares is usually enough. 
+          // Ajustes directos a veces no tienen tasa clara, usamos la de la sesion para exact
+          exactMovimientoNeto += montoBase * Number(session?.tasaDolar || initialTasaDolar || 1);
         }
       }
       else {
         // Fallback
-        netCordobas += montoBase - txTarjeta - txTransf;
+        const neto = montoBase - txTarjeta - txTransf;
+        netCordobas += neto;
+        exactMovimientoNeto += neto;
       }
 
       // --- TOTAL VENTAS / INGRESOS DEL DIA (Revenue) ---
@@ -249,10 +270,9 @@ const CajaModal = ({
       else if (t.includes('abono')) cls.abonos.push(normalizedTx);
     }
 
-    // Calcular Esperado
-    // Formula: CajaInicial + (VentasTotales - NoEfectivo - Salidas) -> Simplificado: CajaInicial + NetCordobasFisicosCalculados
-    // We already calculated netCordobas strictly based on physical cash movement.
-    const efectivoEsperadoCalc = cajaInicialN + netCordobas + (netDolares * tasaRef);
+    // Calcular Esperado EXACTO usando la logica del backend
+    // Evitamos multiplicar todo el netDolares al final por la tasaRef
+    const efectivoEsperadoCalc = (session?.esperado !== undefined) ? Number(session.esperado) : (cajaInicialN + exactMovimientoNeto);
 
     return {
       cajaInicial: cajaInicialN,
@@ -573,8 +593,7 @@ const CajaModal = ({
                 <div className="section">
                   <div className="section-title">4. ARQUEO FINAL</div>
                   <div className="row big"><span>EFECTIVO ESPERADO:</span><span>{money(efectivoEsperado)}</span></div>
-                  <div className="row sub">({money(efectivoEsperadoCordobas)} + {usd(efectivoEsperadoDolares)})</div>
-
+                  
                   <div className="row" style={{ marginTop: 8, paddingTop: 4, borderTop: '1px dashed #ccc' }}>
                     <span>EFECTIVO CONTADO:</span><span>{money(totalContadoFisico)}</span>
                   </div>
@@ -682,10 +701,10 @@ const CajaModal = ({
             </div>
 
             <div style={{ marginTop: 8, padding: '15px', backgroundColor: '#f8f9fa', borderRadius: 6, border: '1px dashed #ced4da' }}>
-              <div style={{ fontWeight: '800', marginBottom: 10, fontSize: '1.2rem', color: '#495057' }}>Efectivo a Tener:</div>
+              <div style={{ fontWeight: '800', marginBottom: 10, fontSize: '1.2rem', color: '#495057' }}>Esperado Físico Aproximado:</div>
               <TotalsRow style={{ fontSize: '1.3rem' }}><span>Córdobas:</span><strong style={{ color: '#198754' }}>C$ {Number(efectivoEsperadoCordobas).toLocaleString()}</strong></TotalsRow>
               <TotalsRow style={{ fontSize: '1.3rem' }}><span>Dólares:</span><strong style={{ color: '#198754' }}>$ {Number(efectivoEsperadoDolares).toLocaleString()}</strong></TotalsRow>
-              <TotalsRow $bold style={{ marginTop: 10, borderTop: '2px solid #ccc', paddingTop: 10, fontSize: '1.5rem' }}><span>TOTAL (C$):</span><span>{money(efectivoEsperado)}</span></TotalsRow>
+              <TotalsRow $bold style={{ marginTop: 10, borderTop: '2px solid #ccc', paddingTop: 10, fontSize: '1.5rem' }}><span>TOTAL EXACTO (C$):</span><span>{money(efectivoEsperado)}</span></TotalsRow>
             </div>
 
             <div style={{ display: 'flex', gap: 15, marginTop: 20 }}>
