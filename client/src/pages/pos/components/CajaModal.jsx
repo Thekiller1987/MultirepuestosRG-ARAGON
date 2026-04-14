@@ -417,11 +417,12 @@ const CajaModal = ({
                 <div style={{ background: '#fff', padding: 15, borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: '4px solid #28a745' }}>
                   <div style={{ fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Efectivo Real</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#28a745' }}>{money(totalContadoFisico)}</div>
-}
+                </div>
                 <div style={{ background: '#fff', padding: 15, borderRadius: 8, boxShadow: '0 2px 5px rgba(0,0,0,0.05)', borderLeft: `4px solid ${diferencia < 0 ? '#dc3545' : '#ffc107'}` }}>
                   <div style={{ fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Diferencia</div>
                   <div style={{ fontSize: '1.5rem', fontWeight: '800', color: diferencia !== 0 ? (diferencia < 0 ? '#dc3545' : '#e0a800') : '#28a745' }}>{diferencia > 0 ? '+' : ''}{money(diferencia)}</div>
                 </div>
+              </div>
 
               <div style={{ background: '#fff', padding: 0, borderRadius: 8, boxShadow: '0 4px 15px rgba(0,0,0,0.08)', marginBottom: 25, overflow: 'hidden' }}>
                 <div style={{ background: '#1e293b', padding: '15px 20px', color: 'white' }}>
