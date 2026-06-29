@@ -25,6 +25,7 @@ const Solicitudes = React.lazy(() => import('./pages/Solicitudes.jsx'));
 const InventoryOutflowPage = React.lazy(() => import('./pages/InventoryOutflowPage.jsx'));
 const DetailedSalesReport = React.lazy(() => import('./pages/DetailedSalesReport.jsx'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage.jsx'));
+const EmployeeManagement = React.lazy(() => import('./pages/EmployeeManagement.jsx'));
 
 // Simple fallback component
 const Loading = () => (
@@ -203,6 +204,15 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.GERENTE]}>
                 <motion.div {...pageTransition}><SettingsPage /></motion.div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/employees"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <motion.div {...pageTransition}><EmployeeManagement /></motion.div>
               </ProtectedRoute>
             }
           />

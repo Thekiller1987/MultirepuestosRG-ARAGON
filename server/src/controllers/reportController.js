@@ -100,15 +100,23 @@ const getSalesByUserReport = async (req, res) => {
         const { from, to } = getDateRange(startDate, endDate);
         const sql = `
             SELECT 
-                u.nombre_usuario, 
+                CASE 
+                    WHEN e.nombre IS NOT NULL THEN CONCAT('Vendedor: ', e.nombre)
+                    ELSE CONCAT('Caja: ', u.nombre_usuario)
+                END AS nombre_usuario, 
                 COUNT(v.id_venta) AS cantidad_ventas, 
                 SUM(v.total_venta) AS total_vendido
             FROM ventas AS v
             JOIN usuarios AS u ON v.id_usuario = u.id_usuario
+            LEFT JOIN empleados AS e ON v.id_empleado = e.id_empleado
             WHERE 
                 v.estado = 'COMPLETADA' 
                 AND v.fecha >= ? AND v.fecha <= ?
-            GROUP BY u.nombre_usuario 
+            GROUP BY 
+                CASE 
+                    WHEN e.nombre IS NOT NULL THEN CONCAT('Vendedor: ', e.nombre)
+                    ELSE CONCAT('Caja: ', u.nombre_usuario)
+                END
             ORDER BY total_vendido DESC;
         `;
         const [results] = await db.query(sql, [from, to]);
@@ -219,11 +227,13 @@ const getDetailedSales = async (req, res) => {
                 v.tipo_venta,
                 v.id_usuario AS userId,
                 v.id_cliente AS clientId,
+                v.id_empleado AS employeeId,
                 c.nombre AS clienteNombre,
-                u.nombre_usuario AS vendedorNombre
+                COALESCE(e.nombre, u.nombre_usuario) AS vendedorNombre
             FROM ventas v
             LEFT JOIN clientes c ON v.id_cliente = c.id_cliente
             LEFT JOIN usuarios u ON v.id_usuario = u.id_usuario
+            LEFT JOIN empleados e ON v.id_empleado = e.id_empleado
             WHERE v.fecha >= ? AND v.fecha <= ?
             ${tipoFilter}
             ${clientFilter}
@@ -352,6 +362,37 @@ const getProductHistory = async (req, res) => {
     }
 };
 
+// --- REPORTE DE VENTAS POR EMPLEADO/VENDEDOR ---
+const getSalesByEmployeeReport = async (req, res) => {
+    const { startDate, endDate } = req.query;
+    if (!startDate || !endDate) return res.status(400).json({ msg: 'Fechas requeridas.' });
+    try {
+        const { from, to } = getDateRange(startDate, endDate);
+        // Agrupa ventas completadas por empleado/vendedor real
+        // Excluye devoluciones y cancelaciones para números limpios
+        const sql = `
+            SELECT 
+                COALESCE(e.id_empleado, 0) AS id_empleado,
+                COALESCE(e.nombre, 'Sin asignar') AS nombre_empleado, 
+                COUNT(v.id_venta) AS cantidad_facturas, 
+                COALESCE(SUM(v.total_venta), 0) AS total_vendido
+            FROM ventas AS v
+            LEFT JOIN empleados AS e ON v.id_empleado = e.id_empleado
+            WHERE 
+                v.estado = 'COMPLETADA' 
+                AND v.fecha >= ? AND v.fecha <= ?
+            GROUP BY e.id_empleado, e.nombre 
+            ORDER BY total_vendido DESC;
+        `;
+        const [results] = await db.query(sql, [from, to]);
+        res.json(results);
+    } catch (error) {
+        console.error('Error en reporte de ventas por empleado:', error);
+        res.status(500).json({ msg: 'Error en el servidor.' });
+    }
+};
+
+
 module.exports = {
     getSalesSummaryReport,
     getInventoryValueReport,
@@ -359,5 +400,6 @@ module.exports = {
     getTopProductsReport,
     getSalesChartReport,
     getDetailedSales,
-    getProductHistory
+    getProductHistory,
+    getSalesByEmployeeReport
 };

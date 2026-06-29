@@ -19,6 +19,9 @@ const createSale = async (req, res) => {
     }
 
     const montoCredito = pagoDetalles.credito || 0;
+    const cleanEmpleadoId = req.body.id_empleado || pagoDetalles.id_empleado || null;
+    const finalEmpleadoId = cleanEmpleadoId && Number(cleanEmpleadoId) !== 0 ? Number(cleanEmpleadoId) : null;
+
     const saleData = {
       fecha: new Date(),
       total_venta: totalVenta,
@@ -27,6 +30,7 @@ const createSale = async (req, res) => {
       estado: 'COMPLETADA',
       id_usuario: userId,
       id_cliente: clientId,
+      id_empleado: finalEmpleadoId,
       pago_detalles: JSON.stringify({ ...pagoDetalles, tasaDolarAlMomento: req.body.tasaDolarAlMomento }),
       tipo_venta: montoCredito > 0 ? 'CREDITO' : 'CONTADO',
       referencia_pedido: req.body.referencia_pedido
@@ -293,7 +297,7 @@ const getSales = async (req, res) => {
     const { date } = req.query;
     let query = `
       SELECT v.id_venta, v.fecha, v.total_venta, v.subtotal, v.descuento,
-             v.estado, v.id_usuario, v.id_cliente, v.pago_detalles, v.tipo_venta
+             v.estado, v.id_usuario, v.id_cliente, v.id_empleado, v.pago_detalles, v.tipo_venta
       FROM ventas v
     `;
     const params = [];
@@ -330,6 +334,7 @@ const getSales = async (req, res) => {
         estado: sale.estado,
         userId: sale.id_usuario,
         clientId: sale.id_cliente,
+        employeeId: sale.id_empleado,
         pagoDetalles: pd || {},
         tipo_venta: sale.tipo_venta,
         items: details

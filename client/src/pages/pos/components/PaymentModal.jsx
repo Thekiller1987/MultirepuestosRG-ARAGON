@@ -10,6 +10,9 @@ import {
   ModalOverlay, ModalContent, Button, SearchInput, TotalsRow, InfoBox
 } from '../POS.styles.jsx';
 
+import { fetchEmployees } from '../../../service/api';
+import socket from '../../../service/socket';
+
 /* ========== Helpers ========== */
 const cleanFloat = (v) => {
   const n = parseFloat(v);
@@ -46,6 +49,28 @@ const PaymentModal = ({
   const [tipoPagoPrincipal, setTipoPagoPrincipal] = useState('contado');
   const [clienteSeleccionado, setClienteSeleccionado] = useState(initialClientId ?? '0');
   const [saving, setSaving] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState('0');
+
+  // Cargar lista de empleados al montar y en tiempo real
+  useEffect(() => {
+    const loadEmployeesList = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const data = await fetchEmployees(token);
+        setEmployees(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Error al obtener la lista de empleados en POS PaymentModal:", err);
+      }
+    };
+    loadEmployeesList();
+
+    socket.on('employees:update', loadEmployeesList);
+
+    return () => {
+      socket.off('employees:update', loadEmployeesList);
+    };
+  }, []);
 
   // hover del botón pagar
   const [isHovering, setIsHovering] = useState(false);
@@ -262,6 +287,7 @@ const PaymentModal = ({
       referenciaTransferencia: referenciaTransferencia.trim(),
       credito,                           // shorthand
       clienteId: finalClienteId,
+      id_empleado: empleadoSeleccionado !== '0' ? Number(empleadoSeleccionado) : null,
       tipoVenta: computeTipoVenta({
         efectivo: numEfectivo,
         tarjeta: numTarjeta,
@@ -404,6 +430,32 @@ const PaymentModal = ({
                   <FaWindowClose style={{ marginRight: 4 }} /> No puedes vender sin seleccionar un cliente.
                 </p>
               )}
+
+              {/* Empleado / Vendedor */}
+              <label style={{ display: 'block', fontWeight: '700', marginTop: 15, marginBottom: 8, color: '#475569', fontSize: '0.9rem' }}>
+                👤 Seleccionar Vendedor / Empleado
+              </label>
+              <SearchInput
+                as="select"
+                value={empleadoSeleccionado}
+                onChange={(e) => setEmpleadoSeleccionado(e.target.value)}
+                style={{
+                  height: 42,
+                  padding: '0 12px',
+                  width: '100%',
+                  fontSize: '1rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 8,
+                  backgroundColor: '#f8fafc'
+                }}
+              >
+                <option value="0">-- Sin Empleado --</option>
+                {employees.map(emp => (
+                  <option key={emp.id_empleado} value={emp.id_empleado}>
+                    {emp.nombre} {emp.cargo ? `(${emp.cargo})` : ''}
+                  </option>
+                ))}
+              </SearchInput>
             </div>
 
             {/* Medios de pago */}

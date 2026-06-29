@@ -1157,7 +1157,7 @@ const InventoryManagement = () => {
               <div className="image-placeholder" onClick={() => p.imagen && setViewImage({ isOpen: true, imageUrl: p.imagen })}>
                 {p.imagen ? (
                   <>
-                    <img src={p.imagen} alt={p.nombre} />
+                    <img src={p.imagen} alt={p.nombre} loading="lazy" />
                     <div className="overlay"><FaEye /></div>
                   </>
                 ) : (

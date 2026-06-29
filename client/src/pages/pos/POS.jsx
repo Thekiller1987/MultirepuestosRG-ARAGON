@@ -331,6 +331,7 @@ const POS = () => {
       pagoDetalles,
       userId,
       clientId: Number(pagoDetalles.clienteId || 0),
+      id_empleado: pagoDetalles.id_empleado || null,
       tasaDolarAlMomento: tasaDolar,
       originalOrderId: currentOrder?.serverSaleId || null
     };

@@ -517,3 +517,32 @@ export const createOutflow = async (data, token) => {
 export const fetchOutflowHistory = async (token) => {
     return await request('get', '/outflow/history', token);
 };
+
+// ===================================================================
+// === SECCIÓN DE EMPLEADOS/TRABAJADORES ===
+// ===================================================================
+
+export const fetchEmployees = async (token, includeInactive = false) => {
+    const params = includeInactive ? { includeInactive: 'true' } : {};
+    return await request('get', '/employees', token, null, { params });
+};
+
+export const createEmployeeApi = async (data, token) => {
+    return await request('post', '/employees', token, data);
+};
+
+export const updateEmployeeApi = async (id, data, token) => {
+    return await request('put', `/employees/${id}`, token, data);
+};
+
+export const deleteEmployeeApi = async (id, token) => {
+    return await request('delete', `/employees/${id}`, token);
+};
+
+// ===================================================================
+// === REPORTE DE VENTAS POR EMPLEADO ===
+// ===================================================================
+
+export const fetchSalesByEmployeeReport = (token, params) => {
+    return request('get', '/reports/sales-by-employee', token, null, { params });
+};

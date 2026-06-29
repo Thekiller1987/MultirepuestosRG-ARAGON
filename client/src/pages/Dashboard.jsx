@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import {
     FaSignOutAlt, FaShoppingCart, FaBoxOpen, FaFileInvoice,
     FaCreditCard, FaCloudUploadAlt, FaChartBar, FaBriefcase, FaUsers,
-    FaFileInvoiceDollar, FaClipboardList, FaTruck, FaTags, FaCog
+    FaFileInvoiceDollar, FaClipboardList, FaTruck, FaTags, FaCog, FaUserTie
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -209,16 +209,6 @@ const Dashboard = () => {
                         </Card>
                     )}
 
-                    {/* Venta Mayorista (Próximamente) */}
-                    {canAccessPOS && (
-                        <Card to="#" onClick={(e) => e.preventDefault()} color="#8b5cf6" style={{ opacity: 0.9, cursor: 'not-allowed' }}>
-                            <CardIcon color="#8b5cf6"><FaTags /></CardIcon>
-                            <h2>Venta Mayorista</h2>
-                            <p style={{ fontWeight: 'bold', color: '#8b5cf6', marginBottom: '5px' }}>PRÓXIMAMENTE</p>
-                            <p>Portal exclusivo para ventas al por mayor.</p>
-                        </Card>
-                    )}
-
                     {/* 2. Pedidos y Apartados */}
                     {canAccessOrders && (
                         <Card to="/orders" color="#ffc107" onMouseEnter={() => prefetch('/orders')}>
@@ -306,6 +296,15 @@ const Dashboard = () => {
                             <CardIcon color="#ff6b6b"><FaUsers /></CardIcon>
                             <h2>Usuarios</h2>
                             <p>Administra roles y accesos.</p>
+                        </Card>
+                    )}
+
+                    {/* NUEVO: Trabajadores */}
+                    {canAccessAdminUsers && (
+                        <Card to="/admin/employees" color="#0ea5e9" onMouseEnter={() => import('./EmployeeManagement.jsx').catch(() => {})}>
+                            <CardIcon color="#0ea5e9"><FaUserTie /></CardIcon>
+                            <h2>Trabajadores</h2>
+                            <p>Gestiona empleados y personal.</p>
                         </Card>
                     )}
 

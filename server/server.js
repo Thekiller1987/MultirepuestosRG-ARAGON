@@ -6,23 +6,21 @@ require('dotenv').config();
 // Importamos la conexión a la BD
 const db = require('./src/config/db.js');
 
-// Importamos nuestras rutas
-const authRoutes = require('./src/routes/authRoutes.js');
-const userRoutes = require('./src/routes/userRoutes.js');
-const productRoutes = require('./src/routes/productRoutes.js');
-const categoryRoutes = require('./src/routes/categoryRoutes.js');
-const providerRoutes = require('./src/routes/providerRoutes.js');
-const clientRoutes = require('./src/routes/clientRoutes.js');
-const orderRoutes = require('./src/routes/orderRoutes.js');
-const financeRoutes = require('./src/routes/financeRoutes.js');
-const salesRoutes = require('./src/routes/salesRoutes.js');
-const reportRoutes = require('./src/routes/reportRoutes.js');
-const uploadRoutes = require('./src/routes/uploadRouter.js');
-const cajaRoutes = require('./src/routes/cajaRoutes.js');
-// NUEVA RUTA AGREGADA
-const providerInvoiceRoutes = require('./src/routes/providerInvoiceRoutes.js');
-const requestRoutes = require('./src/routes/requestRoutes.js');
-const outflowRoutes = require('./src/routes/outflowRoutes.js'); // FIXED: Missing import
+// Helper to wait for DB connection
+const waitForDb = async (retries = 20, delay = 3000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const conn = await db.getConnection();
+      console.log('¡Conexión a la base de datos establecida exitosamente! 🎉');
+      conn.release();
+      return true;
+    } catch (e) {
+      console.log(`⏳ Esperando a la base de datos (intento ${i + 1}/${retries})... ${e.message}`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('❌ No se pudo conectar a la base de datos después de varios intentos.');
+};
 
 // 2. Crear una instancia de Express
 const app = express();
@@ -41,15 +39,8 @@ const allowedOrigins = [
 ];
 
 const corsOriginHelper = (origin, callback) => {
-  // Log request origin for debugging
-  // console.log("Incoming Origin:", origin); 
-
-  // Permitir requests sin origin (como apps móviles o Postman)
   if (!origin) return callback(null, true);
 
-  // Allow all origins matching the main domains (http/https, www/non-www)
-  // Also allows localhost and local IPs
-  // For production stability, we will be permissive with the specific domains
   if (allowedOrigins.includes(origin) ||
     origin.includes('multirepuestos') || // Safe fallback for subdomains
     origin.includes('localhost') ||
@@ -58,7 +49,6 @@ const corsOriginHelper = (origin, callback) => {
     return callback(null, true);
   }
 
-  // FALLBACK: Permitir todo para evitar "Server Error" en socket.io si el origen es legítimo pero no listado
   console.log(`⚠️ Permissive CORS for: ${origin}`);
   return callback(null, true);
 };
@@ -80,46 +70,19 @@ const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // 4. Definir el puerto
-// Usamos BACKEND_PORT si existe (según tu .env), o PORT, o 3003 por defecto
 const PORT = process.env.BACKEND_PORT || process.env.PORT || 3003;
-
-// 5. Usar las rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/providers', providerRoutes);
-app.use('/api/clients', clientRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/finances', financeRoutes);
-app.use('/api/sales', salesRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/upload', uploadRoutes);
-app.use('/api/caja', cajaRoutes);
-// NUEVA RUTA AGREGADA
-app.use('/api/facturas-proveedores', providerInvoiceRoutes);
-app.use('/api/requests', requestRoutes);
-app.use('/api/outflow', outflowRoutes);
-
-const settingsRoutes = require('./src/routes/settingsRoutes.js');
-const { initSettings } = require('./src/controllers/settingsController.js');
-
-// Inicializar configuración (asegurar que exista tabla)
-initSettings().catch(err => console.error("Error init settings:", err));
-
-app.use('/api/settings', settingsRoutes);
 
 app.get('/', (_req, res) => {
   res.send('¡API de MultirepuestosRG funcionando! 🚀');
 });
 
-// 6. Middleware global de manejo de errores
+// 5. Middleware global de manejo de errores
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ message: err.message || 'Error interno del servidor' });
 });
 
-// 7. Configuración de Socket.IO
+// 6. Configuración de Socket.IO
 const { Server } = require('socket.io');
 const http = require('http');
 
@@ -140,8 +103,47 @@ io.on('connection', (socket) => {
 
 app.set('io', io);
 
-// 8. Iniciar Servidor
-// Importante: Usamos httpServer.listen en lugar de app.listen para que WS funcione
-httpServer.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
-});
+// 7. Arrancar servidor y montar rutas dinámicamente cuando la BD esté lista
+async function startServer() {
+  try {
+    // A. Esperar a la base de datos
+    await waitForDb();
+
+    // B. Ejecutar migraciones iniciales de tablas (asegurar configuración y trabajadores)
+    const { initSettings } = require('./src/controllers/settingsController.js');
+    const { initEmployeesTable } = require('./src/controllers/employeeController.js');
+
+    await initSettings();
+    await initEmployeesTable();
+
+    // C. Importar y usar las rutas (se importan después de conectar para que las consultas de sus IIFEs no fallen)
+    app.use('/api/auth', require('./src/routes/authRoutes.js'));
+    app.use('/api/users', require('./src/routes/userRoutes.js'));
+    app.use('/api/products', require('./src/routes/productRoutes.js'));
+    app.use('/api/categories', require('./src/routes/categoryRoutes.js'));
+    app.use('/api/providers', require('./src/routes/providerRoutes.js'));
+    app.use('/api/clients', require('./src/routes/clientRoutes.js'));
+    app.use('/api/orders', require('./src/routes/orderRoutes.js'));
+    app.use('/api/finances', require('./src/routes/financeRoutes.js'));
+    app.use('/api/sales', require('./src/routes/salesRoutes.js'));
+    app.use('/api/reports', require('./src/routes/reportRoutes.js'));
+    app.use('/api/upload', require('./src/routes/uploadRouter.js'));
+    app.use('/api/caja', require('./src/routes/cajaRoutes.js'));
+    app.use('/api/facturas-proveedores', require('./src/routes/providerInvoiceRoutes.js'));
+    app.use('/api/requests', require('./src/routes/requestRoutes.js'));
+    app.use('/api/outflow', require('./src/routes/outflowRoutes.js'));
+    app.use('/api/employees', require('./src/routes/employeeRoutes.js'));
+    app.use('/api/settings', require('./src/routes/settingsRoutes.js'));
+
+    // D. Iniciar la escucha del servidor HTTP
+    httpServer.listen(PORT, () => {
+      console.log(`Servidor corriendo en el puerto ${PORT}`);
+    });
+
+  } catch (error) {
+    console.error('Error FATAL inicializando la aplicación:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();

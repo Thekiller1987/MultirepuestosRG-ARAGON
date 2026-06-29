@@ -483,7 +483,7 @@ const ProformaGenerator = () => {
 
                                 <div style={{ height: 160, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                                     {p.imagen ? (
-                                        <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                        <img src={p.imagen} alt={p.nombre} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                                     ) : (
                                         <FaImage size={40} color="#e2e8f0" />
                                     )}

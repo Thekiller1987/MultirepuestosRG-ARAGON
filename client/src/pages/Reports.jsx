@@ -10,7 +10,8 @@ import {
   fetchInventoryValueReport,
   fetchSalesByUserReport,
   fetchTopProductsReport,
-  fetchSalesChartReport
+  fetchSalesChartReport,
+  fetchSalesByEmployeeReport
 } from '../service/api.js';
 
 import AlertModal from './pos/components/AlertModal';
@@ -279,6 +280,7 @@ const Reports = () => {
   const [salesByUser, setSalesByUser] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [chartData, setChartData] = useState({ labels: [], datasets: [] });
+  const [salesByEmployee, setSalesByEmployee] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [alertInfo, setAlertInfo] = useState({ isOpen: false, title: '', message: '' });
@@ -296,12 +298,13 @@ const Reports = () => {
     }
     try {
       const params = { startDate, endDate };
-      const [summary, inventory, userSales, topProds, chart] = await Promise.all([
+      const [summary, inventory, userSales, topProds, chart, employeeSales] = await Promise.all([
         fetchSalesSummaryReport(token, params),
         fetchInventoryValueReport(token),
         fetchSalesByUserReport(token, params),
         fetchTopProductsReport(token, params),
-        fetchSalesChartReport(token, params)
+        fetchSalesChartReport(token, params),
+        fetchSalesByEmployeeReport(token, params)
       ]);
       setSalesSummary(summary);
 
@@ -327,6 +330,7 @@ const Reports = () => {
           hoverBackgroundColor: 'rgba(59, 130, 246, 1)',
         }]
       });
+      setSalesByEmployee(Array.isArray(employeeSales) ? employeeSales : []);
     } catch (error) {
       setAlertInfo({ isOpen: true, title: 'Error de Conexión', message: error.message });
     } finally {
@@ -445,6 +449,44 @@ const Reports = () => {
                   </ListItem>
                 )) : <EmptyState>No hay datos de productos.</EmptyState>}
               </ul>
+            </ReportCard>
+
+            {/* NUEVO: Ventas por Empleado */}
+            <ReportCard style={{ gridColumn: '1 / -1' }}>
+              <CardHeader><FaUserFriends style={{ color: '#0ea5e9' }} /> Ventas por Empleado</CardHeader>
+              {salesByEmployee.length > 0 ? (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem', marginTop: '0.5rem' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#475569' }}>
+                        <th style={{ padding: '10px 12px' }}>#</th>
+                        <th style={{ padding: '10px 12px' }}>Empleado / Vendedor</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center' }}>Facturas</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'right' }}>Total Vendido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {salesByEmployee.map((emp, idx) => (
+                        <tr key={emp.id_usuario || idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                          <td style={{ padding: '10px 12px', color: '#94a3b8', fontWeight: 600 }}>{idx + 1}</td>
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#1e293b' }}>{emp.nombre_empleado || 'Sin asignar'}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'center', color: '#64748b' }}>{emp.cantidad_facturas}</td>
+                          <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: '#059669' }}>{formatCurrency(emp.total_vendido)}</td>
+                        </tr>
+                      ))}
+                      <tr style={{ background: '#f8fafc', fontWeight: 700 }}>
+                        <td colSpan={2} style={{ padding: '10px 12px', color: '#1e293b' }}>TOTAL</td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center', color: '#1e293b' }}>
+                          {salesByEmployee.reduce((sum, e) => sum + Number(e.cantidad_facturas || 0), 0)}
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'right', color: '#059669', fontSize: '1.05rem' }}>
+                          {formatCurrency(salesByEmployee.reduce((sum, e) => sum + Number(e.total_vendido || 0), 0))}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : <EmptyState>No hay datos de ventas por empleado para este período.</EmptyState>}
             </ReportCard>
           </DashboardGrid>
         </div>
