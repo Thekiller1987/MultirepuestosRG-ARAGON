@@ -1467,7 +1467,12 @@ const MayoristaManagement = () => {
                   <ActionBtn onClick={() => setIsCargaModalOpen(true)}>
                     <FaPlus /> Nueva Carga a Rutero
                   </ActionBtn>
-                                     <tr>
+                </div>
+
+                <TableWrap>
+                  <table>
+                    <thead>
+                      <tr>
                         <th># Carga</th>
                         <th>Rutero / Muchacho</th>
                         <th>Vehículo / Moto</th>
@@ -2557,6 +2562,8 @@ const MayoristaManagement = () => {
               </ModalBox>
             </ModalOverlay>
           )}
+        </AnimatePresence>
+
         {/* =========================================================================
             MODAL 6: EMISIÓN DE FACTURA DE RUTA MAYORISTA
         ========================================================================= */}
