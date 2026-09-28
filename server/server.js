@@ -112,9 +112,11 @@ async function startServer() {
     // B. Ejecutar migraciones iniciales de tablas (asegurar configuración y trabajadores)
     const { initSettings } = require('./src/controllers/settingsController.js');
     const { initEmployeesTable } = require('./src/controllers/employeeController.js');
+    const { initMayoristaModule } = require('./src/controllers/mayoristaController.js');
 
     await initSettings();
     await initEmployeesTable();
+    await initMayoristaModule();
 
     // C. Importar y usar las rutas (se importan después de conectar para que las consultas de sus IIFEs no fallen)
     app.use('/api/auth', require('./src/routes/authRoutes.js'));
@@ -134,6 +136,7 @@ async function startServer() {
     app.use('/api/outflow', require('./src/routes/outflowRoutes.js'));
     app.use('/api/employees', require('./src/routes/employeeRoutes.js'));
     app.use('/api/settings', require('./src/routes/settingsRoutes.js'));
+    app.use('/api/mayorista', require('./src/routes/mayoristaRoutes.js'));
 
     // D. Iniciar la escucha del servidor HTTP
     httpServer.listen(PORT, () => {

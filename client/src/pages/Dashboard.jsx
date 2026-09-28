@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import {
     FaSignOutAlt, FaShoppingCart, FaBoxOpen, FaFileInvoice,
     FaCreditCard, FaCloudUploadAlt, FaChartBar, FaBriefcase, FaUsers,
-    FaFileInvoiceDollar, FaClipboardList, FaTruck, FaTags, FaCog, FaUserTie
+    FaFileInvoiceDollar, FaClipboardList, FaTruck, FaTags, FaCog, FaUserTie, FaWarehouse
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -182,6 +182,7 @@ const Dashboard = () => {
             case '/credits': import('./ClientesYCreditos.jsx'); break;
             case '/invoices': import('./FacturasProveedores.jsx'); break;
             case '/orders': import('./PedidosYApartados.jsx'); break;
+            case '/mayorista': import('./MayoristaManagement.jsx'); break;
             default: break;
         }
     };
@@ -206,6 +207,15 @@ const Dashboard = () => {
                             <CardIcon color="#007bff"><FaShoppingCart /></CardIcon>
                             <h2>Punto de Venta</h2>
                             <p>Registra ventas y gestiona transacciones diarias.</p>
+                        </Card>
+                    )}
+
+                    {/* Módulo Mayorista (Solo Administrador) */}
+                    {isAdmin && (
+                        <Card to="/mayorista" color="#059669" onMouseEnter={() => prefetch('/mayorista')}>
+                            <CardIcon color="#059669"><FaWarehouse /></CardIcon>
+                            <h2>Módulo Mayorista</h2>
+                            <p>Catálogo interactivo, precios de ruta, despacho y PDF.</p>
                         </Card>
                     )}
 

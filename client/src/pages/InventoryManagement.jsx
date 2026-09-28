@@ -605,7 +605,8 @@ const InventoryHistoryModal = ({ onClose }) => {
 const CreateProductModal = ({ isOpen, onClose, onSave, categories, providers, allProductsRaw }) => {
   const [formData, setFormData] = useState({
     codigo: '', nombre: '', costo: '', venta: '', mayoreo: '', id_categoria: '',
-    existencia: '', minimo: '', maximo: '', tipo_venta: 'Unidad', id_proveedor: '', descripcion: '', imagen: null
+    existencia: '', minimo: '', maximo: '', tipo_venta: 'Unidad', id_proveedor: '', descripcion: '', imagen: null,
+    precio_ruta: '', descuento_mayorista: '', promocion_mayorista: '', combo_mayorista: '', catalogo_mayorista: false
   });
   const [profitPercentage, setProfitPercentage] = useState('');
   const [modalError, setModalError] = useState('');
@@ -662,9 +663,27 @@ const CreateProductModal = ({ isOpen, onClose, onSave, categories, providers, al
       return;
     }
 
+    if (f.catalogo_mayorista) {
+      const pRuta = parseFloat(f.precio_ruta);
+      if (isNaN(pRuta) || pRuta <= 0) {
+        setModalError('Para activar en el Catálogo Mayorista, debe ingresar un Precio de Ruta mayor a C$ 0.');
+        return;
+      }
+      if (pRuta < cost) {
+        setModalError('El Precio de Ruta no puede ser menor que el costo.');
+        return;
+      }
+    }
+
     onSave({
       ...f,
-      mayoreo: f.mayoreo || null, minimo: f.minimo || null, maximo: f.maximo || null,
+      mayoreo: f.mayoreo || null,
+      precio_ruta: f.precio_ruta ? parseFloat(f.precio_ruta) : (f.mayoreo ? parseFloat(f.mayoreo) : null),
+      descuento_mayorista: f.descuento_mayorista ? parseFloat(f.descuento_mayorista) : 0,
+      promocion_mayorista: f.promocion_mayorista || null,
+      combo_mayorista: f.combo_mayorista || null,
+      catalogo_mayorista: f.catalogo_mayorista ? 1 : 0,
+      minimo: f.minimo || null, maximo: f.maximo || null,
       id_categoria: f.id_categoria || null, id_proveedor: f.id_proveedor || null
     });
   };
@@ -696,6 +715,29 @@ const CreateProductModal = ({ isOpen, onClose, onSave, categories, providers, al
               <FormGroup><Label>Categoría</Label><Select name="id_categoria" value={formData.id_categoria} onChange={handleInputChange}><option value="">-- Sin Categoría --</option>{categories.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>)}</Select></FormGroup>
               <FormGroup><Label>Proveedor</Label><Select name="id_proveedor" value={formData.id_proveedor} onChange={handleInputChange}><option value="">-- Sin Proveedor --</option>{providers.map(p => <option key={p.id_proveedor} value={p.id_proveedor}>{p.nombre}</option>)}</Select></FormGroup>
               <FormGroup><Label>Tipo de Venta</Label><Select name="tipo_venta" value={formData.tipo_venta} onChange={handleInputChange}><option value="Unidad">Unidad</option><option value="Juego">Juego</option><option value="Kit">Kit</option></Select></FormGroup>
+              
+              {/* Sección Mayorista & Rutas */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '2px dashed #cbd5e1', paddingTop: '0.85rem', marginTop: '0.5rem' }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🚚 Configuración Mayorista & Ruta
+                </span>
+              </div>
+              <FormGroup><Label>Precio de Ruta (C$) <span style={{ color: '#059669', fontSize: '0.75rem' }}>(Mayorista)</span></Label><Input type="number" step="0.01" name="precio_ruta" value={formData.precio_ruta} onChange={handleInputChange} placeholder="ej: 180.00" /></FormGroup>
+              <FormGroup><Label>% Descuento Ruta Autorizado</Label><Input type="number" step="0.01" name="descuento_mayorista" value={formData.descuento_mayorista} onChange={handleInputChange} placeholder="ej: 10" /></FormGroup>
+              <FormGroup><Label>Promoción Mayorista</Label><Input name="promocion_mayorista" value={formData.promocion_mayorista} onChange={handleInputChange} placeholder="ej: 10+ a C$ 160" /></FormGroup>
+              <FormGroup><Label>Combo Mayorista</Label><Input name="combo_mayorista" value={formData.combo_mayorista} onChange={handleInputChange} placeholder="ej: Incluye bujía gratis" /></FormGroup>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '10px', background: '#f0fdf4', padding: '10px 14px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+                <input
+                  type="checkbox"
+                  id="create_catalogo_mayorista"
+                  checked={!!formData.catalogo_mayorista}
+                  onChange={e => setFormData(prev => ({ ...prev, catalogo_mayorista: e.target.checked }))}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <label htmlFor="create_catalogo_mayorista" style={{ margin: 0, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: '#166534' }}>
+                  ⭐ Activar y mostrar en Catálogo Mayorista (Exige Precio de Ruta)
+                </label>
+              </div>
             </InputGrid>
             <ModalActions>
               <CancelButton type="button" onClick={onClose}>Cancelar</CancelButton>
@@ -721,6 +763,11 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
       setFormData({
         ...productToEdit,
         mayoreo: productToEdit.mayoreo ?? '',
+        precio_ruta: productToEdit.precio_ruta ?? productToEdit.mayorista ?? '',
+        descuento_mayorista: productToEdit.descuento_mayorista ?? '',
+        promocion_mayorista: productToEdit.promocion_mayorista ?? '',
+        combo_mayorista: productToEdit.combo_mayorista ?? '',
+        catalogo_mayorista: Boolean(productToEdit.catalogo_mayorista),
         minimo: productToEdit.minimo ?? '',
         maximo: productToEdit.maximo ?? '',
         id_categoria: productToEdit.id_categoria ?? '',
@@ -773,7 +820,30 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
     );
     if (duplicate) { setModalError(`Ya existe otro producto con ese código o nombre.`); return; }
 
-    const { existencia, ...payload } = { ...f, mayoreo: f.mayoreo || null, minimo: f.minimo || null, maximo: f.maximo || null, id_categoria: f.id_categoria || null, id_proveedor: f.id_proveedor || null };
+    if (f.catalogo_mayorista) {
+      const pRuta = parseFloat(f.precio_ruta);
+      const cost = parseFloat(f.costo);
+      if (isNaN(pRuta) || pRuta <= 0) {
+        setModalError('Para activar en el Catálogo Mayorista, debe ingresar un Precio de Ruta mayor a C$ 0.');
+        return;
+      }
+      if (pRuta < cost) {
+        setModalError('El Precio de Ruta no puede ser menor que el costo.');
+        return;
+      }
+    }
+
+    const { existencia, ...payload } = {
+      ...f,
+      mayoreo: f.mayoreo || null,
+      precio_ruta: f.precio_ruta ? parseFloat(f.precio_ruta) : null,
+      descuento_mayorista: f.descuento_mayorista ? parseFloat(f.descuento_mayorista) : 0,
+      promocion_mayorista: f.promocion_mayorista || null,
+      combo_mayorista: f.combo_mayorista || null,
+      catalogo_mayorista: f.catalogo_mayorista ? 1 : 0,
+      minimo: f.minimo || null, maximo: f.maximo || null,
+      id_categoria: f.id_categoria || null, id_proveedor: f.id_proveedor || null
+    };
     onSave(payload, productToEdit.id_producto);
   };
 
@@ -804,6 +874,29 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
               <FormGroup><Label>Categoría</Label><Select name="id_categoria" value={formData.id_categoria || ''} onChange={handleInputChange}><option value="">-- Sin Categoría --</option>{categories.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>)}</Select></FormGroup>
               <FormGroup><Label>Proveedor</Label><Select name="id_proveedor" value={formData.id_proveedor || ''} onChange={handleInputChange}><option value="">-- Sin Proveedor --</option>{providers.map(p => <option key={p.id_proveedor} value={p.id_proveedor}>{p.nombre}</option>)}</Select></FormGroup>
               <FormGroup><Label>Tipo de Venta</Label><Select name="tipo_venta" value={formData.tipo_venta || 'Unidad'} onChange={handleInputChange}><option value="Unidad">Unidad</option><option value="Juego">Juego</option><option value="Kit">Kit</option></Select></FormGroup>
+
+              {/* Sección Mayorista & Rutas en Edición */}
+              <div style={{ gridColumn: '1 / -1', borderTop: '2px dashed #cbd5e1', paddingTop: '0.85rem', marginTop: '0.5rem' }}>
+                <span style={{ fontSize: '0.95rem', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🚚 Configuración Mayorista & Ruta
+                </span>
+              </div>
+              <FormGroup><Label>Precio de Ruta (C$) <span style={{ color: '#059669', fontSize: '0.75rem' }}>(Mayorista)</span></Label><Input type="number" step="0.01" name="precio_ruta" value={formData.precio_ruta || ''} onChange={handleInputChange} placeholder="ej: 180.00" /></FormGroup>
+              <FormGroup><Label>% Descuento Ruta Autorizado</Label><Input type="number" step="0.01" name="descuento_mayorista" value={formData.descuento_mayorista || ''} onChange={handleInputChange} placeholder="ej: 10" /></FormGroup>
+              <FormGroup><Label>Promoción Mayorista</Label><Input name="promocion_mayorista" value={formData.promocion_mayorista || ''} onChange={handleInputChange} placeholder="ej: 10+ a C$ 160" /></FormGroup>
+              <FormGroup><Label>Combo Mayorista</Label><Input name="combo_mayorista" value={formData.combo_mayorista || ''} onChange={handleInputChange} placeholder="ej: Incluye bujía gratis" /></FormGroup>
+              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '10px', background: '#f0fdf4', padding: '10px 14px', borderRadius: '10px', border: '1px solid #bbf7d0' }}>
+                <input
+                  type="checkbox"
+                  id="edit_catalogo_mayorista"
+                  checked={!!formData.catalogo_mayorista}
+                  onChange={e => setFormData(prev => ({ ...prev, catalogo_mayorista: e.target.checked }))}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                />
+                <label htmlFor="edit_catalogo_mayorista" style={{ margin: 0, cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', color: '#166534' }}>
+                  ⭐ Activar y mostrar en Catálogo Mayorista (Exige Precio de Ruta)
+                </label>
+              </div>
             </InputGrid>
             <ModalActions>
               <CancelButton type="button" onClick={onClose}>Cancelar</CancelButton>
@@ -1174,6 +1267,12 @@ const InventoryManagement = () => {
                 <StockTag $low={low} $out={out}><span>Existencia</span><strong>{p.existencia}</strong></StockTag>
                 <InfoTag><span>Costo Total</span><strong>{p.__fmt.costoTotal}</strong></InfoTag>
               </CardBody>
+              {p.catalogo_mayorista === 1 && (
+                <div style={{ margin: '0 0.85rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', color: '#065f46' }}>
+                  <span>⭐ Catálogo Mayorista</span>
+                  <strong>Ruta: C$ {Number(p.precio_ruta || p.mayorista || 0).toFixed(2)}</strong>
+                </div>
+              )}
               <CardFooter>
                 <ActionButton className="adjust" title="Imprimir Etiqueta" onClick={() => setLabelModal({ isOpen: true, product: p })}><FaBarcode /> Etiqueta</ActionButton>
                 <ActionButton className="adjust" title="Ajustar Stock" onClick={() => setAdjustmentModal({ isOpen: true, product: p })}><FaPlusCircle /><FaMinusCircle style={{ marginLeft: 4 }} /></ActionButton>

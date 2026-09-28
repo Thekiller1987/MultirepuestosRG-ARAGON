@@ -11,7 +11,8 @@ const createProduct = async (req, res) => {
   const {
     codigo, nombre, costo, venta, existencia,
     minimo, maximo, id_categoria, id_proveedor,
-    tipo_venta, mayoreo, imagen, descripcion
+    tipo_venta, mayoreo, imagen, descripcion,
+    precio_ruta, descuento_mayorista, promocion_mayorista, combo_mayorista, catalogo_mayorista
   } = req.body;
 
   console.log('CREATE PRODUCT REQUEST:', { codigo, nombre, imagenLength: imagen ? imagen.length : 'NULL' });
@@ -37,7 +38,12 @@ const createProduct = async (req, res) => {
     const productData = {
       codigo, nombre, costo, venta, existencia,
       minimo, maximo, id_categoria, id_proveedor,
-      tipo_venta, mayoreo, imagen, descripcion
+      tipo_venta, mayoreo, imagen, descripcion,
+      precio_ruta: precio_ruta || mayoreo || null,
+      descuento_mayorista: descuento_mayorista || 0,
+      promocion_mayorista: promocion_mayorista || null,
+      combo_mayorista: combo_mayorista || null,
+      catalogo_mayorista: catalogo_mayorista ? 1 : 0
     };
 
     const [result] = await connection.query('INSERT INTO productos SET ?', [productData]);
@@ -183,7 +189,8 @@ const updateProduct = async (req, res) => {
   const {
     codigo, nombre, costo, venta,
     minimo, maximo, id_categoria, id_proveedor,
-    tipo_venta, mayoreo, descripcion, imagen // Se añade 'descripcion' e 'imagen'
+    tipo_venta, mayoreo, descripcion, imagen,
+    precio_ruta, descuento_mayorista, promocion_mayorista, combo_mayorista, catalogo_mayorista
   } = req.body;
 
   console.log('UPDATE PRODUCT REQUEST:', { id, codigo, nombre, imagenLength: imagen ? imagen.length : 'NULL' });
@@ -219,8 +226,14 @@ const updateProduct = async (req, res) => {
     const productData = {
       codigo, nombre, costo, venta,
       minimo, maximo, id_categoria, id_proveedor,
-      tipo_venta, mayoreo, descripcion, imagen
+      tipo_venta, mayoreo, descripcion, imagen,
+      precio_ruta: precio_ruta !== undefined ? (precio_ruta || null) : undefined,
+      descuento_mayorista: descuento_mayorista !== undefined ? (descuento_mayorista || 0) : undefined,
+      promocion_mayorista: promocion_mayorista !== undefined ? (promocion_mayorista || null) : undefined,
+      combo_mayorista: combo_mayorista !== undefined ? (combo_mayorista || null) : undefined,
+      catalogo_mayorista: catalogo_mayorista !== undefined ? (catalogo_mayorista ? 1 : 0) : undefined
     };
+    Object.keys(productData).forEach(k => productData[k] === undefined && delete productData[k]);
 
     // Actualiza el producto en la base de datos
     await connection.query('UPDATE productos SET ? WHERE id_producto = ?', [productData, id]);

@@ -546,3 +546,68 @@ export const deleteEmployeeApi = async (id, token) => {
 export const fetchSalesByEmployeeReport = (token, params) => {
     return request('get', '/reports/sales-by-employee', token, null, { params });
 };
+
+// ===================================================================
+// === SECCIÓN MÓDULO MAYORISTA Y RUTAS ===
+// ===================================================================
+
+export const fetchMayoristaMetrics = async (token) => {
+    return await request('get', '/mayorista/metrics', token);
+};
+
+export const fetchMayoristaProducts = async (token) => {
+    return await request('get', '/mayorista/products', token);
+};
+
+export const fetchMayoristaCatalog = async (token) => {
+    return await request('get', '/mayorista/catalog', token);
+};
+
+export const toggleCatalogStatusApi = async (id, catalogo_mayorista, token) => {
+    return await request('patch', `/mayorista/products/${id}/catalog`, token, { catalogo_mayorista });
+};
+
+export const updateMayoristaConfigApi = async (id, data, token) => {
+    return await request('put', `/mayorista/products/${id}/config`, token, data);
+};
+
+export const fetchCargasRuta = async (token, estado = null) => {
+    const params = estado ? { estado } : {};
+    return await request('get', '/mayorista/cargas', token, null, { params });
+};
+
+export const fetchDetalleCargaRuta = async (id, token) => {
+    return await request('get', `/mayorista/cargas/${id}`, token);
+};
+
+export const createCargaRuta = async (data, token) => {
+    return await request('post', '/mayorista/cargas', token, data);
+};
+
+export const liquidarCargaRuta = async (id, data, token) => {
+    return await request('post', `/mayorista/cargas/${id}/liquidar`, token, data);
+};
+
+export const updateComisionPagadaApi = async (id, comision_pagada, token) => {
+    return await request('patch', `/mayorista/cargas/${id}/comision`, token, { comision_pagada });
+};
+
+export const fetchClientesRuta = async (token) => {
+    return await request('get', '/mayorista/clientes', token);
+};
+
+export const createClienteRuta = async (data, token) => {
+    return await request('post', '/mayorista/clientes', token, data);
+};
+
+export const fetchFacturasRuta = async (token) => {
+    return await request('get', '/mayorista/facturas', token);
+};
+
+export const fetchDetalleFacturaRuta = async (id, token) => {
+    return await request('get', `/mayorista/facturas/${id}`, token);
+};
+
+export const createFacturaRuta = async (data, token) => {
+    return await request('post', '/mayorista/facturas', token, data);
+};
