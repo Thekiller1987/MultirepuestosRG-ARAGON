@@ -58,8 +58,8 @@ export const useLazyImage = (productId) => {
               }
             })
             .catch(() => {
-              // En caso de fallo o timeout por mala señal, guardar 'none' para no reintentar infinitamente en bucle
-              setCachedImage(productId, 'none');
+              // En caso de fallo temporal por mala señal o 502, limpiar caché para permitir reintento
+              clearCachedImage(productId);
               if (isMounted) {
                 setImgSrc(null);
                 setIsLoading(false);

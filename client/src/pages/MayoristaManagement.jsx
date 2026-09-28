@@ -33,7 +33,10 @@ import {
   updateComisionPagadaApi,
   fetchEmployees,
   createEmployeeApi,
-  clearCachedImage
+  clearCachedImage,
+  fetchProductImage,
+  getCachedImage,
+  setCachedImage
 } from '../service/api';
 import { useLazyImage } from '../hooks/useLazyImage.js';
 import socket from '../service/socket.js';
@@ -558,12 +561,38 @@ const LazyMayoristaImage = ({ productId, productName, inCatalog }) => {
 };
 
 const LazyPdfCatalogItemImage = ({ productId, productName, fallbackSrc }) => {
-  const { imgSrc, cardRef } = useLazyImage(productId);
-  const src = imgSrc || fallbackSrc;
+  const [img, setImg] = useState(() => {
+    const c = getCachedImage(productId);
+    return (c && c !== 'loading' && c !== 'none') ? c : fallbackSrc;
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const c = getCachedImage(productId);
+    if (c && c !== 'loading' && c !== 'none') {
+      setImg(c);
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    fetchProductImage(productId, token)
+      .then(data => {
+        if (data?.imagen && isMounted) {
+          setImg(data.imagen);
+          setCachedImage(productId, data.imagen);
+        }
+      })
+      .catch(() => {
+        clearCachedImage(productId);
+      });
+
+    return () => { isMounted = false; };
+  }, [productId]);
+
   return (
-    <div ref={cardRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {src ? (
-        <img src={src} alt={productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {img ? (
+        <img src={img} alt={productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : (
         <FaBoxOpen style={{ fontSize: '2rem', color: '#cbd5e1' }} />
       )}
@@ -705,6 +734,12 @@ const MayoristaManagement = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleManualRefresh = () => {
+    clearCachedImage();
+    loadData();
+    toast.success('Datos e imágenes actualizados');
   };
 
   useEffect(() => {
@@ -1462,7 +1497,7 @@ const MayoristaManagement = () => {
                   </SelectBox>
 
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <ActionBtn $secondary onClick={loadData} title="Recargar datos">
+                    <ActionBtn $secondary onClick={handleManualRefresh} title="Recargar datos e imágenes">
                       <FaRedo /> Refrescar
                     </ActionBtn>
                     <ActionBtn $excel onClick={handleExportExcel} title="Exportar a archivo de Excel">
