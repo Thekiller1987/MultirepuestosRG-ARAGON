@@ -1626,8 +1626,9 @@ const MayoristaManagement = () => {
                         </CardFooter>
                       </ProductCard>
                     );
+                  })}
                 </CatalogGrid>
-                )}
+              )}
               </div>
             )}
 
