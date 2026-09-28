@@ -149,29 +149,38 @@ const initMayoristaModule = async () => {
 // Obtener todos los productos para la administración mayorista
 const getAllMayoristaProducts = async (req, res) => {
   try {
-    const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
-    const prodFields = prodCols.map(c => c.Field);
-    const selectFields = prodFields
-      .filter(f => f !== 'imagen')
-      .map(f => `p.\`${f}\``)
-      .join(', ');
+    let rows = [];
+    try {
+      const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
+      const prodFields = prodCols.map(c => c.Field);
+      const selectFields = prodFields
+        .filter(f => f !== 'imagen')
+        .map(f => `p.\`${f}\``)
+        .join(', ');
 
-    // Filtro dinámico: solo aplicar p.activo si la columna existe
-    const hasActivo = prodFields.includes('activo');
-    const activoFilter = hasActivo ? '(p.activo = 1 OR p.activo IS NULL)' : '1=1';
+      const hasActivo = prodFields.includes('activo');
+      const activoFilter = hasActivo ? '(p.activo = 1 OR p.activo IS NULL)' : '1=1';
+      const hasCat = prodFields.includes('id_categoria');
+      const hasProv = prodFields.includes('id_proveedor');
 
-    const query = `
-      SELECT 
-        ${selectFields},
-        c.nombre AS nombre_categoria,
-        pr.nombre AS nombre_proveedor
-      FROM productos p
-      LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
-      LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
-      WHERE ${activoFilter}
-      ORDER BY p.nombre ASC
-    `;
-    const [rows] = await db.query(query);
+      const query = `
+        SELECT 
+          ${selectFields}
+          ${hasCat ? ', c.nombre AS nombre_categoria' : ''}
+          ${hasProv ? ', pr.nombre AS nombre_proveedor' : ''}
+        FROM productos p
+        ${hasCat ? 'LEFT JOIN categorias c ON p.id_categoria = c.id_categoria' : ''}
+        ${hasProv ? 'LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor' : ''}
+        WHERE ${activoFilter}
+        ORDER BY p.nombre ASC
+      `;
+      const [qRows] = await db.query(query);
+      rows = qRows;
+    } catch (sqlErr) {
+      console.warn('Fallback en getAllMayoristaProducts:', sqlErr.message);
+      const [fallbackRows] = await db.query('SELECT * FROM productos LIMIT 5000');
+      rows = fallbackRows;
+    }
 
     const requestingUserId = req.user?.id_usuario || req.user?.id;
     let reservedMap = new Map();
@@ -205,8 +214,8 @@ const getAllMayoristaProducts = async (req, res) => {
         ...p,
         existencia: Math.max(0, (p.existencia || 0) - reserved),
         reserved,
-        precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
-        catalogo_mayorista: p.catalogo_mayorista !== undefined ? p.catalogo_mayorista : 0,
+        precio_ruta: p.precio_ruta !== undefined && p.precio_ruta !== null ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
+        catalogo_mayorista: p.catalogo_mayorista !== undefined && p.catalogo_mayorista !== null ? p.catalogo_mayorista : 0,
         imagen: null // Carga perezosa (lazy load) on-demand vía GET /api/products/:id/image
       };
     });
@@ -227,29 +236,37 @@ const getCatalogProducts = async (req, res) => {
       return res.json([]);
     }
 
-    const selectFields = prodFields
-      .filter(f => f !== 'imagen')
-      .map(f => `p.\`${f}\``)
-      .join(', ');
+    let rows = [];
+    try {
+      const selectFields = prodFields
+        .filter(f => f !== 'imagen')
+        .map(f => `p.\`${f}\``)
+        .join(', ');
 
-    // Filtro dinámico: solo aplicar p.activo si la columna existe
-    const hasActivo = prodFields.includes('activo');
-    const activoFilter = hasActivo ? '(p.activo = 1 OR p.activo IS NULL) AND' : '';
+      const hasActivo = prodFields.includes('activo');
+      const activoFilter = hasActivo ? '(p.activo = 1 OR p.activo IS NULL) AND' : '';
+      const hasCat = prodFields.includes('id_categoria');
 
-    const query = `
-      SELECT 
-        ${selectFields},
-        c.nombre AS nombre_categoria
-      FROM productos p
-      LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-      WHERE ${activoFilter} p.catalogo_mayorista = 1
-      ORDER BY c.nombre ASC, p.nombre ASC
-    `;
-    const [rows] = await db.query(query);
+      const query = `
+        SELECT 
+          ${selectFields}
+          ${hasCat ? ', c.nombre AS nombre_categoria' : ''}
+        FROM productos p
+        ${hasCat ? 'LEFT JOIN categorias c ON p.id_categoria = c.id_categoria' : ''}
+        WHERE ${activoFilter} p.catalogo_mayorista = 1
+        ORDER BY p.nombre ASC
+      `;
+      const [qRows] = await db.query(query);
+      rows = qRows;
+    } catch (sqlErr) {
+      console.warn('Fallback en getCatalogProducts:', sqlErr.message);
+      const [fallbackRows] = await db.query('SELECT * FROM productos WHERE catalogo_mayorista = 1 LIMIT 2000');
+      rows = fallbackRows;
+    }
 
     const catalog = rows.map(p => ({
       ...p,
-      precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
+      precio_ruta: p.precio_ruta !== undefined && p.precio_ruta !== null ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
       catalogo_mayorista: 1,
       imagen: null
     }));
