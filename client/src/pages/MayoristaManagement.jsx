@@ -7,7 +7,7 @@ import {
   FaSearch, FaPlus, FaCheck, FaTimes, FaEdit, FaPrint, FaGift, FaTags,
   FaExclamationTriangle, FaWarehouse, FaUserTie, FaMoneyBillWave, FaSpinner,
   FaExchangeAlt, FaPercent, FaBoxOpen, FaChartLine, FaFileExcel, FaDownload,
-  FaClipboardCheck, FaSignature, FaStore, FaChartPie
+  FaClipboardCheck, FaSignature, FaStore, FaChartPie, FaUserPlus, FaRedo
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -32,6 +32,7 @@ import {
   createFacturaRuta,
   updateComisionPagadaApi,
   fetchEmployees,
+  createEmployeeApi,
   clearCachedImage
 } from '../service/api';
 import { useLazyImage } from '../hooks/useLazyImage.js';
@@ -609,6 +610,12 @@ const MayoristaManagement = () => {
 
   // Modal para Cargar Inventario a Rutero (Despacho a Ruta)
   const [isCargaModalOpen, setIsCargaModalOpen] = useState(false);
+  const [isQuickEmployeeModalOpen, setIsQuickEmployeeModalOpen] = useState(false);
+  const [quickEmployee, setQuickEmployee] = useState({
+    nombre: '',
+    telefono: '',
+    cargo: 'Rutero / Repartidor'
+  });
   const [nuevaCarga, setNuevaCarga] = useState({
     nombre_rutero: '',
     id_empleado: '',
@@ -909,8 +916,8 @@ const MayoristaManagement = () => {
 
   const handleCrearCarga = async (e) => {
     e.preventDefault();
-    if (!nuevaCarga.nombre_rutero.trim()) {
-      toast.error('Ingrese el nombre del rutero.');
+    if (!nuevaCarga.id_empleado) {
+      toast.error('Debe seleccionar un empleado registrado como rutero. Si no aparece, regístrelo primero en el módulo de Empleados.');
       return;
     }
     if (nuevaCarga.items.length === 0) {
@@ -934,6 +941,46 @@ const MayoristaManagement = () => {
       loadData();
     } catch (err) {
       toast.error(err.message || 'Error al crear la carga de ruta.');
+    }
+  };
+
+  /* =========================================================================
+     CREACIÓN RÁPIDA DE EMPLEADO (RUTERO)
+  ========================================================================= */
+  const handleQuickCreateEmployee = async (e) => {
+    e.preventDefault();
+    if (!quickEmployee.nombre.trim()) {
+      toast.error('El nombre del empleado o rutero es obligatorio.');
+      return;
+    }
+    try {
+      const res = await createEmployeeApi({
+        nombre: quickEmployee.nombre.trim(),
+        telefono: quickEmployee.telefono || null,
+        cargo: quickEmployee.cargo || 'Rutero / Repartidor'
+      }, token);
+
+      const newId = res.id || res.id_empleado || res.insertId;
+      const created = {
+        id_empleado: newId,
+        nombre: quickEmployee.nombre.trim(),
+        telefono: quickEmployee.telefono,
+        cargo: quickEmployee.cargo || 'Rutero / Repartidor',
+        activo: 1
+      };
+
+      setEmployees(prev => [...prev, created]);
+      setNuevaCarga(prev => ({
+        ...prev,
+        id_empleado: String(newId),
+        nombre_rutero: quickEmployee.nombre.trim()
+      }));
+
+      toast.success(`¡Empleado "${quickEmployee.nombre}" registrado y asignado como rutero! 🎉`);
+      setIsQuickEmployeeModalOpen(false);
+      setQuickEmployee({ nombre: '', telefono: '', cargo: 'Rutero / Repartidor' });
+    } catch (err) {
+      toast.error(err.message || 'Error al registrar empleado.');
     }
   };
 
@@ -1409,12 +1456,15 @@ const MayoristaManagement = () => {
                   </SelectBox>
 
                   <SelectBox value={catalogStatusFilter} onChange={(e) => setCatalogStatusFilter(e.target.value)}>
-                    <option value="ALL">Todos los Productos</option>
-                    <option value="IN_CATALOG">⭐ Solo en Catálogo Activo</option>
-                    <option value="OUT_CATALOG">No están en Catálogo</option>
+                    <option value="ALL">📦 Todos los Productos ({products.length})</option>
+                    <option value="IN_CATALOG">⭐ Solo en Catálogo Activo ({products.filter(p => Number(p.catalogo_mayorista) === 1).length})</option>
+                    <option value="OUT_CATALOG">⚪ Fuera de Catálogo ({products.filter(p => Number(p.catalogo_mayorista) === 0).length})</option>
                   </SelectBox>
 
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <ActionBtn $secondary onClick={loadData} title="Recargar datos">
+                      <FaRedo /> Refrescar
+                    </ActionBtn>
                     <ActionBtn $excel onClick={handleExportExcel} title="Exportar a archivo de Excel">
                       <FaFileExcel /> Excel
                     </ActionBtn>
@@ -1424,10 +1474,84 @@ const MayoristaManagement = () => {
                   </div>
                 </FilterBar>
 
-                <div style={{ marginBottom: '1rem', color: '#64748b', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between' }}>
+                {/* Botones de Píldoras Rápidas para Filtrar */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCatalogStatusFilter('IN_CATALOG')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '20px',
+                      border: '1px solid #10b981',
+                      background: catalogStatusFilter === 'IN_CATALOG' ? '#10b981' : '#ecfdf5',
+                      color: catalogStatusFilter === 'IN_CATALOG' ? '#ffffff' : '#065f46',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    ⭐ Solo en Catálogo ({products.filter(p => Number(p.catalogo_mayorista) === 1).length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCatalogStatusFilter('ALL')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '20px',
+                      border: '1px solid #cbd5e1',
+                      background: catalogStatusFilter === 'ALL' ? '#334155' : '#f8fafc',
+                      color: catalogStatusFilter === 'ALL' ? '#ffffff' : '#334155',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    📦 Todos los Productos ({products.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCatalogStatusFilter('OUT_CATALOG')}
+                    style={{
+                      padding: '0.4rem 0.85rem',
+                      borderRadius: '20px',
+                      border: '1px solid #cbd5e1',
+                      background: catalogStatusFilter === 'OUT_CATALOG' ? '#64748b' : '#f8fafc',
+                      color: catalogStatusFilter === 'OUT_CATALOG' ? '#ffffff' : '#64748b',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ⚪ Sin Catálogo ({products.filter(p => Number(p.catalogo_mayorista) === 0).length})
+                  </button>
+                </div>
+
+                <div style={{ marginBottom: '1rem', color: '#64748b', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
                   <span>Mostrando {filteredProducts.length} productos | {catalogProducts.length} listos para el catálogo impreso.</span>
                   <span style={{ color: '#059669' }}>💡 Para activar en catálogo, el Precio de Ruta debe ser mayor a 0 y superior al costo.</span>
                 </div>
+
+                {filteredProducts.length === 0 ? (
+                  <div style={{ background: '#ffffff', borderRadius: '16px', padding: '3rem 1.5rem', textAlign: 'center', border: '1px dashed #cbd5e1', marginTop: '1rem' }}>
+                    <FaBoxes style={{ fontSize: '3rem', color: '#94a3b8', marginBottom: '1rem' }} />
+                    <h3 style={{ margin: '0 0 0.5rem', color: '#1e293b' }}>No se encontraron productos</h3>
+                    <p style={{ color: '#64748b', maxWidth: '500px', margin: '0 auto 1.5rem', fontSize: '0.92rem' }}>
+                      {catalogStatusFilter === 'IN_CATALOG'
+                        ? 'Aún no has activado productos en el catálogo mayorista. Cambia el filtro a "Todos los Productos" para activarlos asignándoles su Precio de Ruta.'
+                        : 'No hay productos que coincidan con la búsqueda o categoría seleccionada.'}
+                    </p>
+                    {catalogStatusFilter === 'IN_CATALOG' && (
+                      <ActionBtn onClick={() => setCatalogStatusFilter('ALL')} style={{ margin: '0 auto' }}>
+                        📦 Ver Todos los Productos para Activar
+                      </ActionBtn>
+                    )}
+                  </div>
+                ) : (
 
                 <CatalogGrid>
                   {filteredProducts.map(p => {
@@ -1502,8 +1626,8 @@ const MayoristaManagement = () => {
                         </CardFooter>
                       </ProductCard>
                     );
-                  })}
                 </CatalogGrid>
+                )}
               </div>
             )}
 
@@ -2069,34 +2193,65 @@ const MayoristaManagement = () => {
                 <form onSubmit={handleCrearCarga}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                     <FormGroup>
-                      <label>Nombre del Rutero / Muchacho *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="ej: Carlos Pérez"
-                        value={nuevaCarga.nombre_rutero}
-                        onChange={(e) => setNuevaCarga(prev => ({ ...prev, nombre_rutero: e.target.value }))}
-                      />
-                    </FormGroup>
-
-                    <FormGroup>
-                      <label>Empleado Asociado (Opcional)</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label style={{ fontWeight: 700, color: '#dc2626' }}>🧑‍💼 Empleado / Rutero *</label>
+                        <button
+                          type="button"
+                          onClick={() => setIsQuickEmployeeModalOpen(true)}
+                          style={{
+                            background: '#059669',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '3px 8px',
+                            fontSize: '0.78rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          title="Registrar nuevo empleado para asignarle la ruta"
+                        >
+                          <FaUserPlus /> + Nuevo
+                        </button>
+                      </div>
                       <select
+                        required
                         value={nuevaCarga.id_empleado}
                         onChange={(e) => {
                           const emp = employees.find(em => String(em.id_empleado) === e.target.value);
                           setNuevaCarga(prev => ({
                             ...prev,
                             id_empleado: e.target.value,
-                            nombre_rutero: emp ? emp.nombre : prev.nombre_rutero
+                            nombre_rutero: emp ? emp.nombre : ''
                           }));
                         }}
+                        style={{ border: !nuevaCarga.id_empleado ? '2px solid #fca5a5' : undefined }}
                       >
-                        <option value="">-- Seleccionar Empleado --</option>
+                        <option value="">-- Seleccionar Empleado Registrado --</option>
                         {employees.map(em => (
                           <option key={em.id_empleado} value={em.id_empleado}>{em.nombre} ({em.cargo || 'Personal'})</option>
                         ))}
                       </select>
+                      {employees.length === 0 ? (
+                        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '6px 10px', marginTop: '4px', color: '#b91c1c', fontSize: '0.8rem' }}>
+                          ⚠️ No hay empleados registrados. Presione el botón verde <strong>"+ Nuevo"</strong> arriba para registrarlo de inmediato.
+                        </div>
+                      ) : (
+                        <small style={{ color: '#dc2626' }}>⚠️ Solo empleados registrados pueden ser ruteros.</small>
+                      )}
+                    </FormGroup>
+
+                    <FormGroup>
+                      <label>Nombre del Rutero</label>
+                      <input
+                        type="text"
+                        readOnly
+                        placeholder="Se auto-llena al seleccionar empleado"
+                        value={nuevaCarga.nombre_rutero}
+                        style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
+                      />
                     </FormGroup>
 
                     <FormGroup>
@@ -3047,6 +3202,78 @@ const MayoristaManagement = () => {
                     </div>
                   </div>
                 )}
+              </ModalBox>
+            </ModalOverlay>
+          )}
+
+          {/* =========================================================================
+              MODAL RÁPIDO: REGISTRAR NUEVO EMPLEADO (RUTERO)
+          ========================================================================= */}
+          {isQuickEmployeeModalOpen && (
+            <ModalOverlay
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsQuickEmployeeModalOpen(false)}
+            >
+              <ModalBox
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{ maxWidth: '440px' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                  <h3 style={{ margin: 0, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <FaUserPlus color="#059669" /> Registrar Nuevo Empleado
+                  </h3>
+                  <button onClick={() => setIsQuickEmployeeModalOpen(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>
+                    <FaTimes />
+                  </button>
+                </div>
+
+                <form onSubmit={handleQuickCreateEmployee}>
+                  <FormGroup>
+                    <label style={{ fontWeight: 700 }}>Nombre Completo del Trabajador *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="ej: Carlos Alberto Pérez"
+                      value={quickEmployee.nombre}
+                      onChange={(e) => setQuickEmployee(prev => ({ ...prev, nombre: e.target.value }))}
+                      autoFocus
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <label>Teléfono / Celular</label>
+                    <input
+                      type="text"
+                      placeholder="ej: 8888-1234"
+                      value={quickEmployee.telefono}
+                      onChange={(e) => setQuickEmployee(prev => ({ ...prev, telefono: e.target.value }))}
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <label>Cargo / Función</label>
+                    <input
+                      type="text"
+                      placeholder="ej: Rutero / Repartidor Mayorista"
+                      value={quickEmployee.cargo}
+                      onChange={(e) => setQuickEmployee(prev => ({ ...prev, cargo: e.target.value }))}
+                    />
+                  </FormGroup>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                    <ActionBtn $secondary type="button" onClick={() => setIsQuickEmployeeModalOpen(false)}>
+                      Cancelar
+                    </ActionBtn>
+                    <ActionBtn type="submit">
+                      Guardar y Asignar
+                    </ActionBtn>
+                  </div>
+                </form>
               </ModalBox>
             </ModalOverlay>
           )}

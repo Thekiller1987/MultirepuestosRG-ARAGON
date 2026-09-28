@@ -64,6 +64,9 @@ const initMayoristaModule = async () => {
     if (!clientFields.includes('zona_ruta')) {
       await db.query('ALTER TABLE clientes ADD COLUMN zona_ruta VARCHAR(150) NULL');
     }
+    if (!clientFields.includes('saldo_pendiente')) {
+      await db.query('ALTER TABLE clientes ADD COLUMN saldo_pendiente DECIMAL(10,2) NOT NULL DEFAULT 0.00');
+    }
 
     // 3. Tabla de Cargas de Ruta (despacho al muchacho que se monta a la ruta)
     await db.query(`
@@ -126,6 +129,12 @@ const initMayoristaModule = async () => {
     if (!ventasFields.includes('id_carga')) {
       await db.query('ALTER TABLE ventas ADD COLUMN id_carga INT NULL');
     }
+    if (!ventasFields.includes('tipo_venta')) {
+      await db.query("ALTER TABLE ventas ADD COLUMN tipo_venta VARCHAR(50) NOT NULL DEFAULT 'NORMAL'");
+    }
+    if (!ventasFields.includes('numero_factura')) {
+      await db.query('ALTER TABLE ventas ADD COLUMN numero_factura VARCHAR(50) NULL');
+    }
 
     console.log('✅ Esquema del Módulo Mayorista sincronizado con éxito.');
   } catch (error) {
@@ -147,6 +156,10 @@ const getAllMayoristaProducts = async (req, res) => {
       .map(f => `p.\`${f}\``)
       .join(', ');
 
+    // Filtro dinámico: solo aplicar p.activo si la columna existe
+    const hasActivo = prodFields.includes('activo');
+    const activoFilter = hasActivo ? '(p.activo = 1 OR p.activo IS NULL)' : '1=1';
+
     const query = `
       SELECT 
         ${selectFields},
@@ -155,7 +168,7 @@ const getAllMayoristaProducts = async (req, res) => {
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
       LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
-      WHERE p.activo = 1 OR p.activo IS NULL
+      WHERE ${activoFilter}
       ORDER BY p.nombre ASC
     `;
     const [rows] = await db.query(query);
@@ -190,7 +203,7 @@ const getAllMayoristaProducts = async (req, res) => {
       const reserved = reservedMap.get(pid) || 0;
       return {
         ...p,
-        existencia: Math.max(0, p.existencia - reserved),
+        existencia: Math.max(0, (p.existencia || 0) - reserved),
         reserved,
         precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
         catalogo_mayorista: p.catalogo_mayorista !== undefined ? p.catalogo_mayorista : 0,
@@ -219,13 +232,17 @@ const getCatalogProducts = async (req, res) => {
       .map(f => `p.\`${f}\``)
       .join(', ');
 
+    // Filtro dinámico: solo aplicar p.activo si la columna existe
+    const hasActivo = prodFields.includes('activo');
+    const activoFilter = hasActivo ? '(p.activo = 1 OR p.activo IS NULL) AND' : '';
+
     const query = `
       SELECT 
         ${selectFields},
         c.nombre AS nombre_categoria
       FROM productos p
       LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-      WHERE (p.activo = 1 OR p.activo IS NULL) AND p.catalogo_mayorista = 1
+      WHERE ${activoFilter} p.catalogo_mayorista = 1
       ORDER BY c.nombre ASC, p.nombre ASC
     `;
     const [rows] = await db.query(query);
@@ -250,8 +267,14 @@ const toggleCatalogStatus = async (req, res) => {
   const { catalogo_mayorista } = req.body;
 
   try {
+    // Consulta dinámica para evitar fallas si columnas no existen
+    const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
+    const prodFields = prodCols.map(c => c.Field);
+    const safeFields = ['id_producto', 'nombre', 'codigo', 'costo', 'venta', 'mayoreo', 'precio_ruta', 'mayorista', 'catalogo_mayorista']
+      .filter(f => prodFields.includes(f));
+    
     const [rows] = await db.query(
-      'SELECT id_producto, nombre, codigo, costo, venta, mayoreo, precio_ruta, mayorista, catalogo_mayorista FROM productos WHERE id_producto = ?',
+      `SELECT ${safeFields.map(f => `\`${f}\``).join(', ')} FROM productos WHERE id_producto = ?`,
       [id]
     );
 
@@ -264,7 +287,7 @@ const toggleCatalogStatus = async (req, res) => {
 
     // Validación estricta
     if (newStatus === 1) {
-      const routePrice = Number(product.precio_ruta || product.mayorista || 0);
+      const routePrice = Number(product.precio_ruta || product.mayorista || product.mayoreo || 0);
       const cost = Number(product.costo || 0);
 
       if (routePrice <= 0) {
@@ -275,9 +298,9 @@ const toggleCatalogStatus = async (req, res) => {
             id_producto: product.id_producto,
             codigo: product.codigo,
             nombre: product.nombre,
-            costo: product.costo,
-            venta: product.venta,
-            mayoreo: product.mayoreo
+            costo: product.costo || 0,
+            venta: product.venta || 0,
+            mayoreo: product.mayoreo || 0
           }
         });
       }
@@ -290,9 +313,9 @@ const toggleCatalogStatus = async (req, res) => {
             id_producto: product.id_producto,
             codigo: product.codigo,
             nombre: product.nombre,
-            costo: product.costo,
-            venta: product.venta,
-            mayoreo: product.mayoreo
+            costo: product.costo || 0,
+            venta: product.venta || 0,
+            mayoreo: product.mayoreo || 0
           }
         });
       }
@@ -473,7 +496,7 @@ const getDetalleCargaRuta = async (req, res) => {
 
 // Crear nueva carga de ruta (Despacho de inventario al rutero/muchacho)
 const crearCargaRuta = async (req, res) => {
-  const {
+  let {
     id_empleado,
     nombre_rutero,
     vehiculo_ruta,
@@ -485,8 +508,25 @@ const crearCargaRuta = async (req, res) => {
 
   const id_usuario = req.user?.id_usuario || req.user?.id;
 
-  if (!nombre_rutero || !items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ msg: 'Debe ingresar el nombre del rutero y al menos un producto a cargar.' });
+  // El rutero DEBE ser un empleado existente
+  if (!id_empleado) {
+    return res.status(400).json({ msg: 'Debe seleccionar un empleado registrado como rutero. Registre al empleado primero en el módulo de Empleados.' });
+  }
+
+  // Verificar que el empleado exista y obtener su nombre
+  try {
+    const [empRows] = await db.query('SELECT id_empleado, nombre FROM empleados WHERE id_empleado = ?', [id_empleado]);
+    if (!empRows.length) {
+      return res.status(400).json({ msg: 'El empleado seleccionado no existe. Registre al empleado primero en el módulo de Empleados.' });
+    }
+    // Siempre usar el nombre real del empleado
+    nombre_rutero = empRows[0].nombre;
+  } catch (empErr) {
+    return res.status(500).json({ msg: 'Error al verificar empleado: ' + empErr.message });
+  }
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ msg: 'Debe agregar al menos un producto a cargar.' });
   }
 
   let connection;
@@ -971,84 +1011,123 @@ const crearFacturaRuta = async (req, res) => {
 ========================================================================= */
 const getMayoristaMetrics = async (req, res) => {
   try {
+    // Check if ventas has tipo_venta column
+    let hasVentasTipo = false;
+    try {
+      const [ventasCols] = await db.query('SHOW COLUMNS FROM ventas');
+      hasVentasTipo = ventasCols.some(c => c.Field === 'tipo_venta');
+    } catch(e) {}
+
     // 1. Resumen de Ventas de Ruta
-    const [salesSummary] = await db.query(`
-      SELECT 
-        COUNT(*) AS total_facturas,
-        COALESCE(SUM(total_venta), 0) AS total_ventas,
-        COALESCE(SUM(subtotal), 0) AS subtotal,
-        COALESCE(SUM(descuento), 0) AS total_descuentos
-      FROM ventas 
-      WHERE tipo_venta = 'RUTA_MAYORISTA'
-    `);
+    let salesSummary = [{}];
+    if (hasVentasTipo) {
+      try {
+        [salesSummary] = await db.query(`
+          SELECT 
+            COUNT(*) AS total_facturas,
+            COALESCE(SUM(total_venta), 0) AS total_ventas,
+            COALESCE(SUM(subtotal), 0) AS subtotal,
+            COALESCE(SUM(descuento), 0) AS total_descuentos
+          FROM ventas 
+          WHERE tipo_venta = 'RUTA_MAYORISTA'
+        `);
+      } catch(e) { console.warn('Metrics: ventas query error:', e.message); }
+    }
 
     // 2. Margen y Ganancia de Ruta
-    const [profitSummary] = await db.query(`
-      SELECT 
-        COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS venta_bruta,
-        COALESCE(SUM(dv.cantidad * p.costo), 0) AS costo_total,
-        COALESCE(SUM(dv.cantidad * (dv.precio_unitario - p.costo)), 0) AS ganancia_neta
-      FROM detalle_ventas dv
-      JOIN ventas v ON dv.id_venta = v.id_venta
-      JOIN productos p ON dv.id_producto = p.id_producto
-      WHERE v.tipo_venta = 'RUTA_MAYORISTA'
-    `);
+    let profitSummary = [{}];
+    if (hasVentasTipo) {
+      try {
+        [profitSummary] = await db.query(`
+          SELECT 
+            COALESCE(SUM(dv.cantidad * dv.precio_unitario), 0) AS venta_bruta,
+            COALESCE(SUM(dv.cantidad * p.costo), 0) AS costo_total,
+            COALESCE(SUM(dv.cantidad * (dv.precio_unitario - p.costo)), 0) AS ganancia_neta
+          FROM detalle_ventas dv
+          JOIN ventas v ON dv.id_venta = v.id_venta
+          JOIN productos p ON dv.id_producto = p.id_producto
+          WHERE v.tipo_venta = 'RUTA_MAYORISTA'
+        `);
+      } catch(e) { console.warn('Metrics: profit query error:', e.message); }
+    }
 
     // 3. Mercancía actualmente en calle / furgones (cargas activas)
-    const [cargasSummary] = await db.query(`
-      SELECT 
-        COUNT(*) AS cargas_activas,
-        COALESCE(SUM(total_valor_ruta - total_vendido), 0) AS valor_en_ruta,
-        COALESCE(SUM(total_items), 0) AS items_cargados,
-        COALESCE(SUM(total_vendido), 0) AS total_vendido_cargas,
-        COALESCE(SUM(total_recaudado), 0) AS total_recaudado_cargas
-      FROM cargas_ruta 
-      WHERE estado = 'EN_RUTA'
-    `);
+    let cargasSummary = [{}];
+    try {
+      [cargasSummary] = await db.query(`
+        SELECT 
+          COUNT(*) AS cargas_activas,
+          COALESCE(SUM(total_valor_ruta - total_vendido), 0) AS valor_en_ruta,
+          COALESCE(SUM(total_items), 0) AS items_cargados,
+          COALESCE(SUM(total_vendido), 0) AS total_vendido_cargas,
+          COALESCE(SUM(total_recaudado), 0) AS total_recaudado_cargas
+        FROM cargas_ruta 
+        WHERE estado = 'EN_RUTA'
+      `);
+    } catch(e) { console.warn('Metrics: cargas query error:', e.message); }
 
     // 4. Cartera de Clientes de Ruta (Cuentas por cobrar)
-    const [clientsSummary] = await db.query(`
-      SELECT 
-        COUNT(*) AS total_clientes_ruta,
-        COALESCE(SUM(saldo_pendiente), 0) AS saldo_por_cobrar,
-        COALESCE(SUM(limite_credito), 0) AS limite_total_credito
-      FROM clientes 
-      WHERE tipo_cliente = 'MAYORISTA_RUTA'
-    `);
+    let clientsSummary = [{}];
+    try {
+      const [clientCols] = await db.query('SHOW COLUMNS FROM clientes');
+      const clientFields = clientCols.map(c => c.Field);
+      const hasSaldo = clientFields.includes('saldo_pendiente');
+      const hasLimite = clientFields.includes('limite_credito');
+      const hasTipo = clientFields.includes('tipo_cliente');
+
+      if (hasTipo) {
+        [clientsSummary] = await db.query(`
+          SELECT 
+            COUNT(*) AS total_clientes_ruta,
+            ${hasSaldo ? "COALESCE(SUM(saldo_pendiente), 0)" : "0"} AS saldo_por_cobrar,
+            ${hasLimite ? "COALESCE(SUM(limite_credito), 0)" : "0"} AS limite_total_credito
+          FROM clientes 
+          WHERE tipo_cliente = 'MAYORISTA_RUTA'
+        `);
+      }
+    } catch(e) { console.warn('Metrics: clientes query error:', e.message); }
 
     // 5. Rendimiento por Rutero con Comisiones
-    const [ruterosRanking] = await db.query(`
-      SELECT 
-        nombre_rutero,
-        COUNT(*) AS total_viajes,
-        COALESCE(SUM(total_valor_ruta), 0) AS total_cargado,
-        COALESCE(SUM(total_vendido), 0) AS total_vendido,
-        COALESCE(SUM(total_recaudado), 0) AS total_recaudado,
-        COALESCE(SUM(monto_comision), 0) AS total_comisiones,
-        COALESCE(SUM(CASE WHEN comision_pagada = 1 THEN monto_comision ELSE 0 END), 0) AS comisiones_pagadas,
-        COALESCE(SUM(CASE WHEN comision_pagada = 0 THEN monto_comision ELSE 0 END), 0) AS comisiones_pendientes
-      FROM cargas_ruta
-      GROUP BY nombre_rutero
-      ORDER BY total_vendido DESC
-      LIMIT 10
-    `);
+    let ruterosRanking = [];
+    try {
+      [ruterosRanking] = await db.query(`
+        SELECT 
+          nombre_rutero,
+          COUNT(*) AS total_viajes,
+          COALESCE(SUM(total_valor_ruta), 0) AS total_cargado,
+          COALESCE(SUM(total_vendido), 0) AS total_vendido,
+          COALESCE(SUM(total_recaudado), 0) AS total_recaudado,
+          COALESCE(SUM(monto_comision), 0) AS total_comisiones,
+          COALESCE(SUM(CASE WHEN comision_pagada = 1 THEN monto_comision ELSE 0 END), 0) AS comisiones_pagadas,
+          COALESCE(SUM(CASE WHEN comision_pagada = 0 THEN monto_comision ELSE 0 END), 0) AS comisiones_pendientes
+        FROM cargas_ruta
+        GROUP BY nombre_rutero
+        ORDER BY total_vendido DESC
+        LIMIT 10
+      `);
+    } catch(e) { console.warn('Metrics: ruteros query error:', e.message); }
 
     // 6. Top 10 Productos Más Vendidos en Ruta
-    const [topProducts] = await db.query(`
-      SELECT 
-        p.id_producto,
-        p.codigo,
-        p.nombre,
-        SUM(dv.cantidad) AS total_unidades,
-        SUM(dv.cantidad * dv.precio_unitario) AS total_ingresos
-      FROM detalle_ventas dv
-      JOIN ventas v ON dv.id_venta = v.id_venta
-      JOIN productos p ON dv.id_producto = p.id_producto
-      WHERE v.tipo_venta = 'RUTA_MAYORISTA'
-      GROUP BY p.id_producto, p.codigo, p.nombre
-      ORDER BY total_unidades DESC
-      LIMIT 10
-    `);
+    let topProducts = [];
+    if (hasVentasTipo) {
+      try {
+        [topProducts] = await db.query(`
+          SELECT 
+            p.id_producto,
+            p.codigo,
+            p.nombre,
+            SUM(dv.cantidad) AS total_unidades,
+            SUM(dv.cantidad * dv.precio_unitario) AS total_ingresos
+          FROM detalle_ventas dv
+          JOIN ventas v ON dv.id_venta = v.id_venta
+          JOIN productos p ON dv.id_producto = p.id_producto
+          WHERE v.tipo_venta = 'RUTA_MAYORISTA'
+          GROUP BY p.id_producto, p.codigo, p.nombre
+          ORDER BY total_unidades DESC
+          LIMIT 10
+        `);
+      } catch(e) { console.warn('Metrics: top products query error:', e.message); }
+    }
 
     res.json({
       ventas: salesSummary[0] || {},

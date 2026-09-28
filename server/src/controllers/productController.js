@@ -46,7 +46,17 @@ const createProduct = async (req, res) => {
       catalogo_mayorista: catalogo_mayorista ? 1 : 0
     };
 
-    const [result] = await connection.query('INSERT INTO productos SET ?', [productData]);
+    // Filtrar sólo columnas existentes para evitar errores SQL
+    const [tableCols] = await connection.query('SHOW COLUMNS FROM productos');
+    const existingColNames = new Set(tableCols.map(c => c.Field));
+    const safeProductData = {};
+    for (const [key, val] of Object.entries(productData)) {
+      if (existingColNames.has(key)) {
+        safeProductData[key] = val;
+      }
+    }
+
+    const [result] = await connection.query('INSERT INTO productos SET ?', [safeProductData]);
     const id_producto = result.insertId;
 
     // Movimiento inventario
@@ -281,10 +291,19 @@ const updateProduct = async (req, res) => {
       combo_mayorista: combo_mayorista !== undefined ? (combo_mayorista || null) : undefined,
       catalogo_mayorista: catalogo_mayorista !== undefined ? (catalogo_mayorista ? 1 : 0) : undefined
     };
-    Object.keys(productData).forEach(k => productData[k] === undefined && delete productData[k]);
+    // Filtrar sólo columnas existentes en la tabla
+    const [tableCols] = await connection.query('SHOW COLUMNS FROM productos');
+    const existingColNames = new Set(tableCols.map(c => c.Field));
+    const safeProductData = {};
+    for (const [key, val] of Object.entries(productData)) {
+      if (existingColNames.has(key)) {
+        safeProductData[key] = val;
+      }
+    }
 
     // Actualiza el producto en la base de datos
-    await connection.query('UPDATE productos SET ? WHERE id_producto = ?', [productData, id]);
+    await connection.query('UPDATE productos SET ? WHERE id_producto = ?', [safeProductData, id]);
+    cachedSelectFields = null; // Invalidate cache
 
     // Registra el movimiento de auditoría
     await connection.query(

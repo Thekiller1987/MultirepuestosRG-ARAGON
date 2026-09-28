@@ -125,7 +125,11 @@ async function startServer() {
     // A. Esperar a la base de datos
     await waitForDb();
 
-    // B. Ejecutar migraciones iniciales de tablas (asegurar configuración y trabajadores)
+    // B. Ejecutar migración integral automática de base de datos
+    const { runAllMigrations } = require('./src/config/migrateAll.js');
+    await runAllMigrations(db);
+
+    // Complementos adicionales de módulos
     const { initSettings } = require('./src/controllers/settingsController.js');
     const { initEmployeesTable } = require('./src/controllers/employeeController.js');
     const { initMayoristaModule } = require('./src/controllers/mayoristaController.js');

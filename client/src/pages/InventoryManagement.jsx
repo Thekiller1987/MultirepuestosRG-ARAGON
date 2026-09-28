@@ -770,7 +770,7 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
         descuento_mayorista: productToEdit.descuento_mayorista ?? '',
         promocion_mayorista: productToEdit.promocion_mayorista ?? '',
         combo_mayorista: productToEdit.combo_mayorista ?? '',
-        catalogo_mayorista: Boolean(productToEdit.catalogo_mayorista),
+        catalogo_mayorista: Number(productToEdit.catalogo_mayorista) === 1,
         minimo: productToEdit.minimo ?? '',
         maximo: productToEdit.maximo ?? '',
         id_categoria: productToEdit.id_categoria ?? '',
@@ -1318,7 +1318,7 @@ const InventoryManagement = () => {
                 <StockTag $low={low} $out={out}><span>Existencia</span><strong>{p.existencia}</strong></StockTag>
                 <InfoTag><span>Costo Total</span><strong>{p.__fmt.costoTotal}</strong></InfoTag>
               </CardBody>
-              {p.catalogo_mayorista === 1 && (
+              {Number(p.catalogo_mayorista) === 1 && (
                 <div style={{ margin: '0 0.85rem 0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', color: '#065f46' }}>
                   <span>⭐ Catálogo Mayorista</span>
                   <strong>Ruta: C$ {Number(p.precio_ruta || p.mayorista || 0).toFixed(2)}</strong>

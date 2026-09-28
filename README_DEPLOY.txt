@@ -35,10 +35,11 @@ docker compose ps
 http://IP_DEL_VPS/health        -> ok
 http://IP_DEL_VPS/api/health    -> { ok: true }
 
-## 5) Importar base de datos (opcional)
-# Copia empresa.sql a /srv/app en el VPS
-docker ps   # identifica el contenedor mysql (db)
-docker exec -i <NOMBRE_CONTENEDOR_DB> mysql -u$DB_USER -p$DB_PASSWORD $DB_DATABASE < /srv/app/empresa.sql
+## 5) Base de datos y Migraciones Automáticas
+- ¡El backend cuenta con auto-migración integral automática! Cada vez que levantas el contenedor o inicias el servidor (`docker compose up -d --build` o reinicio), el sistema crea y actualiza automáticamente todas las tablas, columnas, índices y configuraciones que falten en MySQL.
+- Si deseas forzar la ejecución de la migración manualmente en el VPS:
+  docker compose exec api npm run migrate
+  (o dentro de la carpeta server: node scripts/migrate_all.js)
 
 ## 6) Frontend (Netlify)
 - Base directory: client
@@ -52,6 +53,7 @@ En tu PC:
 En el VPS:
   cd /srv/app/server && git pull
   cd /srv/app && docker compose up -d --build
+(La base de datos se auto-migrará sola al arrancar).
 
 ## 8) HTTPS cuando tengas dominio
 sudo apt install -y certbot python3-certbot-nginx
