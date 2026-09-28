@@ -74,16 +74,34 @@ const createProduct = async (req, res) => {
 };
 
 
+let cachedSelectFields = null;
+
+const getProductColumnsSafe = async () => {
+  if (cachedSelectFields) return cachedSelectFields;
+  try {
+    const [cols] = await db.query('SHOW COLUMNS FROM productos');
+    const validCols = cols
+      .map(c => c.Field)
+      .filter(f => f !== 'imagen')
+      .map(f => `p.\`${f}\``);
+    if (validCols.length > 0) {
+      cachedSelectFields = validCols.join(', ');
+      return cachedSelectFields;
+    }
+  } catch (err) {
+    console.warn('[getAllProducts] Fallback selecting p.*:', err.message);
+  }
+  return 'p.*';
+};
+
 /* ===================== READ ===================== */
 const getAllProducts = async (_req, res) => {
   try {
     // PERF: Excluimos imagen del listado masivo para que 4000+ productos carguen instantáneamente.
     // Las imágenes se sirven bajo demanda por /api/products/:id/image y se cachean con lazy image.
+    const selectFields = await getProductColumnsSafe();
     const query = `
-      SELECT p.id_producto, p.codigo, p.nombre, p.costo, p.venta, p.mayoreo,
-             p.existencia, p.minimo, p.maximo, p.tipo_venta,
-             p.id_categoria, p.id_proveedor, p.descripcion,
-             p.precio_ruta, p.descuento_mayorista, p.promocion_mayorista, p.combo_mayorista, p.catalogo_mayorista,
+      SELECT ${selectFields},
              c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
@@ -92,29 +110,29 @@ const getAllProducts = async (_req, res) => {
     `;
     const [rows] = await db.query(query);
 
-    // 1. Obtener carritos activos (últimos 60 min) EXCLUYENDO al usuario actual
-    const requestingUserId = _req.user?.id_usuario || _req.user?.id;
-    // FIXED: Column name is carts_json, not cart_data
-    const [carts] = await db.query(
-      "SELECT user_id, carts_json FROM active_carts WHERE updated_at > NOW() - INTERVAL 60 MINUTE AND user_id != ?",
-      [requestingUserId || -1]
-    );
+    // 1. Obtener carritos activos de forma segura (sin que un fallo en active_carts tumbe los productos)
+    let carts = [];
+    try {
+      const requestingUserId = _req.user?.id_usuario || _req.user?.id;
+      const [cartRows] = await db.query(
+        "SELECT user_id, carts_json FROM active_carts WHERE updated_at > NOW() - INTERVAL 60 MINUTE AND user_id != ?",
+        [requestingUserId || -1]
+      );
+      carts = cartRows || [];
+    } catch (e) {
+      // Ignorar si la tabla no existe o error en active_carts
+    }
 
     // 2. Calcular stock reservado por producto
     const reservedMap = new Map();
     carts.forEach(c => {
       try {
-        // FIXED: Use carts_json. Native JSON type in MySQL might not need parsing if driver handles it, 
-        // but often it returns string or object. If Object (mysql2), no need to parse.
-        // Let's handle both.
         let items = c.carts_json;
         if (typeof items === 'string') {
           items = JSON.parse(items);
         }
         if (!items) items = [];
 
-        // Structure of active carts is: [ { id, name, items: [...] }, ... ]
-        // So we need to iterate over the tickets (carts), then the items in those tickets.
         if (Array.isArray(items)) {
           items.forEach(ticket => {
             if (ticket.items && Array.isArray(ticket.items)) {
@@ -133,22 +151,22 @@ const getAllProducts = async (_req, res) => {
     const products = rows.map(p => {
       const pid = p.id_producto;
       const reserved = reservedMap.get(pid) || 0;
-      // Restar lo reservado (pero no bajar de 0 visualmente para no confundir, o sí?)
-      // User says "no le salga", so reducing existence is correct.
       const existenciaReal = Math.max(0, p.existencia - reserved);
 
       return {
         ...p,
         existencia: existenciaReal, // Override existence with Available Stock
         reserved: reserved,         // Optional: expose reserved count
-        imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
+        imagen: null,               // Carga perezosa ultra rápida
+        precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayoreo || 0),
+        catalogo_mayorista: p.catalogo_mayorista !== undefined ? p.catalogo_mayorista : 0
       };
     });
 
     res.json(products);
   } catch (error) {
     console.error('Error en getAllProducts:', error);
-    res.status(500).json({ msg: 'Error al obtener productos.' });
+    res.status(500).json({ msg: 'Error al obtener productos.', error: error.message });
   }
 };
 

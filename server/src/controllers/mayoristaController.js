@@ -21,22 +21,38 @@ const initMayoristaModule = async () => {
     const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
     const prodFields = prodCols.map(c => c.Field);
 
-    if (!prodFields.includes('catalogo_mayorista')) {
-      await db.query('ALTER TABLE productos ADD COLUMN catalogo_mayorista TINYINT(1) NOT NULL DEFAULT 0');
-    }
-    if (!prodFields.includes('precio_ruta')) {
-      await db.query('ALTER TABLE productos ADD COLUMN precio_ruta DECIMAL(10,2) NULL DEFAULT 0.00 AFTER mayorista');
-      await db.query('UPDATE productos SET precio_ruta = mayorista WHERE mayorista > 0 AND (precio_ruta IS NULL OR precio_ruta = 0)');
-    }
-    if (!prodFields.includes('descuento_mayorista')) {
-      await db.query('ALTER TABLE productos ADD COLUMN descuento_mayorista DECIMAL(5,2) NULL DEFAULT 0.00 AFTER precio_ruta');
-    }
-    if (!prodFields.includes('promocion_mayorista')) {
-      await db.query('ALTER TABLE productos ADD COLUMN promocion_mayorista VARCHAR(255) NULL AFTER descuento_mayorista');
-    }
-    if (!prodFields.includes('combo_mayorista')) {
-      await db.query('ALTER TABLE productos ADD COLUMN combo_mayorista VARCHAR(255) NULL AFTER promocion_mayorista');
-    }
+    try {
+      if (!prodFields.includes('catalogo_mayorista')) {
+        await db.query('ALTER TABLE productos ADD COLUMN catalogo_mayorista TINYINT(1) NOT NULL DEFAULT 0');
+      }
+    } catch (e) { console.warn('Col catalogo_mayorista:', e.message); }
+
+    try {
+      if (!prodFields.includes('precio_ruta')) {
+        await db.query('ALTER TABLE productos ADD COLUMN precio_ruta DECIMAL(10,2) NULL DEFAULT 0.00');
+        if (prodFields.includes('mayoreo')) {
+          await db.query('UPDATE productos SET precio_ruta = mayoreo WHERE mayoreo > 0 AND (precio_ruta IS NULL OR precio_ruta = 0)');
+        }
+      }
+    } catch (e) { console.warn('Col precio_ruta:', e.message); }
+
+    try {
+      if (!prodFields.includes('descuento_mayorista')) {
+        await db.query('ALTER TABLE productos ADD COLUMN descuento_mayorista DECIMAL(5,2) NULL DEFAULT 0.00');
+      }
+    } catch (e) { console.warn('Col descuento_mayorista:', e.message); }
+
+    try {
+      if (!prodFields.includes('promocion_mayorista')) {
+        await db.query('ALTER TABLE productos ADD COLUMN promocion_mayorista VARCHAR(255) NULL');
+      }
+    } catch (e) { console.warn('Col promocion_mayorista:', e.message); }
+
+    try {
+      if (!prodFields.includes('combo_mayorista')) {
+        await db.query('ALTER TABLE productos ADD COLUMN combo_mayorista VARCHAR(255) NULL');
+      }
+    } catch (e) { console.warn('Col combo_mayorista:', e.message); }
 
     // 2. Columnas en clientes para diferenciar clientes de ruta
     const [clientCols] = await db.query('SHOW COLUMNS FROM clientes');
@@ -119,36 +135,21 @@ const initMayoristaModule = async () => {
 
 /* =========================================================================
    2. CATÁLOGO MAYORISTA Y PRODUCTOS
-========================================================================= */
+======================================================================== */
 
 // Obtener todos los productos para la administración mayorista
 const getAllMayoristaProducts = async (req, res) => {
   try {
+    const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
+    const prodFields = prodCols.map(c => c.Field);
+    const selectFields = prodFields
+      .filter(f => f !== 'imagen')
+      .map(f => `p.\`${f}\``)
+      .join(', ');
+
     const query = `
       SELECT 
-        p.id_producto,
-        p.codigo,
-        p.nombre,
-        p.costo,
-        p.venta,
-        p.mayoreo,
-        COALESCE(p.precio_ruta, p.mayorista, 0.00) AS precio_ruta,
-        p.mayorista,
-        p.distribuidor,
-        p.taller,
-        COALESCE(p.descuento_mayorista, 0.00) AS descuento_mayorista,
-        p.promocion_mayorista,
-        p.combo_mayorista,
-        p.existencia,
-        p.stock_reservado,
-        p.minimo,
-        p.maximo,
-        p.descripcion,
-        p.tipo_venta,
-        p.id_categoria,
-        p.id_proveedor,
-        COALESCE(p.activo, 1) AS activo,
-        COALESCE(p.catalogo_mayorista, 0) AS catalogo_mayorista,
+        ${selectFields},
         c.nombre AS nombre_categoria,
         pr.nombre AS nombre_proveedor
       FROM productos p
@@ -191,6 +192,8 @@ const getAllMayoristaProducts = async (req, res) => {
         ...p,
         existencia: Math.max(0, p.existencia - reserved),
         reserved,
+        precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
+        catalogo_mayorista: p.catalogo_mayorista !== undefined ? p.catalogo_mayorista : 0,
         imagen: null // Carga perezosa (lazy load) on-demand vía GET /api/products/:id/image
       };
     });
@@ -198,31 +201,27 @@ const getAllMayoristaProducts = async (req, res) => {
     res.json(products);
   } catch (error) {
     console.error('Error en getAllMayoristaProducts:', error);
-    res.status(500).json({ msg: 'Error al obtener productos para módulo mayorista.' });
+    res.status(500).json({ msg: 'Error al obtener productos para módulo mayorista.', error: error.message });
   }
 };
 
 // Obtener catálogo activo para PDF / visualización
 const getCatalogProducts = async (req, res) => {
   try {
+    const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
+    const prodFields = prodCols.map(c => c.Field);
+    if (!prodFields.includes('catalogo_mayorista')) {
+      return res.json([]);
+    }
+
+    const selectFields = prodFields
+      .filter(f => f !== 'imagen')
+      .map(f => `p.\`${f}\``)
+      .join(', ');
+
     const query = `
       SELECT 
-        p.id_producto,
-        p.codigo,
-        p.nombre,
-        p.costo,
-        p.venta,
-        p.mayoreo,
-        COALESCE(p.precio_ruta, p.mayorista, 0.00) AS precio_ruta,
-        p.mayorista,
-        COALESCE(p.descuento_mayorista, 0.00) AS descuento_mayorista,
-        p.promocion_mayorista,
-        p.combo_mayorista,
-        p.existencia,
-        p.descripcion,
-        p.tipo_venta,
-        p.id_categoria,
-        p.imagen,
+        ${selectFields},
         c.nombre AS nombre_categoria
       FROM productos p
       LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
@@ -233,13 +232,15 @@ const getCatalogProducts = async (req, res) => {
 
     const catalog = rows.map(p => ({
       ...p,
-      imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
+      precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
+      catalogo_mayorista: 1,
+      imagen: null
     }));
 
     res.json(catalog);
   } catch (error) {
     console.error('Error en getCatalogProducts:', error);
-    res.status(500).json({ msg: 'Error al obtener catálogo mayorista.' });
+    res.status(500).json({ msg: 'Error al obtener catálogo mayorista.', error: error.message });
   }
 };
 

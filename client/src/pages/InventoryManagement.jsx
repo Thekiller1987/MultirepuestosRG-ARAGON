@@ -1234,8 +1234,17 @@ const InventoryManagement = () => {
     }
   };
 
+  if (error) {
+    return (
+      <PageWrapper>
+        <CenteredMessage style={{ color: '#c53030' }}>
+          <p>{error}</p>
+          <Button primary style={{ marginTop: '1rem' }} onClick={() => { setError(null); fetchData(); }}>Reintentar</Button>
+        </CenteredMessage>
+      </PageWrapper>
+    );
+  }
   if (!initialLoadComplete) return <PageWrapper><CenteredMessage><Spinner /><p>Cargando Inventario...</p></CenteredMessage></PageWrapper>;
-  if (error) return <PageWrapper><CenteredMessage style={{ color: '#c53030' }}>{error}</CenteredMessage></PageWrapper>;
 
   const animationsEnabled = filtered.length <= LARGE_LIST_CUTOFF;
   const totalPages = Math.ceil(totalFilteredCount / ITEMS_PER_PAGE);
