@@ -77,11 +77,17 @@ const createProduct = async (req, res) => {
 /* ===================== READ ===================== */
 const getAllProducts = async (_req, res) => {
   try {
+    // PERF: Excluimos imagen del listado masivo para que 4000+ productos carguen instantáneamente.
+    // Las imágenes se sirven bajo demanda por /api/products/:id/image y se cachean con lazy image.
     const query = `
-      SELECT p.*, c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
+      SELECT p.id_producto, p.codigo, p.nombre, p.costo, p.venta, p.mayoreo,
+             p.existencia, p.minimo, p.maximo, p.tipo_venta,
+             p.id_categoria, p.id_proveedor, p.descripcion,
+             p.precio_ruta, p.descuento_mayorista, p.promocion_mayorista, p.combo_mayorista, p.catalogo_mayorista,
+             c.nombre AS nombre_categoria, pr.nombre AS nombre_proveedor
       FROM productos p
       LEFT JOIN categorias c   ON p.id_categoria  = c.id_categoria
-      LEFT   JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
+      LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor
       ORDER BY p.nombre ASC
     `;
     const [rows] = await db.query(query);
@@ -143,6 +149,30 @@ const getAllProducts = async (_req, res) => {
   } catch (error) {
     console.error('Error en getAllProducts:', error);
     res.status(500).json({ msg: 'Error al obtener productos.' });
+  }
+};
+
+/* ===================== GET IMAGE BY ID (LAZY IMAGE) ===================== */
+const getProductImage = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await db.query(
+      'SELECT imagen FROM productos WHERE id_producto = ?',
+      [id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ msg: 'Producto no encontrado.' });
+    }
+
+    const raw = rows[0].imagen;
+    const imagen = raw
+      ? (Buffer.isBuffer(raw) ? raw.toString('utf-8') : raw)
+      : null;
+
+    res.json({ imagen });
+  } catch (error) {
+    console.error(`[IMAGE_REQUEST] Error al obtener imagen para ID ${id}:`, error);
+    res.status(500).json({ msg: 'Error al obtener imagen.' });
   }
 };
 
@@ -412,6 +442,7 @@ const getInventoryHistory = async (_req, res) => {
 module.exports = {
   createProduct,
   getAllProducts,
+  getProductImage,
   getProductById,
   updateProduct,
   deleteProduct,   // ← ahora permite eliminar aunque haya ventas/pedidos (Fks SET NULL)

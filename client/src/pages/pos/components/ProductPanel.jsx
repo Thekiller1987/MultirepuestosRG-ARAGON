@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { FaStore, FaExclamationTriangle, FaTags, FaBarcode, FaFont, FaImage, FaEye, FaTimes } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as S from '../POS.styles.jsx';
+import { useLazyImage } from '../../../hooks/useLazyImage.js';
 
 const PRODUCTS_PER_PAGE = 100;
 
@@ -51,6 +52,39 @@ const ImageViewModal = ({ isOpen, imageSrc, onClose }) => {
         />
       </motion.div>
     </S.ModalOverlay >
+  );
+};
+
+const LazyPosProductImage = ({ productId, productName, setViewImage }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId);
+  return (
+    <div
+      ref={cardRef}
+      className="image-placeholder"
+      style={{ position: 'relative', height: 160, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid #f1f5f9', overflow: 'hidden' }}
+    >
+      {imgSrc && (
+        <div
+          className="eye-icon"
+          onClick={(e) => { e.stopPropagation(); setViewImage({ isOpen: true, imageUrl: imgSrc }); }}
+          style={{
+            position: 'absolute', top: 10, left: 10, zIndex: 20,
+            background: 'white', borderRadius: '50%', width: 32, height: 32,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)', cursor: 'pointer',
+            transition: 'transform 0.2s',
+          }}
+          title="Ver imagen"
+        >
+          <FaEye size={14} color="#64748b" />
+        </div>
+      )}
+      {imgSrc ? (
+        <img src={imgSrc} alt={productName} loading="lazy" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+      ) : (
+        <FaImage className="no-image-icon" size={40} color="#e2e8f0" />
+      )}
+    </div>
   );
 };
 
@@ -169,29 +203,7 @@ export default function ProductPanel({
                 {agotado ? 'Agotado' : `Stock: ${restante}`}
               </S.StockBadge>
 
-              <div className="image-placeholder" style={{ position: 'relative', height: 160, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid #f1f5f9', overflow: 'hidden' }}>
-                {p.imagen && (
-                  <div
-                    className="eye-icon"
-                    onClick={(e) => { e.stopPropagation(); setViewImage({ isOpen: true, imageUrl: p.imagen }); }}
-                    style={{
-                      position: 'absolute', top: 10, left: 10, zIndex: 20,
-                      background: 'white', borderRadius: '50%', width: 32, height: 32,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      boxShadow: '0 4px 6px rgba(0,0,0,0.1)', cursor: 'pointer',
-                      transition: 'transform 0.2s',
-                    }}
-                    title="Ver imagen"
-                  >
-                    <FaEye size={14} color="#64748b" />
-                  </div>
-                )}
-                {p.imagen ? (
-                  <img src={p.imagen} alt={p.nombre} loading="lazy" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                ) : (
-                  <FaImage className="no-image-icon" size={40} color="#e2e8f0" />
-                )}
-              </div>
+              <LazyPosProductImage productId={p.id_producto} productName={p.nombre} setViewImage={setViewImage} />
 
               <div className="info" style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div className="product-name" style={{

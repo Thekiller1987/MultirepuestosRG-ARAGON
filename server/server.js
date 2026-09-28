@@ -94,6 +94,22 @@ const io = new Server(httpServer, {
   path: '/api/socket.io/' // Match client path for Nginx routing
 });
 
+// Middleware para autenticar WebSocket con JWT siempre en línea
+const jwt = require('jsonwebtoken');
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace('Bearer ', '');
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+      socket.user = decoded;
+      console.log(`[Socket] Conexión autenticada con JWT para usuario: ${decoded.nombre_usuario || decoded.id_usuario}`);
+    } catch (err) {
+      console.warn('[Socket] Advertencia al verificar JWT del socket:', err.message);
+    }
+  }
+  next();
+});
+
 io.on('connection', (socket) => {
   console.log('Cliente conectado al socket:', socket.id);
   socket.on('disconnect', () => {

@@ -147,7 +147,6 @@ const getAllMayoristaProducts = async (req, res) => {
         p.tipo_venta,
         p.id_categoria,
         p.id_proveedor,
-        p.imagen,
         COALESCE(p.activo, 1) AS activo,
         COALESCE(p.catalogo_mayorista, 0) AS catalogo_mayorista,
         c.nombre AS nombre_categoria,
@@ -192,7 +191,7 @@ const getAllMayoristaProducts = async (req, res) => {
         ...p,
         existencia: Math.max(0, p.existencia - reserved),
         reserved,
-        imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
+        imagen: null // Carga perezosa (lazy load) on-demand vía GET /api/products/:id/image
       };
     });
 

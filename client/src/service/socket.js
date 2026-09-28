@@ -6,10 +6,13 @@ const URL = window.location.host.includes('localhost')
     : window.location.origin;
 
 // Initialize the socket connection
-// We use 'polling' first for maximum compatibility, then upgrade to 'websocket'
+// Prefer websocket for speed, fallback to polling
 const socket = io(URL, {
     path: '/api/socket.io/', // Routing via /api/ to use existing Nginx proxy
-    transports: ['polling', 'websocket'], // Critical for stability
+    transports: ['websocket', 'polling'], // Prefer websocket, fallback to polling
+    auth: {
+        token: localStorage.getItem('token')
+    },
     reconnection: true,
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
@@ -19,15 +22,27 @@ const socket = io(URL, {
     withCredentials: true // Ensure cookies/session data are sent if needed
 });
 
+// Update socket auth token whenever login happens or token is refreshed
+export const updateSocketAuth = (token) => {
+    if (socket) {
+        socket.auth = { token };
+        if (!socket.connected) {
+            socket.connect();
+        }
+    }
+};
+
 // Global debug listeners
 socket.on('connect', () => {
     console.log("✅ Socket Connected (v2.1):", socket.id);
-    console.log("🚀 Connection Transport:", socket.io.engine.transport.name);
+    console.log("🚀 Connection Transport:", socket.io?.engine?.transport?.name || 'websocket');
 });
 
-socket.io.engine.on("upgrade", (transport) => {
-    console.log("🚀 Transport Upgraded to:", transport.name);
-});
+if (socket.io && socket.io.engine) {
+    socket.io.engine.on("upgrade", (transport) => {
+        console.log("🚀 Transport Upgraded to:", transport.name);
+    });
+}
 
 socket.on('connect_error', (err) => {
     console.warn("⚠️ Socket Connection Error:", err.message);
@@ -40,4 +55,5 @@ socket.on('disconnect', (reason) => {
     }
 });
 
+export { socket };
 export default socket;

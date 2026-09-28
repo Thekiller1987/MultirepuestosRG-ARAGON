@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect, useCallback, use
 import { useNavigate } from 'react-router-dom';
 import * as api from '../service/api.js';
 import { loadCajaSession, saveCajaSession } from '../utils/caja.js';
+import { updateSocketAuth } from '../service/socket.js';
 
 const AuthContext = createContext(null);
 
@@ -25,6 +26,7 @@ export const AuthProvider = ({ children, socket }) => {
         localStorage.removeItem('user');
         setUser(null);
         setToken(null);
+        updateSocketAuth(null);
         navigate('/login');
     }, [navigate]);
 
@@ -133,7 +135,14 @@ export const AuthProvider = ({ children, socket }) => {
     useEffect(() => {
         if (!socket) return;
 
-        const onInventoryUpdate = () => {
+        const onInventoryUpdate = (data) => {
+            // Invalida la imagen en caché para que useLazyImage vuelva a pedirla
+            if (data?.id) {
+                api.clearCachedImage(data.id);
+            }
+            if (data?.id_producto) {
+                api.clearCachedImage(data.id_producto);
+            }
             // Use Debounced version!
             refreshProductsDebounced();
         };
@@ -171,6 +180,7 @@ export const AuthProvider = ({ children, socket }) => {
                         const parsedUser = JSON.parse(storedUser);
                         setUser(parsedUser);
                         setToken(tokenInStorage);
+                        updateSocketAuth(tokenInStorage);
 
                         // 1. CARGAR DESDE CACHÉ = INSTANTÁNEO (< 10ms)
                         const hadCache = loadFromCache();
@@ -202,6 +212,7 @@ export const AuthProvider = ({ children, socket }) => {
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
         setToken(token);
+        updateSocketAuth(token);
         setIsLoading(true);
         await loadMasterData(token);
         setIsLoading(false);

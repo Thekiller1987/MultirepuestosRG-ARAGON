@@ -15,6 +15,7 @@ router.get('/inventory/history', verifyToken, productController.getInventoryHist
 
 /* CRUD de productos */
 router.get('/', verifyToken, productController.getAllProducts);
+router.get('/:id/image', productController.getProductImage);
 router.get('/:id', verifyToken, productController.getProductById);
 router.post('/', verifyToken, productController.createProduct);
 router.put('/:id', verifyToken, productController.updateProduct);

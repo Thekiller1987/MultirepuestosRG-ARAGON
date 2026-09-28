@@ -10,6 +10,26 @@ const API_URL = RAW_BASE; // Simplificado
 
 export { API_URL };
 
+// ===================================================================
+// === GESTIÓN CENTRALIZADA DE CACHÉ DE IMÁGENES (LAZY LOAD) ===
+// Permite invalidar imágenes específicas cuando el WebSocket emite updates.
+// ===================================================================
+const imageCache = new Map(); // id_producto -> base64 | 'loading' | 'none'
+
+export const getCachedImage = (id) => imageCache.get(id);
+export const setCachedImage = (id, val) => imageCache.set(id, val);
+export const clearCachedImage = (id) => {
+    if (id) {
+        imageCache.delete(id);
+    } else {
+        imageCache.clear();
+    }
+};
+
+export const fetchProductImage = async (productId, token) => {
+    return await request('get', `/products/${productId}/image`, token);
+};
+
 const REQUEST_TIMEOUT = 15000; // 15 segundos máximo por request
 const MAX_RETRIES = 2; // Reintentos solo para GET
 

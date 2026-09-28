@@ -9,6 +9,9 @@ import {
   FaBarcode, FaFont, FaImage, FaEye
 } from 'react-icons/fa';
 import BarcodeLabelModal from './pos/components/BarcodeLabelModal';
+import { useLazyImage } from '../hooks/useLazyImage.js';
+import socket from '../service/socket.js';
+import { clearCachedImage } from '../service/api.js';
 
 /* ================================
    STYLED COMPONENTS LOCALES
@@ -910,6 +913,30 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
 };
 
 
+/* ======================================================
+   COMPONENTE: Tarjeta con imagen lazy optimizada para mala señal
+   ====================================================== */
+const LazyProductImage = ({ productId, productName, onViewFull }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId);
+  return (
+    <div
+      ref={cardRef}
+      className="image-placeholder"
+      onClick={() => onViewFull(imgSrc)}
+      style={{ cursor: 'zoom-in' }}
+    >
+      {imgSrc ? (
+        <>
+          <img src={imgSrc} alt={productName} />
+          <div className="overlay"><FaEye /></div>
+        </>
+      ) : (
+        <div className="no-image-text"><FaImage /></div>
+      )}
+    </div>
+  );
+};
+
 /* ==================================
   COMPONENTE PRINCIPAL: InventoryManagement
 ===================================== */
@@ -1003,7 +1030,27 @@ const InventoryManagement = () => {
     }
   }, [fetchProductList]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+
+    const handleInventoryUpdate = (data) => {
+      if (data?.id) {
+        clearCachedImage(data.id);
+      }
+      if (data?.id_producto) {
+        clearCachedImage(data.id_producto);
+      }
+      fetchData();
+    };
+
+    socket.on('inventory_update', handleInventoryUpdate);
+    socket.on('products:update', handleInventoryUpdate);
+
+    return () => {
+      socket.off('inventory_update', handleInventoryUpdate);
+      socket.off('products:update', handleInventoryUpdate);
+    };
+  }, [fetchData]);
 
   const { filtered, totalFilteredCount } = useMemo(() => {
     const q = (deferredSearch || '').toLowerCase().trim();
@@ -1247,16 +1294,11 @@ const InventoryManagement = () => {
           const out = p.existencia <= 0;
           return (
             <ProductCard key={p.id_producto} {...cardProps}>
-              <div className="image-placeholder" onClick={() => p.imagen && setViewImage({ isOpen: true, imageUrl: p.imagen })}>
-                {p.imagen ? (
-                  <>
-                    <img src={p.imagen} alt={p.nombre} loading="lazy" />
-                    <div className="overlay"><FaEye /></div>
-                  </>
-                ) : (
-                  <div className="no-image-text"><FaImage /></div>
-                )}
-              </div>
+              <LazyProductImage
+                productId={p.id_producto}
+                productName={p.nombre}
+                onViewFull={(src) => src && setViewImage({ isOpen: true, imageUrl: src })}
+              />
               <CardHeader>
                 <CardTitle title={p.nombre}>{p.nombre}</CardTitle>
                 <CardCode>Código: {p.codigo}</CardCode>

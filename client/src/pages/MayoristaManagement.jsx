@@ -31,8 +31,11 @@ import {
   fetchDetalleFacturaRuta,
   createFacturaRuta,
   updateComisionPagadaApi,
-  fetchEmployees
+  fetchEmployees,
+  clearCachedImage
 } from '../service/api';
+import { useLazyImage } from '../hooks/useLazyImage.js';
+import socket from '../service/socket.js';
 
 /* =========================================================================
    ESTILOS GENERALES Y TEMA ELEGANTE
@@ -535,6 +538,39 @@ const TableWrap = styled.div`
 `;
 
 /* =========================================================================
+   COMPONENTES AUXILIARES: IMÁGENES LAZY LOAD (ALTA VELOCIDAD Y MALA SEÑAL)
+========================================================================= */
+const LazyMayoristaImage = ({ productId, productName, inCatalog }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId);
+  return (
+    <CardImageContainer ref={cardRef}>
+      {imgSrc ? (
+        <img src={imgSrc} alt={productName} />
+      ) : (
+        <div className="no-img"><FaBoxOpen /></div>
+      )}
+      <CatalogBadge $active={inCatalog}>
+        {inCatalog ? <><FaCheck /> En Catálogo</> : 'Inactivo'}
+      </CatalogBadge>
+    </CardImageContainer>
+  );
+};
+
+const LazyPdfCatalogItemImage = ({ productId, productName, fallbackSrc }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId);
+  const src = imgSrc || fallbackSrc;
+  return (
+    <div ref={cardRef} style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {src ? (
+        <img src={src} alt={productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <FaBoxOpen style={{ fontSize: '2rem', color: '#cbd5e1' }} />
+      )}
+    </div>
+  );
+};
+
+/* =========================================================================
    COMPONENTE PRINCIPAL: MAYORISTAMANAGEMENT
 ========================================================================= */
 const MayoristaManagement = () => {
@@ -666,6 +702,28 @@ const MayoristaManagement = () => {
 
   useEffect(() => {
     loadData();
+
+    const handleMayoristaSync = (data) => {
+      if (data?.id) {
+        clearCachedImage(data.id);
+      }
+      if (data?.id_producto) {
+        clearCachedImage(data.id_producto);
+      }
+      loadData();
+    };
+
+    socket.on('inventory_update', handleMayoristaSync);
+    socket.on('products:update', handleMayoristaSync);
+    socket.on('sales_update', handleMayoristaSync);
+    socket.on('mayorista_update', handleMayoristaSync);
+
+    return () => {
+      socket.off('inventory_update', handleMayoristaSync);
+      socket.off('products:update', handleMayoristaSync);
+      socket.off('sales_update', handleMayoristaSync);
+      socket.off('mayorista_update', handleMayoristaSync);
+    };
   }, [token]);
 
   // Categorías únicas
@@ -1378,16 +1436,11 @@ const MayoristaManagement = () => {
 
                     return (
                       <ProductCard key={p.id_producto} $inCatalog={inCatalog}>
-                        <CardImageContainer>
-                          {p.imagen ? (
-                            <img src={p.imagen} alt={p.nombre} loading="lazy" />
-                          ) : (
-                            <div className="no-img"><FaBoxOpen /></div>
-                          )}
-                          <CatalogBadge $active={inCatalog}>
-                            {inCatalog ? <><FaCheck /> En Catálogo</> : 'Inactivo'}
-                          </CatalogBadge>
-                        </CardImageContainer>
+                        <LazyMayoristaImage
+                          productId={p.id_producto}
+                          productName={p.nombre}
+                          inCatalog={inCatalog}
+                        />
 
                         <CardBody>
                           <ProductCode>{p.codigo} • {p.nombre_categoria || 'Sin Categoría'}</ProductCode>
@@ -1793,11 +1846,7 @@ const MayoristaManagement = () => {
                             }}
                           >
                             <div style={{ width: '90px', height: '90px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {p.imagen ? (
-                                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <FaBoxOpen style={{ fontSize: '2rem', color: '#cbd5e1' }} />
-                              )}
+                              <LazyPdfCatalogItemImage productId={p.id_producto} productName={p.nombre} fallbackSrc={p.imagen} />
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                               <div>
