@@ -658,7 +658,7 @@ const LazyPdfCatalogItemImage = ({ productId, productName, fallbackSrc, initialS
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {img ? (
-        <img src={img} alt={productName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={img} alt={productName} crossOrigin="anonymous" loading="eager" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : (
         <FaBoxOpen style={{ fontSize: '2rem', color: '#cbd5e1' }} />
       )}
@@ -1337,6 +1337,7 @@ const MayoristaManagement = () => {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff'
       });
@@ -1361,7 +1362,27 @@ const MayoristaManagement = () => {
       }
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      pdf.save(`Catalogo_Mayorista_MultirepuestosRG_${dateStr}.pdf`);
+      const fileName = `Catalogo_Mayorista_MultirepuestosRG_${dateStr}.pdf`;
+
+      // Exportar como blob con MIME type application/pdf explícito y forzar descarga con elemento anchor en el DOM
+      const pdfBlob = pdf.output('blob');
+      const fileBlob = new Blob([pdfBlob], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(fileBlob);
+
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = fileName;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+        URL.revokeObjectURL(downloadUrl);
+      }, 5000);
+
       toast.success('Catálogo PDF descargado con éxito.', { id: 'pdf-toast' });
     } catch (err) {
       console.error(err);
@@ -1372,7 +1393,13 @@ const MayoristaManagement = () => {
   };
 
   const handlePrintCatalog = () => {
+    const originalTitle = document.title;
+    const dateStr = new Date().toISOString().slice(0, 10);
+    document.title = `Catalogo_Mayorista_MultirepuestosRG_${dateStr}`;
     window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1500);
   };
 
   return (
@@ -3059,7 +3086,12 @@ const MayoristaManagement = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                   <h3 style={{ margin: 0, color: '#1e293b' }}>Hoja de Despacho a Ruta</h3>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <ActionBtn onClick={() => window.print()}><FaPrint /> Imprimir Hoja</ActionBtn>
+                    <ActionBtn onClick={() => {
+                      const orig = document.title;
+                      document.title = `Despacho_Ruta_${comprobanteDespachoModal.carga?.numero_carga || 'Multirepuestos'}`;
+                      window.print();
+                      setTimeout(() => { document.title = orig; }, 1500);
+                    }}><FaPrint /> Imprimir Hoja</ActionBtn>
                     <button onClick={() => setComprobanteDespachoModal({ isOpen: false, carga: null, items: [] })} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>
                       <FaTimes />
                     </button>
@@ -3483,7 +3515,12 @@ const MayoristaManagement = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                   <h3 style={{ margin: 0, color: '#065f46' }}>Comprobante de Venta en Ruta Mayorista</h3>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <ActionBtn onClick={() => window.print()}><FaPrint /> Imprimir Factura</ActionBtn>
+                    <ActionBtn onClick={() => {
+                      const orig = document.title;
+                      document.title = `Factura_Ruta_${facturaDetalleModal.factura?.numero_factura || 'Multirepuestos'}`;
+                      window.print();
+                      setTimeout(() => { document.title = orig; }, 1500);
+                    }}><FaPrint /> Imprimir Factura</ActionBtn>
                     <button onClick={() => setFacturaDetalleModal({ isOpen: false, factura: null, items: [], loading: false })} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>
                       <FaTimes />
                     </button>
