@@ -720,6 +720,7 @@ const MayoristaManagement = () => {
     notas: '',
     items: []
   });
+  const [cargaSearchTerm, setCargaSearchTerm] = useState('');
 
   // Modal de Detalle / Liquidación de Carga
   const [detalleCargaModal, setDetalleCargaModal] = useState({
@@ -1051,6 +1052,7 @@ const MayoristaManagement = () => {
       const res = await createCargaRuta(nuevaCarga, token);
       toast.success('¡Carga despachada al rutero con éxito!');
       setIsCargaModalOpen(false);
+      setCargaSearchTerm('');
       setNuevaCarga({
         nombre_rutero: '',
         id_empleado: '',
@@ -2043,6 +2045,7 @@ const MayoristaManagement = () => {
                 {/* CONTENEDOR DEL CATÁLOGO A CAPTURAR / IMPRIMIR */}
                 <div
                   ref={printableCatalogRef}
+                  data-printable
                   style={{
                     background: '#ffffff',
                     padding: '30px',
@@ -2054,7 +2057,7 @@ const MayoristaManagement = () => {
                   }}
                 >
                   {/* MEMBRETE */}
-                  <div style={{ borderBottom: '3px solid #059669', paddingBottom: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div data-print-header style={{ borderBottom: '3px solid #059669', paddingBottom: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 900, color: '#065f46', letterSpacing: '-0.5px' }}>
                         MULTIREPUESTOS RG & ARAGÓN
@@ -2075,7 +2078,7 @@ const MayoristaManagement = () => {
 
                   {/* FORMATO 1: VISUAL CON FOTOS */}
                   {catalogPdfFormat === 'VISUAL' ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                    <div data-print-catalog-grid style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                       {catalogProducts.length === 0 ? (
                         <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
                           No hay productos activos en el catálogo. Ve a la pestaña "Catálogo Mayorista" y activa los productos deseados con su Precio de Ruta.
@@ -2343,10 +2346,10 @@ const MayoristaManagement = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsCargaModalOpen(false)}
+              onClick={() => { setIsCargaModalOpen(false); setCargaSearchTerm(''); }}
             >
               <ModalBox
-                $large
+                $xlarge
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
@@ -2356,7 +2359,7 @@ const MayoristaManagement = () => {
                   <h3 style={{ margin: 0, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FaTruck color="#059669" /> Nueva Carga a Rutero / Muchacho en Ruta
                   </h3>
-                  <button onClick={() => setIsCargaModalOpen(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>
+                  <button onClick={() => { setIsCargaModalOpen(false); setCargaSearchTerm(''); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: '1.2rem', color: '#64748b' }}>
                     <FaTimes />
                   </button>
                 </div>
@@ -2460,129 +2463,332 @@ const MayoristaManagement = () => {
                     </FormGroup>
                   </div>
 
-                  {/* SELECCIONAR PRODUCTOS A CARGAR */}
+                  {/* SELECCIONAR PRODUCTOS A CARGAR - DISEÑO MEJORADO */}
                   <div style={{ borderTop: '2px dashed #e2e8f0', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                    <h4 style={{ margin: '0 0 0.75rem', color: '#065f46' }}>📦 Agregar Productos a la Carga</h4>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
-                      <FormGroup style={{ margin: 0 }}>
-                        <label>Producto a Cargar</label>
-                        <select id="select_producto_carga" defaultValue="">
-                          <option value="" disabled>-- Seleccione un Producto --</option>
-                          {products.map(p => (
-                            <option key={p.id_producto} value={p.id_producto}>
-                              {p.codigo} - {p.nombre} (Disp: {p.existencia} un. | Ruta: C$ {Number(p.precio_ruta || p.mayorista || 0).toFixed(2)})
-                            </option>
-                          ))}
-                        </select>
-                      </FormGroup>
-
-                      <FormGroup style={{ margin: 0 }}>
-                        <label>Cantidad</label>
-                        <input type="number" id="cantidad_producto_carga" defaultValue="1" min="1" />
-                      </FormGroup>
-
-                      <FormGroup style={{ margin: 0 }}>
-                        <label>Precio Ruta (C$)</label>
-                        <input type="number" id="precio_producto_carga" step="0.01" placeholder="Auto" />
-                      </FormGroup>
-
-                      <ActionBtn
-                        type="button"
-                        style={{ height: '42px' }}
-                        onClick={() => {
-                          const sel = document.getElementById('select_producto_carga');
-                          const qtyInput = document.getElementById('cantidad_producto_carga');
-                          const priceInput = document.getElementById('precio_producto_carga');
-
-                          const pid = parseInt(sel.value, 10);
-                          const qty = parseInt(qtyInput.value, 10);
-                          if (!pid || isNaN(qty) || qty <= 0) {
-                            toast.error('Seleccione un producto y cantidad válida.');
-                            return;
-                          }
-
-                          const prod = products.find(p => p.id_producto === pid);
-                          if (qty > prod.existencia) {
-                            toast.error(`Stock insuficiente en tienda (Disponible: ${prod.existencia} un.)`);
-                            return;
-                          }
-
-                          const defaultPrice = Number(prod.precio_ruta || prod.mayorista || prod.venta || 0);
-                          const finalPrice = priceInput.value ? parseFloat(priceInput.value) : defaultPrice;
-
-                          setNuevaCarga(prev => {
-                            const exists = prev.items.find(i => i.id_producto === pid);
-                            if (exists) {
-                              return {
-                                ...prev,
-                                items: prev.items.map(i => i.id_producto === pid ? { ...i, cantidad: i.cantidad + qty } : i)
-                              };
-                            }
-                            return {
-                              ...prev,
-                              items: [...prev.items, {
-                                id_producto: pid,
-                                codigo: prod.codigo,
-                                nombre: prod.nombre,
-                                cantidad: qty,
-                                precio_ruta: finalPrice
-                              }]
-                            };
-                          });
-
-                          sel.value = '';
-                          qtyInput.value = '1';
-                          priceInput.value = '';
-                        }}
-                      >
-                        <FaPlus /> Agregar
-                      </ActionBtn>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                      <h4 style={{ margin: 0, color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        📦 Agregar Productos a la Carga
+                      </h4>
+                      {nuevaCarga.items.length > 0 && (
+                        <div style={{
+                          display: 'flex', gap: '12px', alignItems: 'center',
+                          background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)',
+                          padding: '6px 16px', borderRadius: '12px',
+                          border: '1px solid #a7f3d0'
+                        }}>
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: 700, textTransform: 'uppercase' }}>Productos</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#059669' }}>{nuevaCarga.items.length}</div>
+                          </div>
+                          <div style={{ width: '1px', height: '28px', background: '#a7f3d0' }} />
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: 700, textTransform: 'uppercase' }}>Unidades</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#059669' }}>{nuevaCarga.items.reduce((s, i) => s + i.cantidad, 0)}</div>
+                          </div>
+                          <div style={{ width: '1px', height: '28px', background: '#a7f3d0' }} />
+                          <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.72rem', color: '#065f46', fontWeight: 700, textTransform: 'uppercase' }}>Valor Total</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#065f46' }}>C$ {nuevaCarga.items.reduce((s, i) => s + (i.cantidad * i.precio_ruta), 0).toFixed(2)}</div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* LISTA DE ITEMS A CARGAR */}
-                    <TableWrap style={{ maxHeight: '240px' }}>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Código</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio Ruta</th>
-                            <th>Total Línea</th>
-                            <th></th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                    {/* LAYOUT EN DOS COLUMNAS: BUSCADOR + CARRITO */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', minHeight: '320px' }}>
+
+                      {/* COLUMNA IZQUIERDA: BUSCADOR DE PRODUCTOS */}
+                      <div style={{
+                        background: '#f8fafc', borderRadius: '12px',
+                        border: '1px solid #e2e8f0', overflow: 'hidden',
+                        display: 'flex', flexDirection: 'column'
+                      }}>
+                        <div style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', background: 'white' }}>
+                          <div style={{ position: 'relative' }}>
+                            <FaSearch style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', fontSize: '0.85rem' }} />
+                            <input
+                              type="text"
+                              placeholder="Buscar por código o nombre..."
+                              value={cargaSearchTerm}
+                              onChange={(e) => setCargaSearchTerm(e.target.value)}
+                              style={{
+                                width: '100%', padding: '8px 10px 8px 32px',
+                                border: '1px solid #cbd5e1', borderRadius: '8px',
+                                fontSize: '0.88rem', outline: 'none', boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', maxHeight: '280px', padding: '6px' }}>
+                          {(() => {
+                            const filtered = products.filter(p => {
+                              if (!cargaSearchTerm) return true;
+                              const term = cargaSearchTerm.toLowerCase();
+                              return (p.nombre || '').toLowerCase().includes(term) ||
+                                     (p.codigo || '').toLowerCase().includes(term);
+                            });
+                            if (filtered.length === 0) {
+                              return (
+                                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
+                                  <FaSearch style={{ fontSize: '1.5rem', marginBottom: '8px' }} />
+                                  <div style={{ fontSize: '0.85rem' }}>No se encontraron productos</div>
+                                </div>
+                              );
+                            }
+                            return filtered.map(p => {
+                              const alreadyInCart = nuevaCarga.items.find(i => i.id_producto === p.id_producto);
+                              const noStock = Number(p.existencia || 0) <= 0;
+                              return (
+                                <div
+                                  key={p.id_producto}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                    padding: '8px 10px', marginBottom: '4px',
+                                    background: alreadyInCart ? '#ecfdf5' : 'white',
+                                    borderRadius: '8px',
+                                    border: `1px solid ${alreadyInCart ? '#a7f3d0' : '#e2e8f0'}`,
+                                    opacity: noStock ? 0.5 : 1,
+                                    cursor: noStock ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                  onClick={() => {
+                                    if (noStock) {
+                                      toast.error(`Sin stock disponible para ${p.nombre}`);
+                                      return;
+                                    }
+                                    const pid = p.id_producto;
+                                    const defaultPrice = Number(p.precio_ruta || p.mayorista || p.venta || 0);
+                                    setNuevaCarga(prev => {
+                                      const exists = prev.items.find(i => i.id_producto === pid);
+                                      if (exists) {
+                                        if (exists.cantidad + 1 > p.existencia) {
+                                          toast.error(`Stock máximo alcanzado (${p.existencia} un.)`);
+                                          return prev;
+                                        }
+                                        return {
+                                          ...prev,
+                                          items: prev.items.map(i => i.id_producto === pid ? { ...i, cantidad: i.cantidad + 1 } : i)
+                                        };
+                                      }
+                                      return {
+                                        ...prev,
+                                        items: [...prev.items, {
+                                          id_producto: pid,
+                                          codigo: p.codigo,
+                                          nombre: p.nombre,
+                                          cantidad: 1,
+                                          precio_ruta: defaultPrice
+                                        }]
+                                      };
+                                    });
+                                  }}
+                                >
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                      {p.nombre}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '10px', fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                                      <span style={{ fontWeight: 700, color: '#059669' }}>{p.codigo}</span>
+                                      <span>Stock: {p.existencia} un.</span>
+                                      <span style={{ fontWeight: 700 }}>C$ {Number(p.precio_ruta || p.mayorista || 0).toFixed(2)}</span>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                    {alreadyInCart ? (
+                                      <span style={{
+                                        background: '#059669', color: 'white',
+                                        padding: '2px 8px', borderRadius: '10px',
+                                        fontSize: '0.72rem', fontWeight: 800
+                                      }}>
+                                        ✓ {alreadyInCart.cantidad} un.
+                                      </span>
+                                    ) : (
+                                      <span style={{
+                                        background: noStock ? '#f1f5f9' : '#e0f2fe',
+                                        color: noStock ? '#94a3b8' : '#0284c7',
+                                        padding: '2px 8px', borderRadius: '10px',
+                                        fontSize: '0.72rem', fontWeight: 700
+                                      }}>
+                                        {noStock ? 'Sin stock' : '+ Agregar'}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+
+                      {/* COLUMNA DERECHA: CARRITO / ITEMS SELECCIONADOS */}
+                      <div style={{
+                        background: 'white', borderRadius: '12px',
+                        border: '1px solid #e2e8f0', overflow: 'hidden',
+                        display: 'flex', flexDirection: 'column'
+                      }}>
+                        <div style={{
+                          padding: '10px 14px', borderBottom: '1px solid #e2e8f0',
+                          background: '#f0fdf4', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.88rem', color: '#065f46' }}>
+                            🛒 Carga del Rutero ({nuevaCarga.items.length} {nuevaCarga.items.length === 1 ? 'producto' : 'productos'})
+                          </span>
+                          {nuevaCarga.items.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setNuevaCarga(prev => ({ ...prev, items: [] }))}
+                              style={{
+                                border: 'none', background: '#fee2e2', color: '#dc2626',
+                                padding: '3px 10px', borderRadius: '6px',
+                                fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer'
+                              }}
+                            >
+                              Vaciar Todo
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', maxHeight: '280px', padding: '8px' }}>
                           {nuevaCarga.items.length === 0 ? (
-                            <tr><td colSpan="6" style={{ textAlign: 'center', color: '#94a3b8' }}>Aún no has agregado productos a esta carga.</td></tr>
+                            <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: '#94a3b8' }}>
+                              <FaBoxOpen style={{ fontSize: '2.5rem', marginBottom: '10px', color: '#cbd5e1' }} />
+                              <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>Sin productos en la carga</div>
+                              <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>Haz clic en un producto de la lista izquierda para agregarlo</div>
+                            </div>
                           ) : (
                             nuevaCarga.items.map((it, idx) => (
-                              <tr key={it.id_producto}>
-                                <td>{it.codigo}</td>
-                                <td style={{ fontWeight: 700 }}>{it.nombre}</td>
-                                <td>{it.cantidad} un.</td>
-                                <td>C$ {Number(it.precio_ruta).toFixed(2)}</td>
-                                <td style={{ fontWeight: 800, color: '#059669' }}>C$ {(it.cantidad * it.precio_ruta).toFixed(2)}</td>
-                                <td>
+                              <div
+                                key={it.id_producto}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '10px',
+                                  padding: '8px 10px', marginBottom: '6px',
+                                  background: '#fafafa', borderRadius: '10px',
+                                  border: '1px solid #e2e8f0',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {it.nombre}
+                                  </div>
+                                  <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '1px' }}>
+                                    <span style={{ fontWeight: 700, color: '#059669' }}>{it.codigo}</span>
+                                    {' • '}
+                                    <span style={{ fontWeight: 700 }}>C$ {Number(it.precio_ruta).toFixed(2)} c/u</span>
+                                  </div>
+                                </div>
+
+                                {/* CONTROLES DE CANTIDAD */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                                   <button
                                     type="button"
-                                    onClick={() => setNuevaCarga(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== idx) }))}
-                                    style={{ border: 'none', background: 'transparent', color: '#dc2626', cursor: 'pointer' }}
-                                  >
-                                    <FaTimes />
-                                  </button>
-                                </td>
-                              </tr>
+                                    onClick={() => {
+                                      setNuevaCarga(prev => ({
+                                        ...prev,
+                                        items: it.cantidad <= 1
+                                          ? prev.items.filter((_, i) => i !== idx)
+                                          : prev.items.map((item, i) => i === idx ? { ...item, cantidad: item.cantidad - 1 } : item)
+                                      }));
+                                    }}
+                                    style={{
+                                      width: '26px', height: '26px', borderRadius: '6px',
+                                      border: '1px solid #cbd5e1', background: '#f1f5f9',
+                                      cursor: 'pointer', fontSize: '0.85rem', fontWeight: 900,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      color: '#475569'
+                                    }}
+                                  >−</button>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={it.cantidad}
+                                    onChange={(e) => {
+                                      const val = Math.max(1, parseInt(e.target.value || 1, 10));
+                                      const prod = products.find(p => p.id_producto === it.id_producto);
+                                      if (prod && val > prod.existencia) {
+                                        toast.error(`Stock máximo: ${prod.existencia} un.`);
+                                        return;
+                                      }
+                                      setNuevaCarga(prev => ({
+                                        ...prev,
+                                        items: prev.items.map((item, i) => i === idx ? { ...item, cantidad: val } : item)
+                                      }));
+                                    }}
+                                    style={{
+                                      width: '42px', textAlign: 'center', padding: '3px',
+                                      border: '1px solid #cbd5e1', borderRadius: '6px',
+                                      fontSize: '0.85rem', fontWeight: 800, outline: 'none'
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const prod = products.find(p => p.id_producto === it.id_producto);
+                                      if (prod && it.cantidad + 1 > prod.existencia) {
+                                        toast.error(`Stock máximo: ${prod.existencia} un.`);
+                                        return;
+                                      }
+                                      setNuevaCarga(prev => ({
+                                        ...prev,
+                                        items: prev.items.map((item, i) => i === idx ? { ...item, cantidad: item.cantidad + 1 } : item)
+                                      }));
+                                    }}
+                                    style={{
+                                      width: '26px', height: '26px', borderRadius: '6px',
+                                      border: '1px solid #a7f3d0', background: '#ecfdf5',
+                                      cursor: 'pointer', fontSize: '0.85rem', fontWeight: 900,
+                                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                      color: '#059669'
+                                    }}
+                                  >+</button>
+                                </div>
+
+                                {/* TOTAL LÍNEA */}
+                                <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '80px' }}>
+                                  <div style={{ fontSize: '0.88rem', fontWeight: 900, color: '#065f46' }}>
+                                    C$ {(it.cantidad * it.precio_ruta).toFixed(2)}
+                                  </div>
+                                </div>
+
+                                {/* ELIMINAR */}
+                                <button
+                                  type="button"
+                                  onClick={() => setNuevaCarga(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== idx) }))}
+                                  style={{
+                                    border: 'none', background: '#fee2e2', color: '#dc2626',
+                                    width: '24px', height: '24px', borderRadius: '6px',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', flexShrink: 0, fontSize: '0.72rem'
+                                  }}
+                                >
+                                  <FaTimes />
+                                </button>
+                              </div>
                             ))
                           )}
-                        </tbody>
-                      </table>
-                    </TableWrap>
+                        </div>
+
+                        {/* TOTAL GENERAL */}
+                        {nuevaCarga.items.length > 0 && (
+                          <div style={{
+                            padding: '10px 14px', borderTop: '2px solid #059669',
+                            background: 'linear-gradient(135deg, #065f46, #059669)',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                          }}>
+                            <div style={{ color: '#d1fae5', fontSize: '0.82rem', fontWeight: 700 }}>
+                              {nuevaCarga.items.reduce((s, i) => s + i.cantidad, 0)} unidades en {nuevaCarga.items.length} {nuevaCarga.items.length === 1 ? 'producto' : 'productos'}
+                            </div>
+                            <div style={{ color: 'white', fontSize: '1.15rem', fontWeight: 900 }}>
+                              C$ {nuevaCarga.items.reduce((s, i) => s + (i.cantidad * i.precio_ruta), 0).toFixed(2)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
+
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-                    <ActionBtn $secondary type="button" onClick={() => setIsCargaModalOpen(false)}>
+                    <ActionBtn $secondary type="button" onClick={() => { setIsCargaModalOpen(false); setCargaSearchTerm(''); }}>
                       Cancelar
                     </ActionBtn>
                     <ActionBtn type="submit">
@@ -2862,6 +3068,7 @@ const MayoristaManagement = () => {
 
                 <div
                   ref={comprobanteRef}
+                  data-printable
                   style={{
                     border: '1px solid #cbd5e1',
                     borderRadius: '10px',
@@ -2869,7 +3076,7 @@ const MayoristaManagement = () => {
                     background: '#ffffff'
                   }}
                 >
-                  <div style={{ borderBottom: '2px solid #059669', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                  <div data-print-header style={{ borderBottom: '2px solid #059669', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
                     <div>
                       <h2 style={{ margin: 0, color: '#065f46', fontSize: '20px' }}>MULTIREPUESTOS RG & ARAGÓN</h2>
                       <div style={{ fontSize: '12px', color: '#475569', fontWeight: 700 }}>COMPROBANTE DE SALIDA / DESPACHO A RUTA MAYORISTA</div>
@@ -2918,8 +3125,7 @@ const MayoristaManagement = () => {
                     </tbody>
                   </table>
 
-                  {/* FIRMAS DE RESPONSABILIDAD */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '40px', textAlign: 'center', fontSize: '11px' }}>
+                  <div data-print-signatures style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '40px', textAlign: 'center', fontSize: '11px' }}>
                     <div>
                       <div style={{ borderTop: '1px solid #94a3b8', paddingTop: '6px' }}>
                         <strong>Firma de Despacho (Inventario)</strong>
@@ -3292,6 +3498,7 @@ const MayoristaManagement = () => {
                 ) : (
                   <div
                     ref={facturaTicketRef}
+                    data-printable
                     style={{
                       border: '1px solid #cbd5e1',
                       borderRadius: '10px',
@@ -3299,7 +3506,7 @@ const MayoristaManagement = () => {
                       background: '#ffffff'
                     }}
                   >
-                    <div style={{ borderBottom: '2px solid #059669', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
+                    <div data-print-header style={{ borderBottom: '2px solid #059669', paddingBottom: '12px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
                       <div>
                         <h2 style={{ margin: 0, color: '#065f46', fontSize: '20px' }}>MULTIREPUESTOS RG & ARAGÓN</h2>
                         <div style={{ fontSize: '12px', color: '#475569', fontWeight: 700 }}>VENTA ESPECIAL DE RUTA MAYORISTA</div>
@@ -3359,7 +3566,7 @@ const MayoristaManagement = () => {
                       </tbody>
                     </table>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '35px', textAlign: 'center', fontSize: '11px' }}>
+                    <div data-print-signatures style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '35px', textAlign: 'center', fontSize: '11px' }}>
                       <div>
                         <div style={{ borderTop: '1px solid #94a3b8', paddingTop: '6px' }}>
                           <strong>Firma del Vendedor / Rutero</strong>
