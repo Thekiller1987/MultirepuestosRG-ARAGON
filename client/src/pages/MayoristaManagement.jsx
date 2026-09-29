@@ -571,12 +571,13 @@ const compressImageFile = (file) => {
 /* =========================================================================
    COMPONENTES AUXILIARES: IMÁGENES LAZY LOAD (ALTA VELOCIDAD Y MALA SEÑAL)
 ========================================================================= */
-const LazyMayoristaImage = ({ productId, productName, inCatalog, onOpenConfig }) => {
-  const { imgSrc, cardRef } = useLazyImage(productId);
+const LazyMayoristaImage = ({ productId, productName, initialSrc, inCatalog, onOpenConfig }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId, initialSrc);
+  const displaySrc = initialSrc || imgSrc;
   return (
     <CardImageContainer ref={cardRef} style={{ position: 'relative' }}>
-      {imgSrc ? (
-        <img src={imgSrc} alt={productName} onError={(e) => { e.target.style.display = 'none'; }} />
+      {displaySrc ? (
+        <img src={displaySrc} alt={productName} onError={(e) => { e.target.style.display = 'none'; }} />
       ) : (
         <div className="no-img" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
           <FaBoxOpen />
@@ -590,7 +591,7 @@ const LazyMayoristaImage = ({ productId, productName, inCatalog, onOpenConfig })
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); onOpenConfig(); }}
-          title={imgSrc ? "Cambiar foto del producto" : "Subir foto del producto"}
+          title={displaySrc ? "Cambiar foto del producto" : "Subir foto del producto"}
           style={{
             position: 'absolute',
             bottom: '8px',
@@ -611,20 +612,27 @@ const LazyMayoristaImage = ({ productId, productName, inCatalog, onOpenConfig })
             zIndex: 2
           }}
         >
-          <FaCamera size={10} /> {imgSrc ? 'Foto' : '+ Foto'}
+          <FaCamera size={10} /> {displaySrc ? 'Foto' : '+ Foto'}
         </button>
       )}
     </CardImageContainer>
   );
 };
 
-const LazyPdfCatalogItemImage = ({ productId, productName, fallbackSrc }) => {
+const LazyPdfCatalogItemImage = ({ productId, productName, fallbackSrc, initialSrc }) => {
   const [img, setImg] = useState(() => {
+    if (initialSrc) return initialSrc;
+    if (fallbackSrc) return fallbackSrc;
     const c = getCachedImage(productId);
-    return (c && c !== 'loading' && c !== 'none') ? c : fallbackSrc;
+    return (c && c !== 'loading' && c !== 'none') ? c : null;
   });
 
   useEffect(() => {
+    if (initialSrc || fallbackSrc) {
+      setImg(initialSrc || fallbackSrc);
+      return;
+    }
+
     let isMounted = true;
     const c = getCachedImage(productId);
     if (c && c !== 'loading' && c !== 'none') {
@@ -645,7 +653,7 @@ const LazyPdfCatalogItemImage = ({ productId, productName, fallbackSrc }) => {
       });
 
     return () => { isMounted = false; };
-  }, [productId]);
+  }, [productId, initialSrc, fallbackSrc]);
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1677,6 +1685,7 @@ const MayoristaManagement = () => {
                         <LazyMayoristaImage
                           productId={p.id_producto}
                           productName={p.nombre}
+                          initialSrc={p.imagen}
                           inCatalog={inCatalog}
                           onOpenConfig={() => handleOpenConfig(p)}
                         />
@@ -2086,7 +2095,7 @@ const MayoristaManagement = () => {
                             }}
                           >
                             <div style={{ width: '90px', height: '90px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <LazyPdfCatalogItemImage productId={p.id_producto} productName={p.nombre} fallbackSrc={p.imagen} />
+                              <LazyPdfCatalogItemImage productId={p.id_producto} productName={p.nombre} initialSrc={p.imagen} fallbackSrc={p.imagen} />
                             </div>
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                               <div>

@@ -154,7 +154,6 @@ const getAllMayoristaProducts = async (req, res) => {
       const [prodCols] = await db.query('SHOW COLUMNS FROM productos');
       const prodFields = prodCols.map(c => c.Field);
       const selectFields = prodFields
-        .filter(f => f !== 'imagen')
         .map(f => `p.\`${f}\``)
         .join(', ');
 
@@ -216,7 +215,7 @@ const getAllMayoristaProducts = async (req, res) => {
         reserved,
         precio_ruta: p.precio_ruta !== undefined && p.precio_ruta !== null ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
         catalogo_mayorista: p.catalogo_mayorista !== undefined && p.catalogo_mayorista !== null ? p.catalogo_mayorista : 0,
-        imagen: null // Carga perezosa (lazy load) on-demand vía GET /api/products/:id/image
+        imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
       };
     });
 
@@ -239,7 +238,6 @@ const getCatalogProducts = async (req, res) => {
     let rows = [];
     try {
       const selectFields = prodFields
-        .filter(f => f !== 'imagen')
         .map(f => `p.\`${f}\``)
         .join(', ');
 
@@ -268,7 +266,7 @@ const getCatalogProducts = async (req, res) => {
       ...p,
       precio_ruta: p.precio_ruta !== undefined && p.precio_ruta !== null ? p.precio_ruta : (p.mayorista || p.mayoreo || 0),
       catalogo_mayorista: 1,
-      imagen: null
+      imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null
     }));
 
     res.json(catalog);

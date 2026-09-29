@@ -8,8 +8,12 @@ import { getCachedImage, setCachedImage, clearCachedImage, fetchProductImage } f
  * 2. Mantiene una caché en memoria para nunca descargar la misma imagen dos veces.
  * 3. En caso de corte o lentitud de red, no bloquea la interfaz de usuario.
  */
-export const useLazyImage = (productId) => {
+export const useLazyImage = (productId, initialSrc = null) => {
   const [imgSrc, setImgSrc] = useState(() => {
+    if (initialSrc) {
+      if (productId) setCachedImage(productId, initialSrc);
+      return initialSrc;
+    }
     if (!productId) return null;
     const cached = getCachedImage(productId);
     return (cached && cached !== 'loading' && cached !== 'none') ? cached : null;
@@ -18,6 +22,12 @@ export const useLazyImage = (productId) => {
   const cardRef = useRef(null);
 
   useEffect(() => {
+    if (initialSrc) {
+      setImgSrc(initialSrc);
+      if (productId) setCachedImage(productId, initialSrc);
+      return;
+    }
+
     if (!productId) {
       setImgSrc(null);
       return;
@@ -76,7 +86,7 @@ export const useLazyImage = (productId) => {
       isMounted = false;
       observer.disconnect();
     };
-  }, [productId]);
+  }, [productId, initialSrc]);
 
   return { imgSrc, isLoading, cardRef };
 };

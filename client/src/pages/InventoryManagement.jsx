@@ -916,18 +916,19 @@ const EditProductModal = ({ isOpen, onClose, onSave, productToEdit, categories, 
 /* ======================================================
    COMPONENTE: Tarjeta con imagen lazy optimizada para mala señal
    ====================================================== */
-const LazyProductImage = ({ productId, productName, onViewFull }) => {
-  const { imgSrc, cardRef } = useLazyImage(productId);
+const LazyProductImage = ({ productId, productName, initialSrc, onViewFull }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId, initialSrc);
+  const displaySrc = initialSrc || imgSrc;
   return (
     <div
       ref={cardRef}
       className="image-placeholder"
-      onClick={() => onViewFull(imgSrc)}
+      onClick={() => onViewFull(displaySrc)}
       style={{ cursor: 'zoom-in' }}
     >
-      {imgSrc ? (
+      {displaySrc ? (
         <>
-          <img src={imgSrc} alt={productName} />
+          <img src={displaySrc} alt={productName} onError={(e) => { e.target.style.display = 'none'; }} />
           <div className="overlay"><FaEye /></div>
         </>
       ) : (
@@ -1306,6 +1307,7 @@ const InventoryManagement = () => {
               <LazyProductImage
                 productId={p.id_producto}
                 productName={p.nombre}
+                initialSrc={p.imagen}
                 onViewFull={(src) => src && setViewImage({ isOpen: true, imageUrl: src })}
               />
               <CardHeader>

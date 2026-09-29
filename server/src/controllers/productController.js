@@ -92,7 +92,6 @@ const getProductColumnsSafe = async () => {
     const [cols] = await db.query('SHOW COLUMNS FROM productos');
     const validCols = cols
       .map(c => c.Field)
-      .filter(f => f !== 'imagen')
       .map(f => `p.\`${f}\``);
     if (validCols.length > 0) {
       cachedSelectFields = validCols.join(', ');
@@ -107,8 +106,6 @@ const getProductColumnsSafe = async () => {
 /* ===================== READ ===================== */
 const getAllProducts = async (_req, res) => {
   try {
-    // PERF: Excluimos imagen del listado masivo para que 4000+ productos carguen instantáneamente.
-    // Las imágenes se sirven bajo demanda por /api/products/:id/image y se cachean con lazy image.
     const selectFields = await getProductColumnsSafe();
     const query = `
       SELECT ${selectFields},
@@ -167,7 +164,7 @@ const getAllProducts = async (_req, res) => {
         ...p,
         existencia: existenciaReal, // Override existence with Available Stock
         reserved: reserved,         // Optional: expose reserved count
-        imagen: null,               // Carga perezosa ultra rápida
+        imagen: p.imagen ? (Buffer.isBuffer(p.imagen) ? p.imagen.toString('utf-8') : p.imagen) : null,
         precio_ruta: p.precio_ruta !== undefined ? p.precio_ruta : (p.mayoreo || 0),
         catalogo_mayorista: p.catalogo_mayorista !== undefined ? p.catalogo_mayorista : 0
       };
@@ -284,7 +281,8 @@ const updateProduct = async (req, res) => {
     const productData = {
       codigo, nombre, costo, venta,
       minimo, maximo, id_categoria, id_proveedor,
-      tipo_venta, mayoreo, descripcion, imagen,
+      tipo_venta, mayoreo, descripcion,
+      imagen: imagen !== undefined ? (imagen || (req.body.clear_image ? null : undefined)) : undefined,
       precio_ruta: precio_ruta !== undefined ? (precio_ruta || null) : undefined,
       descuento_mayorista: descuento_mayorista !== undefined ? (descuento_mayorista || 0) : undefined,
       promocion_mayorista: promocion_mayorista !== undefined ? (promocion_mayorista || null) : undefined,

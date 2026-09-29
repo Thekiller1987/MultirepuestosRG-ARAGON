@@ -55,18 +55,19 @@ const ImageViewModal = ({ isOpen, imageSrc, onClose }) => {
   );
 };
 
-const LazyPosProductImage = ({ productId, productName, setViewImage }) => {
-  const { imgSrc, cardRef } = useLazyImage(productId);
+const LazyPosProductImage = ({ productId, productName, initialSrc, setViewImage }) => {
+  const { imgSrc, cardRef } = useLazyImage(productId, initialSrc);
+  const displaySrc = initialSrc || imgSrc;
   return (
     <div
       ref={cardRef}
       className="image-placeholder"
       style={{ position: 'relative', height: 160, background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid #f1f5f9', overflow: 'hidden' }}
     >
-      {imgSrc && (
+      {displaySrc && (
         <div
           className="eye-icon"
-          onClick={(e) => { e.stopPropagation(); setViewImage({ isOpen: true, imageUrl: imgSrc }); }}
+          onClick={(e) => { e.stopPropagation(); setViewImage({ isOpen: true, imageUrl: displaySrc }); }}
           style={{
             position: 'absolute', top: 10, left: 10, zIndex: 20,
             background: 'white', borderRadius: '50%', width: 32, height: 32,
@@ -79,8 +80,8 @@ const LazyPosProductImage = ({ productId, productName, setViewImage }) => {
           <FaEye size={14} color="#64748b" />
         </div>
       )}
-      {imgSrc ? (
-        <img src={imgSrc} alt={productName} loading="lazy" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+      {displaySrc ? (
+        <img src={displaySrc} alt={productName} loading="lazy" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
       ) : (
         <FaImage className="no-image-icon" size={40} color="#e2e8f0" />
       )}
@@ -203,7 +204,7 @@ export default function ProductPanel({
                 {agotado ? 'Agotado' : `Stock: ${restante}`}
               </S.StockBadge>
 
-              <LazyPosProductImage productId={p.id_producto} productName={p.nombre} setViewImage={setViewImage} />
+              <LazyPosProductImage productId={p.id_producto} productName={p.nombre} initialSrc={p.imagen} setViewImage={setViewImage} />
 
               <div className="info" style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div className="product-name" style={{
