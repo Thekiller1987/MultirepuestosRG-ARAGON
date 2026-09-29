@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getCachedImage, setCachedImage, fetchProductImage } from '../service/api.js';
+import { getCachedImage, setCachedImage, clearCachedImage, fetchProductImage } from '../service/api.js';
 
 /**
  * Hook para carga perezosa (lazy load) de imágenes con caché en memoria.

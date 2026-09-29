@@ -7,7 +7,7 @@ import {
   FaSearch, FaPlus, FaCheck, FaTimes, FaEdit, FaPrint, FaGift, FaTags,
   FaExclamationTriangle, FaWarehouse, FaUserTie, FaMoneyBillWave, FaSpinner,
   FaExchangeAlt, FaPercent, FaBoxOpen, FaChartLine, FaFileExcel, FaDownload,
-  FaClipboardCheck, FaSignature, FaStore, FaChartPie, FaUserPlus, FaRedo
+  FaClipboardCheck, FaSignature, FaStore, FaChartPie, FaUserPlus, FaRedo, FaCamera
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
@@ -541,21 +541,79 @@ const TableWrap = styled.div`
   }
 `;
 
+/* Helper para comprimir imágenes del lado del cliente a JPEG 70% max 500px */
+const compressImageFile = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 500;
+        const scaleSize = Math.min(1, MAX_WIDTH / img.width);
+        canvas.width = Math.round(img.width * scaleSize);
+        canvas.height = Math.round(img.height * scaleSize);
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 /* =========================================================================
    COMPONENTES AUXILIARES: IMÁGENES LAZY LOAD (ALTA VELOCIDAD Y MALA SEÑAL)
 ========================================================================= */
-const LazyMayoristaImage = ({ productId, productName, inCatalog }) => {
+const LazyMayoristaImage = ({ productId, productName, inCatalog, onOpenConfig }) => {
   const { imgSrc, cardRef } = useLazyImage(productId);
   return (
-    <CardImageContainer ref={cardRef}>
+    <CardImageContainer ref={cardRef} style={{ position: 'relative' }}>
       {imgSrc ? (
-        <img src={imgSrc} alt={productName} />
+        <img src={imgSrc} alt={productName} onError={(e) => { e.target.style.display = 'none'; }} />
       ) : (
-        <div className="no-img"><FaBoxOpen /></div>
+        <div className="no-img" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <FaBoxOpen />
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600 }}>Sin Foto</span>
+        </div>
       )}
       <CatalogBadge $active={inCatalog}>
         {inCatalog ? <><FaCheck /> En Catálogo</> : 'Inactivo'}
       </CatalogBadge>
+      {onOpenConfig && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onOpenConfig(); }}
+          title={imgSrc ? "Cambiar foto del producto" : "Subir foto del producto"}
+          style={{
+            position: 'absolute',
+            bottom: '8px',
+            right: '8px',
+            background: 'rgba(15, 23, 42, 0.75)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '3px 8px',
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backdropFilter: 'blur(4px)',
+            transition: 'all 0.2s',
+            zIndex: 2
+          }}
+        >
+          <FaCamera size={10} /> {imgSrc ? 'Foto' : '+ Foto'}
+        </button>
+      )}
     </CardImageContainer>
   );
 };
@@ -830,6 +888,9 @@ const MayoristaManagement = () => {
   };
 
   const handleOpenConfig = (product) => {
+    const cached = getCachedImage(product.id_producto);
+    const initialImg = (cached && cached !== 'loading' && cached !== 'none') ? cached : (product.imagen || null);
+
     setConfigModal({
       isOpen: true,
       product,
@@ -838,13 +899,24 @@ const MayoristaManagement = () => {
       promocion_mayorista: product.promocion_mayorista ?? '',
       combo_mayorista: product.combo_mayorista ?? '',
       catalogo_mayorista: Boolean(product.catalogo_mayorista),
+      imagen: initialImg,
       requireReason: ''
     });
+
+    if (!initialImg) {
+      const tok = localStorage.getItem('token') || token;
+      fetchProductImage(product.id_producto, tok).then(data => {
+        if (data?.imagen) {
+          setConfigModal(prev => prev.product?.id_producto === product.id_producto ? { ...prev, imagen: data.imagen } : prev);
+          setCachedImage(product.id_producto, data.imagen);
+        }
+      }).catch(() => {});
+    }
   };
 
   const handleSaveConfig = async (e) => {
     e.preventDefault();
-    const { product, precio_ruta, descuento_mayorista, promocion_mayorista, combo_mayorista, catalogo_mayorista } = configModal;
+    const { product, precio_ruta, descuento_mayorista, promocion_mayorista, combo_mayorista, catalogo_mayorista, imagen } = configModal;
     const cost = Number(product.costo || 0);
     const pRuta = parseFloat(precio_ruta);
 
@@ -865,8 +937,15 @@ const MayoristaManagement = () => {
         descuento_mayorista: parseFloat(descuento_mayorista || 0),
         promocion_mayorista,
         combo_mayorista,
-        catalogo_mayorista
+        catalogo_mayorista,
+        imagen: imagen !== undefined ? imagen : undefined
       }, token);
+
+      if (imagen) {
+        setCachedImage(product.id_producto, imagen);
+      } else if (imagen === null) {
+        setCachedImage(product.id_producto, 'none');
+      }
 
       toast.success('Configuración mayorista guardada con éxito.');
       setConfigModal({ isOpen: false, product: null });
@@ -1599,6 +1678,7 @@ const MayoristaManagement = () => {
                           productId={p.id_producto}
                           productName={p.nombre}
                           inCatalog={inCatalog}
+                          onOpenConfig={() => handleOpenConfig(p)}
                         />
 
                         <CardBody>
@@ -2128,6 +2208,52 @@ const MayoristaManagement = () => {
                 </div>
 
                 <form onSubmit={handleSaveConfig}>
+                  {/* SECCIÓN DE FOTO DEL PRODUCTO */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '14px', border: '1px dashed #cbd5e1', borderRadius: '12px', marginBottom: '1.2rem', background: '#f8fafc' }}>
+                    <div style={{ position: 'relative', width: '130px', height: '130px', borderRadius: '10px', overflow: 'hidden', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #cbd5e1' }}>
+                      {configModal.imagen ? (
+                        <>
+                          <img src={configModal.imagen} alt="Foto Producto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button
+                            type="button"
+                            onClick={() => setConfigModal(prev => ({ ...prev, imagen: null }))}
+                            title="Quitar foto"
+                            style={{ position: 'absolute', top: '4px', right: '4px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <FaTimes size={12} />
+                          </button>
+                        </>
+                      ) : (
+                        <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+                          <FaBoxOpen size={36} />
+                          <div style={{ fontSize: '0.75rem', marginTop: '4px', fontWeight: 600 }}>Sin Foto Cargada</div>
+                        </div>
+                      )}
+                    </div>
+                    <label style={{ cursor: 'pointer', background: '#2563eb', color: 'white', padding: '6px 14px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px', margin: 0, boxShadow: '0 2px 4px rgba(37,99,235,0.2)' }}>
+                      <FaCamera /> {configModal.imagen ? 'Cambiar Foto' : 'Subir Foto'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              const compressed = await compressImageFile(file);
+                              setConfigModal(prev => ({ ...prev, imagen: compressed }));
+                            } catch(err) {
+                              toast.error('Error al procesar la imagen.');
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                    <small style={{ color: '#64748b', fontSize: '0.74rem' }}>
+                      Se optimiza y comprime automáticamente para carga instantánea en el catálogo y PDF.
+                    </small>
+                  </div>
+
                   <FormGroup>
                     <label>Precio de Ruta (C$) <span style={{ color: '#dc2626' }}>* Obligatorio para Catálogo</span></label>
                     <input

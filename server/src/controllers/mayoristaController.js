@@ -364,7 +364,8 @@ const updateMayoristaConfig = async (req, res) => {
     descuento_mayorista,
     promocion_mayorista,
     combo_mayorista,
-    catalogo_mayorista
+    catalogo_mayorista,
+    imagen
   } = req.body;
 
   try {
@@ -417,6 +418,10 @@ const updateMayoristaConfig = async (req, res) => {
       ]
     );
 
+    if (imagen !== undefined) {
+      await db.query('UPDATE productos SET imagen = ? WHERE id_producto = ?', [imagen || null, id]);
+    }
+
     const io = req.app.get('io');
     if (io) {
       io.emit('mayorista_update', {
@@ -428,6 +433,9 @@ const updateMayoristaConfig = async (req, res) => {
         combo_mayorista: newCombo,
         catalogo_mayorista: newInCatalog
       });
+      if (imagen !== undefined) {
+        io.emit('product_image_updated', { id_producto: id, id });
+      }
     }
 
     res.json({
